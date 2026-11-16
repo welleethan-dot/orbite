@@ -30,6 +30,7 @@
   color-scheme:dark;
 }
 [hidden]{display:none!important;}
+html{font-size:clamp(16px, 4.4vw, 19px);}
 html,body{height:100%;margin:0;overscroll-behavior:none;}
 body{-webkit-touch-callout:none;}
 body{background:var(--void);color:var(--ion);overflow:hidden;font-family:var(--mono);-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
@@ -39,48 +40,49 @@ canvas{display:block;width:100%;height:100%;touch-action:none;}
   padding-top:calc(env(safe-area-inset-top,0px) + 14px);
   padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));pointer-events:none;}
 .score{display:flex;flex-direction:column;gap:2px;}
-.score b{font-family:var(--display);font-weight:800;font-size:2.4rem;line-height:1;font-variant-numeric:tabular-nums;}
-.score span{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mist);font-variant-numeric:tabular-nums;}
+.score b{font-family:var(--display);font-weight:800;font-size:2.9rem;line-height:1;font-variant-numeric:tabular-nums;}
+.score .gems{color:var(--shard);}
+.score span{font-size:.85rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mist);font-variant-numeric:tabular-nums;}
 .btns{display:flex;gap:8px;pointer-events:auto;}
-.icon{width:44px;height:44px;border-radius:50%;border:1px solid rgba(191,243,255,.25);background:rgba(21,26,68,.6);color:var(--ion);display:grid;place-items:center;cursor:pointer;padding:0;}
+.icon{width:52px;height:52px;border-radius:50%;border:1px solid rgba(191,243,255,.25);background:rgba(21,26,68,.6);color:var(--ion);display:grid;place-items:center;cursor:pointer;padding:0;}
 .icon:focus-visible,.cta:focus-visible{outline:2px solid var(--shard);outline-offset:3px;}
-.icon svg{width:20px;height:20px;}
-.overlay{position:fixed;inset:0;display:grid;place-items:center;padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));padding-block:24px;
+.icon svg{width:24px;height:24px;}
+.overlay{position:fixed;inset:0;overflow-y:auto;display:grid;place-items:center;padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));padding-block:24px;
   background:rgba(10,12,34,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
 .card{max-width:360px;width:100%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;}
-.eyebrow{font-size:.72rem;letter-spacing:.24em;text-transform:uppercase;color:var(--sun);}
+.eyebrow{font-size:.85rem;letter-spacing:.24em;text-transform:uppercase;color:var(--sun);}
 h1{font-family:var(--display);font-weight:800;font-size:clamp(2.8rem,14vw,4.2rem);letter-spacing:.04em;margin:0;line-height:1;text-wrap:balance;
   background:linear-gradient(180deg,var(--ion),var(--mist));-webkit-background-clip:text;background-clip:text;color:transparent;}
-h2{font-family:var(--display);font-weight:800;font-size:2rem;margin:0;text-wrap:balance;}
+h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wrap:balance;}
 .stepper{display:flex;align-items:center;gap:14px;}
 .stepper input{width:4.2ch;text-align:center;font-family:var(--display);font-weight:800;font-size:2.4rem;color:var(--ion);background:transparent;border:0;border-bottom:2px solid rgba(191,243,255,.3);padding:2px 0;-moz-appearance:textfield;font-variant-numeric:tabular-nums;}
 .stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .stepper input:focus-visible{outline:none;border-bottom-color:var(--shard);}
 .stepper .icon{font-size:1.4rem;font-family:var(--mono);}
 .chips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;}
-.chip{font-family:var(--mono);font-size:.82rem;color:var(--ion);background:rgba(21,26,68,.6);border:1px solid rgba(191,243,255,.25);border-radius:999px;padding:8px 14px;cursor:pointer;}
+.chip{font-family:var(--mono);font-size:.95rem;color:var(--ion);background:rgba(21,26,68,.6);border:1px solid rgba(191,243,255,.25);border-radius:999px;padding:8px 14px;cursor:pointer;}
 .chip[aria-pressed="true"]{background:var(--ion);color:var(--void);border-color:var(--ion);}
 .chip:focus-visible,.link:focus-visible{outline:2px solid var(--shard);outline-offset:2px;}
-.link{background:none;border:0;color:var(--mist);font-family:var(--mono);font-size:.82rem;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:8px;}
-.note{font-size:.75rem !important;}
-.testtag{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--shard);}
+.link{background:none;border:0;color:var(--mist);font-family:var(--mono);font-size:.82rem;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:8px;font-size:.95rem;}
+.note{font-size:.85rem !important;}
+.testtag{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--shard);}
 #title{cursor:default;}
-.card p{margin:0;color:var(--mist);line-height:1.55;font-size:.9rem;max-width:30ch;}
-.rules{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;text-align:left;font-size:.85rem;color:var(--mist);}
+.card p{margin:0;color:var(--mist);line-height:1.5;font-size:1rem;max-width:30ch;}
+.rules{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;text-align:left;font-size:.95rem;line-height:1.35;color:var(--mist);}
 .dot{width:12px;height:12px;border-radius:50%;margin-top:3px;}
-.cta{font-family:var(--display);font-weight:800;font-size:1.05rem;letter-spacing:.08em;color:var(--void);background:var(--sun);border:0;border-radius:999px;padding:16px 40px;cursor:pointer;margin-top:6px;box-shadow:0 0 32px rgba(242,165,65,.35);}
+.cta{font-family:var(--display);font-weight:800;font-size:1.2rem;letter-spacing:.08em;color:var(--void);background:var(--sun);border:0;border-radius:999px;padding:18px 46px;cursor:pointer;margin-top:6px;box-shadow:0 0 32px rgba(242,165,65,.35);}
 .cta:active{transform:scale(.97);}
-.big{font-family:var(--display);font-weight:800;font-size:4.5rem;line-height:1;font-variant-numeric:tabular-nums;color:var(--ion);}
-.stats{display:flex;flex-wrap:wrap;justify-content:center;gap:12px 20px;font-size:.78rem;color:var(--mist);letter-spacing:.1em;text-transform:uppercase;}
-.stats b{display:block;font-size:1.3rem;color:var(--ion);font-family:var(--display);letter-spacing:0;}
-.new{color:var(--shard);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;}
+.big{font-family:var(--display);font-weight:800;font-size:5.2rem;line-height:1;font-variant-numeric:tabular-nums;color:var(--ion);}
+.stats{display:flex;flex-wrap:wrap;justify-content:center;gap:12px 22px;font-size:.85rem;color:var(--mist);letter-spacing:.1em;text-transform:uppercase;}
+.stats b{display:block;font-size:1.6rem;color:var(--ion);font-family:var(--display);letter-spacing:0;}
+.new{color:var(--shard);font-size:.95rem;letter-spacing:.2em;text-transform:uppercase;}
 .chrono{display:flex;flex-direction:column;align-items:center;gap:4px;padding-top:6px;}
-.chrono b{font-family:var(--mono);font-weight:700;font-size:1.15rem;font-variant-numeric:tabular-nums;letter-spacing:.02em;}
-.banner{position:fixed;left:0;right:0;top:24%;text-align:center;pointer-events:none;font-family:var(--display);font-weight:800;font-size:clamp(1.2rem,6vw,1.8rem);letter-spacing:.06em;text-transform:uppercase;padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));animation:bannerIn 2.4s ease forwards;}
-.banner small{display:block;font-family:var(--mono);font-weight:500;font-size:.75rem;letter-spacing:.16em;color:var(--mist);margin-top:6px;}
+.chrono b{font-family:var(--mono);font-weight:700;font-size:1.4rem;font-variant-numeric:tabular-nums;letter-spacing:.02em;}
+.banner{position:fixed;left:0;right:0;top:24%;text-align:center;pointer-events:none;font-family:var(--display);font-weight:800;font-size:clamp(1.5rem,7.5vw,2.1rem);letter-spacing:.06em;text-transform:uppercase;padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));animation:bannerIn 2.4s ease forwards;}
+.banner small{display:block;font-family:var(--mono);font-weight:500;font-size:.9rem;letter-spacing:.16em;color:var(--mist);margin-top:6px;}
 @keyframes bannerIn{0%{opacity:0;transform:scale(.9)}12%{opacity:1;transform:scale(1)}80%{opacity:1}100%{opacity:0}}
 @media (prefers-reduced-motion: reduce){.banner{animation:bannerFade 2.4s linear forwards}@keyframes bannerFade{0%,80%{opacity:1}100%{opacity:0}}}
-.hint{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);text-align:center;font-size:.8rem;letter-spacing:.18em;text-transform:uppercase;color:var(--mist);pointer-events:none;transition:opacity .6s;}
+.hint{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);text-align:center;font-size:.9rem;letter-spacing:.16em;text-transform:uppercase;color:var(--mist);pointer-events:none;transition:opacity .6s;}
 @media (prefers-reduced-motion: reduce){.cta{box-shadow:none;}}
 </style>
 
@@ -89,7 +91,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2rem;margin:0;text-wrap:
 <div id="stage"><canvas id="c" aria-label="Zone de jeu Orbite"></canvas></div>
 
 <div class="hud" id="hud" hidden>
-  <div class="score"><b id="sc">0</b><span id="hs">Record 0</span></div>
+  <div class="score"><b id="sc">0</b><span id="hs">Record 0</span><span id="gm" class="gems">◆ 0</span></div>
   <div class="chrono"><b id="clock">0:00.0</b><span class="testtag" id="testTag" hidden></span></div>
   <div class="btns">
     <button class="icon" id="mute" aria-label="Couper le son"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/><path id="wave" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
@@ -103,16 +105,15 @@ h2{font-family:var(--display);font-weight:800;font-size:2rem;margin:0;text-wrap:
   <div class="card">
     <div class="eyebrow">Arcade · une touche</div>
     <h1 id="title">ORBITE</h1>
-    <p>Votre sonde tourne autour d'une planète. Un toucher la fait sauter d'une orbite à l'autre.</p>
+    <p>Touchez l'écran pour changer d'orbite.</p>
     <div class="rules">
       <span class="dot" style="background:var(--rock)"></span><span>Évitez les astéroïdes</span>
-      <span class="dot" style="background:var(--shard)"></span><span>Attrapez les éclats : +3 points</span>
-      <span class="dot" style="background:transparent;border:2px solid var(--shard)"></span><span>Éclats rares, serrés contre un astéroïde : +5 points</span>
-      <span class="dot" style="background:var(--rock);opacity:.5"></span><span>Dès 30 tours, ça se corse : astéroïdes plus nombreux et plus proches, puis rapides (40 tours), puis inversions du sens de rotation (50 tours).</span>
-      <span class="dot" style="background:var(--ion)"></span><span>Chaque tour complet : +1 point</span>
+      <span class="dot" style="background:var(--ion)"></span><span>Votre score : le nombre de tours</span>
+      <span class="dot" style="background:transparent;border:2px solid var(--shard)"></span><span>Ramassez les éclats ◆ (les rares en valent 3)</span>
+      <span class="dot" style="background:var(--rock);opacity:.5"></span><span>30 tours : plus d'astéroïdes<br>40 tours : astéroïdes rapides<br>50 tours : inversions</span>
     </div>
     <button class="cta" id="play">JOUER</button>
-    <div class="stats"><div>Record<b id="menuBest">0</b></div><div>Parties<b id="menuGames">0</b></div></div>
+    <div class="stats"><div>Record<b id="menuBest">0</b></div><div>Moyenne<b id="menuAvg">0</b></div><div>Parties<b id="menuGames">0</b></div><div>Éclats<b id="menuGems">0</b></div></div>
   </div>
 </div>
 
@@ -152,8 +153,9 @@ h2{font-family:var(--display);font-weight:800;font-size:2rem;margin:0;text-wrap:
   <div class="card">
     <div class="eyebrow" id="overTitle">Collision</div>
     <div class="big" id="finalScore">0</div>
+    <div class="eyebrow" style="color:var(--mist)">tours</div>
     <div class="new" id="newBest" hidden>Nouveau record</div>
-    <div class="stats"><div>Record<b id="overBest">0</b></div><div>Éclats<b id="overShards">0</b></div><div>Tours<b id="overLaps">0</b></div><div>Temps<b id="overTime">0:00.0</b></div></div>
+    <div class="stats"><div>Record<b id="overBest">0</b></div><div>Temps<b id="overTime">0:00.0</b></div><div>Éclats<b id="overShards">0</b></div></div>
     <button class="cta" id="again">REJOUER</button>
     <button class="link" id="homeFromOver">Retour à l'accueil</button>
   </div>
@@ -172,7 +174,17 @@ const store = {
   get(k, d){ try { const v = localStorage.getItem('orbite.'+k); return v == null ? d : JSON.parse(v); } catch(e){ return d; } },
   set(k, v){ try { localStorage.setItem('orbite.'+k, JSON.stringify(v)); } catch(e){} }
 };
-let best = store.get('best', 0), games = store.get('games', 0), muted = store.get('muted', false);
+// Stats v2: the record is the best number of laps. (v1 stored points, which are not comparable.)
+let best = store.get('v2.best', 0), games = store.get('v2.games', 0), lapsTotal = store.get('v2.laps', 0),
+    gemsTotal = store.get('v2.gems', 0), muted = store.get('muted', false);
+// Count a finished run in the stats (never for test runs). Returns true on a new record.
+function recordRun(){
+  if (testRun) return false;
+  games++; lapsTotal += S.laps; gemsTotal += S.shards;
+  const isBest = S.laps > best; if (isBest) best = S.laps;
+  store.set('v2.games', games); store.set('v2.laps', lapsTotal); store.set('v2.gems', gemsTotal); store.set('v2.best', best);
+  return isBest;
+}
 
 // ---------- audio ----------
 let ac = null;
@@ -207,9 +219,12 @@ function resize(){
   const r = cv.getBoundingClientRect(); W = r.width; H = r.height;
   cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr);
   ctx.setTransform(dpr,0,0,dpr,0,0);
-  const m = Math.min(W, H*0.78);
-  unit = m/400; cx = W/2; cy = H*0.53;
-  R0 = m*0.12; lanes = [m*0.25, m*0.385];
+  // Outer orbit as wide as the screen allows (keeping room for a rock at the edge and the HUD above).
+  const small = W < 700;                       // phones and small tablets
+  const boost = small ? 1.35 : 1;              // objects drawn bigger on phones
+  const outer = Math.max(80, Math.min(W/2 - 30*boost, H*0.38));
+  unit = outer/154 * boost; cx = W/2; cy = H*0.53;
+  R0 = outer*0.31; lanes = [outer*0.6, outer];
 }
 addEventListener('resize', resize); resize();
 
@@ -288,11 +303,13 @@ function spawnRocks(lane){
   }
   return true;
 }
+// Speed of the probe (rad/s) after t seconds: top speed after ~45 s (~40 s in a hard run).
+function omegaAt(t){ return S.hard ? 1.75 + Math.min(1.85, t*0.046) : 1.5 + Math.min(1.75, t*0.039); }
 function makeRock(lane, a, w = 0, meet = a){
   return {lane, a, w, meet, rot:Math.random()*TAU, vr:(Math.random()-.5)*2, shape:rockShape(), born:S.t, passed:false, prev:ahead(a), size:(13+Math.random()*4)*unit};
 }
 function addGem(lane, a, hard, clear){
-  S.gems.push({lane, a, hard, clear, val: hard ? 5 : 3, born:S.t, prev:ahead(a), spin:Math.random()*TAU});
+  S.gems.push({lane, a, hard, clear, val: hard ? 3 : 1, born:S.t, prev:ahead(a), spin:Math.random()*TAU});
 }
 function spawnGem(){
   const hardChance = S.t < 6 ? 0 : Math.min(.6, .2 + S.t*.006);
@@ -349,8 +366,9 @@ function popup(text, x, y, color){ S.popups.push({text, x, y, life:1, color}); }
 const ui = {
   show(id){ for (const k of ['menu','paused','over','test']) $(k).hidden = k !== id; },
   hud(on){ $('hud').hidden = !on; },
-  score(){ $('sc').textContent = S.score; $('hs').textContent = 'Record ' + Math.max(best, testRun ? 0 : S.score); },
-  stats(){ $('menuBest').textContent = best; $('menuGames').textContent = games; },
+  score(){ $('sc').textContent = S.laps; $('hs').textContent = 'Record ' + Math.max(best, testRun ? 0 : S.laps); $('gm').textContent = '◆ ' + S.shards; },
+  stats(){ $('menuBest').textContent = best; $('menuGames').textContent = games; $('menuGems').textContent = gemsTotal;
+    $('menuAvg').textContent = games ? Math.round(lapsTotal/games) : 0; },
   muteIcon(){ $('wave').style.display = muted ? 'none' : ''; $('mute').setAttribute('aria-label', muted ? 'Activer le son' : 'Couper le son'); }
 };
 ui.stats(); ui.muteIcon();
@@ -391,9 +409,9 @@ let testCfg = store.get('test', {lap: 29, kind: 'random'});
 // Put the run in the state it would normally have on reaching lap n: same clock, speed, phases, direction.
 function jumpToLap(n){
   let t = 0, ang = 0; const target = n*TAU;
-  const w = tt => S.hard ? 1.75 + Math.min(1.85, tt*0.034) : 1.5 + Math.min(1.75, tt*0.028);
+  const w = tt => omegaAt(tt);
   while (ang < target){ ang += w(t)*0.01; t += 0.01; }
-  S.t = t; S.omega = w(t); S.laps = n; S.score = n; S.storm = n >= 30;
+  S.t = t; S.omega = w(t); S.laps = n; S.storm = n >= 30;
   const flips = n >= 50 ? Math.floor((n - 50)/8) + 1 : 0;
   S.dir = flips % 2 ? -1 : 1;
   S.spawnT = 1; S.gemT = 1.5; ui.score();
@@ -421,8 +439,7 @@ $('testClose').addEventListener('click', () => ui.show('menu'));
 // A run abandoned from the pause screen still counts (record + number of games), except in test mode.
 function goHome(){
   if ((mode === 'paused' || mode === 'play') && !testRun){
-    games++; store.set('games', games);
-    if (S.score > best){ best = S.score; store.set('best', best); }
+    recordRun();
   }
   testRun = null; mode = 'menu'; S = fresh();
   ui.hud(false); $('hint').hidden = true; $('banner').hidden = true;
@@ -435,15 +452,11 @@ function gameOver(){
   mode = 'dying'; S.dead = true; S.deadT = 0; S.shake = 1;
   const p = pos(); burst(p.x, p.y, COL.ion, 40, 260); burst(p.x, p.y, COL.rock, 24, 180);
   sfx.crash(); buzz([60, 40, 120]);
-  let isBest = false;
-  if (!testRun){                                // test runs never touch the record or the counter
-    games++; store.set('games', games);
-    isBest = S.score > best; if (isBest){ best = S.score; store.set('best', best); }
-  }
+  const isBest = recordRun();                   // test runs never touch the stats
   setTimeout(() => {
     mode = 'over'; ui.hud(false);
-    $('finalScore').textContent = S.score; $('overBest').textContent = best;
-    $('overShards').textContent = S.shards; $('overLaps').textContent = S.laps;
+    $('finalScore').textContent = S.laps; $('overBest').textContent = best;
+    $('overShards').textContent = S.shards;
     $('overTime').textContent = fmtTime(S.t);
     $('overTitle').textContent = testRun ? 'Fin du test' : 'Collision';
     $('newBest').hidden = !isBest; ui.show('over'); ui.stats();
@@ -478,10 +491,11 @@ function pos(a = S.a, r = S.r){ return {x: cx + Math.cos(a)*r, y: cy + Math.sin(
 function update(dt){
   if (mode === 'play'){
     S.t += dt; S.campT += dt;
-    S.omega = S.hard ? 1.75 + Math.min(1.85, S.t*0.034) : 1.5 + Math.min(1.75, S.t*0.028);
+    S.omega = omegaAt(S.t);
     const ct = fmtTime(S.t); if (ct !== S.clockShown){ S.clockShown = ct; $('clock').textContent = ct; }
     const da = S.omega*dt; S.a += S.dir*da; S.lapAcc += da;
-    if (S.lapAcc >= TAU){ S.lapAcc -= TAU; S.laps++; S.score++; S.pulse = 1; sfx.lap(); ui.score();
+    if (S.lapAcc >= TAU){ S.lapAcc -= TAU; S.laps++; S.pulse = 1; sfx.lap(); ui.score();
+      if (!testRun && best > 0 && S.laps === best + 1) banner('Nouveau record', best + 1 + ' tours', COL.shard);
       if (S.laps % 7 === 0 || (S.hard && S.laps === 15)) shootingStars(); // lap 15: only in a hard run
       if (S.laps === 40) banner('Astéroïdes rapides', 'Certains foncent droit sur vous', COL.rock);
       if (S.laps >= 50 && (S.laps - 50) % 8 === 0){ S.revWarn = 1.6; banner('Inversion', 'Le sens de rotation va changer', COL.ion); buzz([20,40,20]); }
@@ -496,7 +510,7 @@ function update(dt){
     }
     S.spawnT -= dt;
     if (S.spawnT <= 0){ const lane = pickLane(); // if a spot is refused (it would block both orbits), try other spots on the same orbit
-      const ok = spawnRocks(lane) || spawnRocks(lane) || spawnRocks(lane) || spawnRocks(lane); S.spawnT = ok ? Math.max(.42, 1.25 - S.t*0.017) * (S.hard ? .82 : 1) * (S.storm ? .65 : 1) * (0.75 + Math.random()*.5) : .1; }
+      const ok = spawnRocks(lane) || spawnRocks(lane) || spawnRocks(lane) || spawnRocks(lane); S.spawnT = ok ? Math.max(.38, 1.15 - S.t*0.017) * (S.hard ? .82 : 1) * (S.storm ? .65 : 1) * (0.75 + Math.random()*.5) : .1; }
     S.gemT -= dt;
     if (S.gemT <= 0){ spawnGem(); S.gemT = 1.6 + Math.random()*1.8; }
 
@@ -520,7 +534,7 @@ function update(dt){
     for (const g of S.gems){
       const gp = pos(g.a, lanes[g.lane]);
       if (!g.got && Math.hypot(gp.x-p.x, gp.y-p.y) < 18*unit){
-        g.got = true; S.shards++; S.score += g.val; ui.score(); sfx.shard(); buzz(g.hard ? [12,30,12] : 12);
+        g.got = true; S.shards += g.val; ui.score(); sfx.shard(); buzz(g.hard ? [12,30,12] : 12);
         burst(gp.x, gp.y, COL.shard, g.hard ? 28 : 16, g.hard ? 200 : 140); popup('+' + g.val, gp.x, gp.y, COL.shard);
       }
       const ah = ahead(g.a); if (ah > g.prev + Math.PI) g.passed = true; g.prev = ah;
