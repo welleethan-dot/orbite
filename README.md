@@ -4,6 +4,8 @@ Jeu d'arcade mobile à une touche : votre sonde tourne autour d'une planète, un
 
 ## Jouer
 
+**https://welleethan-dot.github.io/orbite/**
+
 Ouvrez le jeu dans Safari sur iPhone (ou Chrome sur Android), puis **Partager → Sur l'écran d'accueil** pour l'installer comme une application. Il fonctionne ensuite hors connexion.
 
 ## Fichiers
