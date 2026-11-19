@@ -84,6 +84,8 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 .skin .rar{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--rar);}
 .skin small{font-size:.72rem;color:var(--mist);line-height:1.35;min-height:1em;text-align:center;}
 .pill{font-family:var(--mono);font-weight:700;font-size:.9rem;color:var(--ion);background:rgba(191,243,255,.08);border:1px solid rgba(191,243,255,.3);border-radius:999px;padding:8px 14px;cursor:pointer;margin-top:4px;}
+.skin .bar{display:block;height:5px;border-radius:3px;background:rgba(191,243,255,.15);margin-top:5px;overflow:hidden;}
+.skin .bar i{display:block;height:100%;background:var(--rar);min-width:2px;}
 .pill.buy{background:var(--shard);color:var(--void);border-color:var(--shard);}
 .pill:disabled{opacity:.55;cursor:default;}
 .pill:focus-visible{outline:2px solid var(--shard);outline-offset:2px;}
@@ -175,7 +177,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
     <div class="chips" id="kindChips" role="group" aria-label="Type de partie">
       <button class="chip" data-kind="random">Tirage normal</button><button class="chip" data-kind="normal">Normale</button><button class="chip" data-kind="hard">Difficile</button>
     </div>
-    <div class="chips"><button class="chip" id="addGems">+1 000 ◆</button><button class="chip" id="resetSkins">Remettre la boutique à zéro</button></div>
+    <div class="chips"><button class="chip" id="addGems">+1 000 ◆</button><button class="chip" id="unlockMezen">Débloquer Mezen</button><button class="chip" id="resetSkins">Remettre la boutique à zéro</button></div>
     <button class="cta" id="testGo">LANCER LE TEST</button>
     <button class="link" id="testClose">Fermer</button>
     <p class="note">Les parties de test ne comptent ni dans le record ni dans le nombre de parties.</p>
@@ -437,33 +439,73 @@ function reverse(){
 function pause(){ if (mode !== 'play') return; mode = 'paused'; ui.show('paused'); }
 function resume(){ if (mode !== 'paused') return; mode = 'play'; ui.show(null); last = performance.now(); }
 // ---------- skins ----------
-// Prices were set as "N runs of 50 laps" when a 50-lap run gave ~10 crystals (100 = 10 runs ... 10 000 = 1 000 runs).
+// Prices = "N runs of 50 laps" (10, 20, 50, 100, 1 000 runs) at ~14 crystals per 50-lap run.
+// Mezen is a bonus skin: no price, unlocked at 92 390 laps in total.
 const SKINS = [
   {id:'sonde',     name:'Sonde',     rarity:'Défaut',     price:0,     core:'#FFFFFF', glow:'#BFF3FF', trail:[191,243,255], width:5},
-  {id:'comete',    name:'Comète',    rarity:'Commun',     price:100,   core:'#FFE1C2', glow:'#FF9F43', trail:[255,159,67],  width:5},
-  {id:'glacier',   name:'Glacier',   rarity:'Commun',     price:200,   core:'#F0FCFF', glow:'#6FD3FF', trail:[111,211,255], width:6, ring:true},
-  {id:'nebuleuse', name:'Nébuleuse', rarity:'Rare',       price:500,   core:'#F6DDFF', glow:'#C86BFF', trail:'nebula',      width:7},
-  {id:'aurore',    name:'Aurore',    rarity:'Épique',     price:1000,  core:'#E4FFF4', glow:'#4DFFB5', trail:'aurora',      width:7, sparks:2},
-  {id:'trounoir',  name:'Trou noir', rarity:'Légendaire', price:10000, core:'#05060F', glow:'#FFFFFF', trail:'rainbow',     width:8, disk:true, sparks:3},
+  {id:'comete',    name:'Comète',    rarity:'Commun',     price:140,   core:'#FFE1C2', glow:'#FF9F43', trail:[255,159,67],  width:5},
+  {id:'glacier',   name:'Glacier',   rarity:'Commun',     price:280,   core:'#F0FCFF', glow:'#6FD3FF', trail:[111,211,255], width:6, ring:true},
+  {id:'nebuleuse', name:'Nébuleuse', rarity:'Rare',       price:700,   core:'#F6DDFF', glow:'#C86BFF', trail:'nebula',      width:7},
+  {id:'aurore',    name:'Aurore',    rarity:'Épique',     price:1400,  core:'#E4FFF4', glow:'#4DFFB5', trail:'aurora',      width:7, sparks:2},
+  {id:'trounoir',  name:'Trou noir', rarity:'Légendaire', price:14000, core:'#05060F', glow:'#FFFFFF', trail:'rainbow',     width:8, disk:true, sparks:3},
+  {id:'mezen',     name:'Mezen',     rarity:'Bonus',      price:0, unlockLaps:92390, core:'#FFFFFF', glow:'#FFFFFF', trail:'tie', width:6, sprite:true},
 ];
-const RARITY_COL = {'Défaut':'#9AA3D9', 'Commun':'#C3CAEE', 'Rare':'#5AA8FF', 'Épique':'#B46BFF', 'Légendaire':'#FFB13B'};
+const RARITY_COL = {'Bonus':'#FF7AC8', 'Défaut':'#9AA3D9', 'Commun':'#C3CAEE', 'Rare':'#5AA8FF', 'Épique':'#B46BFF', 'Légendaire':'#FFB13B'};
 const skin = () => SKINS.find(k => k.id === equipped) || SKINS[0];
 function hexA(hex, a){ const n = parseInt(hex.slice(1), 16); return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`; }
-function trailColor(sk, k, now){
+function trailColor(sk, k, now, i = 0){
   const a = k*.6;
+  if (sk.trail === 'tie') return Math.floor(i/2) % 2 ? `rgba(136,144,176,${a})` : `rgba(242,242,248,${a})`;   // striped like the tie
   if (Array.isArray(sk.trail)) return `rgba(${sk.trail[0]},${sk.trail[1]},${sk.trail[2]},${a})`;
   if (sk.trail === 'nebula'){ const r = 255 - 115*k, g = 110 - 20*k; return `rgba(${r|0},${g|0},255,${a})`; }
   if (sk.trail === 'aurora') return `hsla(${150 + 50*Math.sin(now/500 + k*4)},100%,65%,${a})`;
   return `hsla(${(now/6 + k*320) % 360},100%,65%,${a})`;                       // rainbow
 }
+// Mezen: pixel portrait (16 x 18), short dark hair, full beard, black suit, white shirt, striped tie.
+const MEZEN = [
+  '....HHHHHHHH....',
+  '...HHHHHHHHHH...',
+  '..HHHHhHHHHHHH..',
+  '..HHSSSSSSSSHH..',
+  '..HSSSSSSSSSSH..',
+  '..SBBBSSSSBBBS..',
+  '.NSSWESSSSEWSSN.',
+  '.NSSSSSssSSSSSN.',
+  '..MSSSSssSSSSM..',
+  '..MSMMMMMMMMSM..',
+  '..MMMSLLLLSMMM..',
+  '..MMMMMMMMMMMM..',
+  '...MMMMMMMMMM...',
+  '....MMMMMMMM....',
+  '..JJJTTTTTTJJJ..',
+  '.JJJJTTKKTTJJJJ.',
+  '.JJjJJTkKTJJjJJ.',
+  '.JJJJJTKkTJJJJJ.',
+];
+const MEZEN_COL = {H:'#231A16', h:'#3D2E26', S:'#D9A582', s:'#B98060', N:'#C99272', B:'#1E1612', E:'#2A1D18', W:'#E9DDD2',
+  M:'#1D1512', L:'#8E5A50', J:'#16171E', j:'#30323D', T:'#EEEEF2', K:'#111114', k:'#E8E8EC'};
+function drawSprite(c, x, y, u){
+  const ps = 1.6*u, w = 16*ps, h = 18*ps, x0 = Math.round(x - w/2), y0 = Math.round(y - h/2);
+  const g = c.createRadialGradient(x, y, 0, x, y, 19*u);                    // soft halo so the black suit reads on space
+  g.addColorStop(0, 'rgba(191,243,255,.35)'); g.addColorStop(1, 'rgba(191,243,255,0)');
+  c.fillStyle = g; c.beginPath(); c.arc(x, y, 19*u, 0, TAU); c.fill();
+  c.fillStyle = 'rgba(191,243,255,.75)';                                     // 1-pixel light outline
+  for (let r = 0; r < 18; r++) for (let q = 0; q < 16; q++)
+    if (MEZEN[r][q] !== '.') c.fillRect(x0 + (q-1)*ps, y0 + (r-1)*ps, ps*3, ps*3);
+  for (let r = 0; r < 18; r++) for (let q = 0; q < 16; q++){
+    const ch = MEZEN[r][q]; if (ch === '.') continue;
+    c.fillStyle = MEZEN_COL[ch]; c.fillRect(x0 + q*ps, y0 + r*ps, Math.ceil(ps), Math.ceil(ps));
+  }
+}
 function drawProbe(c, x, y, trail, sk, now, u){
   c.lineCap = 'round';
   for (let i = 1; i < trail.length; i++){
     const k = i/trail.length;
-    c.strokeStyle = trailColor(sk, k, now); c.lineWidth = k*sk.width*u;
+    c.strokeStyle = trailColor(sk, k, now, i); c.lineWidth = k*sk.width*u;
     c.beginPath(); c.moveTo(trail[i-1].x, trail[i-1].y); c.lineTo(trail[i].x, trail[i].y); c.stroke();
   }
   c.lineCap = 'butt';
+  if (sk.sprite){ drawSprite(c, x, y, u); return; }
   if (sk.disk){                                   // accretion disk: rotating rainbow ring
     c.lineWidth = 3.2*u;
     for (let j = 0; j < 12; j++){
@@ -493,13 +535,19 @@ function drawProbe(c, x, y, trail, sk, now, u){
 let pendingBuy = null, previewRaf = 0;
 const fmtN = n => n.toLocaleString('fr-FR');
 function renderShop(){
+  unlockBonus();
   $('wallet').textContent = fmtN(wallet);
   const box = $('skins'); box.innerHTML = '';
   for (const sk of SKINS){
     const has = owned.includes(sk.id), on = equipped === sk.id;
     const t = document.createElement('div'); t.className = 'skin' + (on ? ' on' : ''); t.style.setProperty('--rar', RARITY_COL[sk.rarity]);
     let action, sub = '';
-    if (on) action = '<button class="pill" disabled>Équipé</button>';
+    if (sk.unlockLaps && !has){
+      const done = Math.min(lapsTotal, sk.unlockLaps);
+      action = '<button class="pill" disabled>Verrouillé</button>';
+      sub = `${fmtN(done)} / ${fmtN(sk.unlockLaps)} tours cumulés<span class="bar"><i style="width:${(done/sk.unlockLaps*100).toFixed(2)}%"></i></span>`;
+    }
+    else if (on) action = '<button class="pill" disabled>Équipé</button>';
     else if (has) action = `<button class="pill" data-equip="${sk.id}">Équiper</button>`;
     else if (wallet >= sk.price) action = `<button class="pill buy" data-buy="${sk.id}">◆ ${fmtN(sk.price)}</button>`;
     else { action = `<button class="pill" disabled>◆ ${fmtN(sk.price)}</button>`; sub = `Il manque ◆ ${fmtN(sk.price - wallet)}`; }
@@ -520,9 +568,12 @@ function previewLoop(now){
     c.strokeStyle = 'rgba(154,163,217,.18)'; c.setLineDash([3,5]); c.beginPath(); c.arc(x0, y0, R, 0, TAU); c.stroke(); c.setLineDash([]);
     const a = now/700;
     for (let i = 16; i >= 0; i--){ const b = a - i*.06; tr.push({x: x0 + Math.cos(b)*R, y: y0 + Math.sin(b)*R}); }
-    drawProbe(c, tr[tr.length-1].x, tr[tr.length-1].y, tr, sk, now, u);
+    drawProbe(c, tr[tr.length-1].x, tr[tr.length-1].y, tr, sk, now, sk.sprite ? u*1.4 : u);
   }
   previewRaf = $('shop').hidden ? 0 : requestAnimationFrame(previewLoop);
+}
+function unlockBonus(){
+  for (const sk of SKINS) if (sk.unlockLaps && lapsTotal >= sk.unlockLaps && !owned.includes(sk.id)){ owned.push(sk.id); store.set('v2.owned', owned); }
 }
 function openShop(){ pendingBuy = null; renderShop(); ui.show('shop'); if (!previewRaf) previewRaf = requestAnimationFrame(previewLoop); }
 $('shopBtn').addEventListener('click', openShop);
@@ -577,6 +628,10 @@ $('testGo').addEventListener('click', () => { setLap($('lapInput').value); testR
 $('testClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
 // test helpers for the shop (hidden mode only)
 $('addGems').addEventListener('click', () => { wallet += 1000; store.set('v2.wallet', wallet); $('addGems').textContent = '+1 000 ◆ (solde ' + fmtN(wallet) + ')'; });
+$('unlockMezen').addEventListener('click', () => {
+  if (!owned.includes('mezen')){ owned.push('mezen'); store.set('v2.owned', owned); }
+  $('unlockMezen').textContent = 'Mezen débloqué';
+});
 $('resetSkins').addEventListener('click', () => {
   wallet = 0; owned = ['sonde']; equipped = 'sonde';
   store.set('v2.wallet', 0); store.set('v2.owned', owned); store.set('v2.skin', equipped);
