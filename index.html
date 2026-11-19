@@ -72,6 +72,23 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 .dot{width:12px;height:12px;border-radius:50%;margin-top:3px;}
 .cta{font-family:var(--display);font-weight:800;font-size:1.2rem;letter-spacing:.08em;color:var(--void);background:var(--sun);border:0;border-radius:999px;padding:18px 46px;cursor:pointer;margin-top:6px;box-shadow:0 0 32px rgba(242,165,65,.35);}
 .cta:active{transform:scale(.97);}
+.cta.ghost{background:transparent;color:var(--sun);border:2px solid var(--sun);box-shadow:none;font-size:1rem;padding:12px 34px;margin-top:0;}
+.shopcard{max-width:440px;}
+.wallet{font-family:var(--display);font-weight:800;font-size:1.4rem;color:var(--shard);}
+.wallet b{font-variant-numeric:tabular-nums;}
+.skins{display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:10px;width:100%;}
+.skin{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px 12px;border-radius:16px;border:1px solid color-mix(in srgb, var(--rar) 45%, transparent);background:rgba(21,26,68,.55);min-width:0;}
+.skin.on{border-color:var(--rar);box-shadow:0 0 0 1px var(--rar) inset;}
+.skin canvas{width:100%;height:84px;display:block;}
+.skin b{font-family:var(--display);font-weight:800;font-size:1rem;}
+.skin .rar{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--rar);}
+.skin small{font-size:.72rem;color:var(--mist);line-height:1.35;min-height:1em;text-align:center;}
+.pill{font-family:var(--mono);font-weight:700;font-size:.9rem;color:var(--ion);background:rgba(191,243,255,.08);border:1px solid rgba(191,243,255,.3);border-radius:999px;padding:8px 14px;cursor:pointer;margin-top:4px;}
+.pill.buy{background:var(--shard);color:var(--void);border-color:var(--shard);}
+.pill:disabled{opacity:.55;cursor:default;}
+.pill:focus-visible{outline:2px solid var(--shard);outline-offset:2px;}
+.confirm{width:100%;border:1px solid var(--shard);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px;align-items:center;background:rgba(255,214,107,.06);}
+.confirm .row{display:flex;gap:10px;}
 .big{font-family:var(--display);font-weight:800;font-size:5.2rem;line-height:1;font-variant-numeric:tabular-nums;color:var(--ion);}
 .stats{display:flex;flex-wrap:wrap;justify-content:center;gap:12px 22px;font-size:.85rem;color:var(--mist);letter-spacing:.1em;text-transform:uppercase;}
 .stats b{display:block;font-size:1.6rem;color:var(--ion);font-family:var(--display);letter-spacing:0;}
@@ -109,11 +126,27 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
     <div class="rules">
       <span class="dot" style="background:var(--rock)"></span><span>Évitez les astéroïdes</span>
       <span class="dot" style="background:var(--ion)"></span><span>Votre score : le nombre de tours</span>
-      <span class="dot" style="background:transparent;border:2px solid var(--shard)"></span><span>Ramassez les éclats ◆ (les rares en valent 3)</span>
+      <span class="dot" style="background:transparent;border:2px solid var(--shard)"></span><span>Un éclat ◆ tous les 5 tours (les rares valent 3), à dépenser en skins</span>
       <span class="dot" style="background:var(--rock);opacity:.5"></span><span>30 tours : plus d'astéroïdes<br>40 tours : astéroïdes rapides<br>50 tours : inversions</span>
     </div>
     <button class="cta" id="play">JOUER</button>
+    <button class="cta ghost" id="shopBtn">SKINS</button>
     <div class="stats"><div>Record<b id="menuBest">0</b></div><div>Moyenne<b id="menuAvg">0</b></div><div>Parties<b id="menuGames">0</b></div><div>Éclats<b id="menuGems">0</b></div></div>
+  </div>
+</div>
+
+<div class="overlay" id="shop" hidden>
+  <div class="card shopcard">
+    <div class="eyebrow">Boutique</div>
+    <h2>Skins de la sonde</h2>
+    <div class="wallet">◆ <b id="wallet">0</b> éclats</div>
+    <div class="confirm" id="confirm" hidden>
+      <p id="confirmText"></p>
+      <div class="row"><button class="pill buy" id="confirmYes">Acheter</button><button class="pill" id="confirmNo">Annuler</button></div>
+    </div>
+    <div class="skins" id="skins"></div>
+    <p class="note">Une partie de 50 tours rapporte environ 10 éclats.</p>
+    <button class="link" id="shopClose">Retour à l'accueil</button>
   </div>
 </div>
 
@@ -143,6 +176,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
     <div class="chips" id="kindChips" role="group" aria-label="Type de partie">
       <button class="chip" data-kind="random">Tirage normal</button><button class="chip" data-kind="normal">Normale</button><button class="chip" data-kind="hard">Difficile</button>
     </div>
+    <div class="chips"><button class="chip" id="addGems">+1 000 ◆</button><button class="chip" id="resetSkins">Remettre la boutique à zéro</button></div>
     <button class="cta" id="testGo">LANCER LE TEST</button>
     <button class="link" id="testClose">Fermer</button>
     <p class="note">Les parties de test ne comptent ni dans le record ni dans le nombre de parties.</p>
@@ -177,10 +211,12 @@ const store = {
 // Stats v2: the record is the best number of laps. (v1 stored points, which are not comparable.)
 let best = store.get('v2.best', 0), games = store.get('v2.games', 0), lapsTotal = store.get('v2.laps', 0),
     gemsTotal = store.get('v2.gems', 0), muted = store.get('muted', false);
+let wallet = store.get('v2.wallet', gemsTotal);            // spendable crystals (gemsTotal = lifetime)
+let owned = store.get('v2.owned', ['sonde']), equipped = store.get('v2.skin', 'sonde');
 // Count a finished run in the stats (never for test runs). Returns true on a new record.
 function recordRun(){
   if (testRun) return false;
-  games++; lapsTotal += S.laps; gemsTotal += S.shards;
+  games++; lapsTotal += S.laps; gemsTotal += S.shards; wallet += S.shards; store.set('v2.wallet', wallet);
   const isBest = S.laps > best; if (isBest) best = S.laps;
   store.set('v2.games', games); store.set('v2.laps', lapsTotal); store.set('v2.gems', gemsTotal); store.set('v2.best', best);
   return isBest;
@@ -224,7 +260,7 @@ function resize(){
   const boost = small ? 1.35 : 1;              // objects drawn bigger on phones
   const outer = Math.max(80, Math.min(W/2 - 30*boost, H*0.38));
   unit = outer/154 * boost; cx = W/2; cy = H*0.53;
-  R0 = outer*0.31; lanes = [outer*0.6, outer];
+  R0 = outer*0.31; lanes = [outer/1.55, outer];   // probe ~55 % faster on the outer orbit
 }
 addEventListener('resize', resize); resize();
 
@@ -239,7 +275,7 @@ let mode = 'menu';
 let S;
 function fresh(){
   return { t:0, a:-Math.PI/2, lane:1, r:lanes[1], omega:1.5, score:0, shards:0, laps:0, lapAcc:0, campT:0, dir:1, revWarn:0, meteors:[], hard:false, storm:false, omegaMax:3.25, clockShown:'',
-    rocks:[], gems:[], parts:[], trail:[], spawnT:1.2, gemT:2, shake:0, pulse:0, popups:[], dead:false, deadT:0 };
+    rocks:[], gems:[], parts:[], trail:[], spawnT:1.2, gemDue:0, gemTry:0, gemWait:0, gemCount:0, shake:0, pulse:0, popups:[], dead:false, deadT:0 };
 }
 S = fresh();
 
@@ -312,8 +348,6 @@ function addGem(lane, a, hard, clear){
   S.gems.push({lane, a, hard, clear, val: hard ? 3 : 1, born:S.t, prev:ahead(a), spin:Math.random()*TAU});
 }
 function spawnGem(){
-  const hardChance = S.t < 6 ? 0 : Math.min(.6, .2 + S.t*.006);
-  if (Math.random() < hardChance && spawnHardGem()) return true;
   // easy: a wide free arc on its own lane
   for (let tries = 0; tries < 6; tries++){
     const lane = Math.random() < .5 ? 0 : 1;
@@ -364,10 +398,10 @@ function popup(text, x, y, color){ S.popups.push({text, x, y, life:1, color}); }
 
 // ---------- UI ----------
 const ui = {
-  show(id){ for (const k of ['menu','paused','over','test']) $(k).hidden = k !== id; },
+  show(id){ for (const k of ['menu','paused','over','test','shop']) $(k).hidden = k !== id; },
   hud(on){ $('hud').hidden = !on; },
   score(){ $('sc').textContent = S.laps; $('hs').textContent = 'Record ' + Math.max(best, testRun ? 0 : S.laps); $('gm').textContent = '◆ ' + S.shards; },
-  stats(){ $('menuBest').textContent = best; $('menuGames').textContent = games; $('menuGems').textContent = gemsTotal;
+  stats(){ $('menuBest').textContent = best; $('menuGames').textContent = games; $('menuGems').textContent = wallet;
     $('menuAvg').textContent = games ? Math.round(lapsTotal/games) : 0; },
   muteIcon(){ $('wave').style.display = muted ? 'none' : ''; $('mute').setAttribute('aria-label', muted ? 'Activer le son' : 'Couper le son'); }
 };
@@ -403,6 +437,116 @@ function reverse(){
 }
 function pause(){ if (mode !== 'play') return; mode = 'paused'; ui.show('paused'); }
 function resume(){ if (mode !== 'paused') return; mode = 'play'; ui.show(null); last = performance.now(); }
+// ---------- skins ----------
+// Prices follow the rule "N runs of 50 laps", with ~10 crystals per 50-lap run.
+const SKINS = [
+  {id:'sonde',     name:'Sonde',     rarity:'Défaut',     price:0,     core:'#FFFFFF', glow:'#BFF3FF', trail:[191,243,255], width:5},
+  {id:'comete',    name:'Comète',    rarity:'Commun',     price:100,   core:'#FFE1C2', glow:'#FF9F43', trail:[255,159,67],  width:5},
+  {id:'glacier',   name:'Glacier',   rarity:'Commun',     price:200,   core:'#F0FCFF', glow:'#6FD3FF', trail:[111,211,255], width:6, ring:true},
+  {id:'nebuleuse', name:'Nébuleuse', rarity:'Rare',       price:500,   core:'#F6DDFF', glow:'#C86BFF', trail:'nebula',      width:7},
+  {id:'aurore',    name:'Aurore',    rarity:'Épique',     price:1000,  core:'#E4FFF4', glow:'#4DFFB5', trail:'aurora',      width:7, sparks:2},
+  {id:'trounoir',  name:'Trou noir', rarity:'Légendaire', price:10000, core:'#05060F', glow:'#FFFFFF', trail:'rainbow',     width:8, disk:true, sparks:3},
+];
+const RARITY_COL = {'Défaut':'#9AA3D9', 'Commun':'#C3CAEE', 'Rare':'#5AA8FF', 'Épique':'#B46BFF', 'Légendaire':'#FFB13B'};
+const CRYSTALS_PER_50 = 10;
+const skin = () => SKINS.find(k => k.id === equipped) || SKINS[0];
+function hexA(hex, a){ const n = parseInt(hex.slice(1), 16); return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`; }
+function trailColor(sk, k, now){
+  const a = k*.6;
+  if (Array.isArray(sk.trail)) return `rgba(${sk.trail[0]},${sk.trail[1]},${sk.trail[2]},${a})`;
+  if (sk.trail === 'nebula'){ const r = 255 - 115*k, g = 110 - 20*k; return `rgba(${r|0},${g|0},255,${a})`; }
+  if (sk.trail === 'aurora') return `hsla(${150 + 50*Math.sin(now/500 + k*4)},100%,65%,${a})`;
+  return `hsla(${(now/6 + k*320) % 360},100%,65%,${a})`;                       // rainbow
+}
+function drawProbe(c, x, y, trail, sk, now, u){
+  c.lineCap = 'round';
+  for (let i = 1; i < trail.length; i++){
+    const k = i/trail.length;
+    c.strokeStyle = trailColor(sk, k, now); c.lineWidth = k*sk.width*u;
+    c.beginPath(); c.moveTo(trail[i-1].x, trail[i-1].y); c.lineTo(trail[i].x, trail[i].y); c.stroke();
+  }
+  c.lineCap = 'butt';
+  if (sk.disk){                                   // accretion disk: rotating rainbow ring
+    c.lineWidth = 3.2*u;
+    for (let j = 0; j < 12; j++){
+      const a0 = now/260 + j/12*TAU;
+      c.strokeStyle = `hsl(${(j*30 + now/5) % 360},100%,65%)`;
+      c.beginPath(); c.arc(x, y, 11*u, a0, a0 + TAU/12 + .03); c.stroke();
+    }
+  }
+  c.save(); c.shadowColor = sk.glow; c.shadowBlur = 20*u;
+  c.fillStyle = sk.core; c.beginPath(); c.arc(x, y, 7*u, 0, TAU); c.fill(); c.restore();
+  if (sk.disk){ c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 1.2*u; c.beginPath(); c.arc(x, y, 7*u, 0, TAU); c.stroke(); }
+  else {
+    c.strokeStyle = hexA(sk.glow, .5); c.lineWidth = 1.5;
+    c.beginPath(); c.arc(x, y, Math.max(0, 11*u + Math.sin(now/180)*1.5*Math.min(1, u)), 0, TAU); c.stroke();
+  }
+  if (sk.ring){ c.strokeStyle = hexA(sk.glow, .28); c.lineWidth = 1.2; c.beginPath(); c.arc(x, y, Math.max(0, 15*u + Math.sin(now/240)*2*Math.min(1, u)), 0, TAU); c.stroke(); }
+  if (sk.sparks){
+    for (let j = 0; j < sk.sparks; j++){
+      const a = now/240 + j/sk.sparks*TAU, r = (sk.disk ? 17 : 15)*u;
+      c.fillStyle = sk.disk ? '#FFFFFF' : sk.glow;
+      c.beginPath(); c.arc(x + Math.cos(a)*r, y + Math.sin(a)*r, 1.9*u, 0, TAU); c.fill();
+    }
+  }
+}
+
+// ---------- shop ----------
+let pendingBuy = null, previewRaf = 0;
+const fmtN = n => n.toLocaleString('fr-FR');
+function renderShop(){
+  $('wallet').textContent = fmtN(wallet);
+  const box = $('skins'); box.innerHTML = '';
+  for (const sk of SKINS){
+    const has = owned.includes(sk.id), on = equipped === sk.id;
+    const t = document.createElement('div'); t.className = 'skin' + (on ? ' on' : ''); t.style.setProperty('--rar', RARITY_COL[sk.rarity]);
+    const runs = Math.round(sk.price / CRYSTALS_PER_50);
+    let action, sub = '';
+    if (on) action = '<button class="pill" disabled>Équipé</button>';
+    else if (has) action = `<button class="pill" data-equip="${sk.id}">Équiper</button>`;
+    else if (wallet >= sk.price) action = `<button class="pill buy" data-buy="${sk.id}">◆ ${fmtN(sk.price)}</button>`;
+    else { action = `<button class="pill" disabled>◆ ${fmtN(sk.price)}</button>`; sub = `Il manque ◆ ${fmtN(sk.price - wallet)}`; }
+    if (!has && sk.price) sub = `≈ ${fmtN(runs)} parties de 50 tours` + (sub ? `<br>${sub}` : '');
+    t.innerHTML = `<canvas data-skin="${sk.id}"></canvas><b>${sk.name}</b><span class="rar">${sk.rarity}</span>${action}<small>${sub}</small>`;
+    box.append(t);
+  }
+  $('confirm').hidden = !pendingBuy;
+  if (pendingBuy){ const sk = SKINS.find(k => k.id === pendingBuy); $('confirmText').textContent = `Acheter ${sk.name} pour ◆ ${fmtN(sk.price)} ?`; }
+}
+function previewLoop(now){
+  for (const cvs of document.querySelectorAll('#skins canvas')){
+    const sk = SKINS.find(k => k.id === cvs.dataset.skin), dpr = Math.min(devicePixelRatio || 1, 2);
+    const w = cvs.clientWidth, h = cvs.clientHeight;
+    if (!w || !h || !sk) continue;               // not laid out yet
+    if (cvs.width !== Math.round(w*dpr)){ cvs.width = Math.round(w*dpr); cvs.height = Math.round(h*dpr); }
+    const c = cvs.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h);
+    const R = Math.min(w, h)*.34, x0 = w/2, y0 = h/2, u = R/40, tr = [];
+    c.strokeStyle = 'rgba(154,163,217,.18)'; c.setLineDash([3,5]); c.beginPath(); c.arc(x0, y0, R, 0, TAU); c.stroke(); c.setLineDash([]);
+    const a = now/700;
+    for (let i = 16; i >= 0; i--){ const b = a - i*.06; tr.push({x: x0 + Math.cos(b)*R, y: y0 + Math.sin(b)*R}); }
+    drawProbe(c, tr[tr.length-1].x, tr[tr.length-1].y, tr, sk, now, u);
+  }
+  previewRaf = $('shop').hidden ? 0 : requestAnimationFrame(previewLoop);
+}
+function openShop(){ pendingBuy = null; renderShop(); ui.show('shop'); if (!previewRaf) previewRaf = requestAnimationFrame(previewLoop); }
+$('shopBtn').addEventListener('click', openShop);
+$('shopClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
+$('skins').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || b.disabled) return;
+  if (b.dataset.equip){ equipped = b.dataset.equip; store.set('v2.skin', equipped); pendingBuy = null; renderShop(); }
+  if (b.dataset.buy){ pendingBuy = b.dataset.buy; renderShop(); $('confirm').scrollIntoView({block:'nearest'}); }
+});
+$('confirmNo').addEventListener('click', () => { pendingBuy = null; renderShop(); });
+$('confirmYes').addEventListener('click', () => {
+  const sk = SKINS.find(k => k.id === pendingBuy); pendingBuy = null;
+  if (sk && wallet >= sk.price && !owned.includes(sk.id)){
+    wallet -= sk.price; owned.push(sk.id); equipped = sk.id;
+    store.set('v2.wallet', wallet); store.set('v2.owned', owned); store.set('v2.skin', equipped);
+    sfx.shard(); buzz([15, 40, 15]);
+  }
+  renderShop();
+});
+
 // ---------- hidden test mode ----------
 let testRun = null;                              // {lap, kind} while a test run is active
 let testCfg = store.get('test', {lap: 29, kind: 'random'});
@@ -414,7 +558,7 @@ function jumpToLap(n){
   S.t = t; S.omega = w(t); S.laps = n; S.storm = n >= 30;
   const flips = n >= 50 ? Math.floor((n - 50)/8) + 1 : 0;
   S.dir = flips % 2 ? -1 : 1;
-  S.spawnT = 1; S.gemT = 1.5; ui.score();
+  S.spawnT = 1; S.gemCount = Math.floor(n/5); ui.score();
 }
 function testUI(){
   $('lapInput').value = testCfg.lap;
@@ -434,7 +578,14 @@ $('lapInput').addEventListener('change', e => setLap(e.target.value));
 $('lapChips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b) setLap(b.dataset.lap); });
 $('kindChips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b){ testCfg.kind = b.dataset.kind; store.set('test', testCfg); testUI(); } });
 $('testGo').addEventListener('click', () => { setLap($('lapInput').value); testRun = {...testCfg}; start(); });
-$('testClose').addEventListener('click', () => ui.show('menu'));
+$('testClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
+// test helpers for the shop (hidden mode only)
+$('addGems').addEventListener('click', () => { wallet += 1000; store.set('v2.wallet', wallet); $('addGems').textContent = '+1 000 ◆ (solde ' + fmtN(wallet) + ')'; });
+$('resetSkins').addEventListener('click', () => {
+  wallet = 0; owned = ['sonde']; equipped = 'sonde';
+  store.set('v2.wallet', 0); store.set('v2.owned', owned); store.set('v2.skin', equipped);
+  $('addGems').textContent = '+1 000 ◆'; $('resetSkins').textContent = 'Boutique remise à zéro';
+});
 // Back to the home screen from the pause or game-over screen.
 // A run abandoned from the pause screen still counts (record + number of games), except in test mode.
 function goHome(){
@@ -450,7 +601,7 @@ $('homeFromOver').addEventListener('click', goHome);
 
 function gameOver(){
   mode = 'dying'; S.dead = true; S.deadT = 0; S.shake = 1;
-  const p = pos(); burst(p.x, p.y, COL.ion, 40, 260); burst(p.x, p.y, COL.rock, 24, 180);
+  const p = pos(); burst(p.x, p.y, skin().glow, 40, 260); burst(p.x, p.y, COL.rock, 24, 180);
   sfx.crash(); buzz([60, 40, 120]);
   const isBest = recordRun();                   // test runs never touch the stats
   setTimeout(() => {
@@ -495,6 +646,7 @@ function update(dt){
     const ct = fmtTime(S.t); if (ct !== S.clockShown){ S.clockShown = ct; $('clock').textContent = ct; }
     const da = S.omega*dt; S.a += S.dir*da; S.lapAcc += da;
     if (S.lapAcc >= TAU){ S.lapAcc -= TAU; S.laps++; S.pulse = 1; sfx.lap(); ui.score();
+      if (S.laps % 5 === 0) S.gemDue++;
       if (!testRun && best > 0 && S.laps === best + 1) banner('Nouveau record', best + 1 + ' tours', COL.shard);
       if (S.laps % 7 === 0 || (S.hard && S.laps === 15)) shootingStars(); // lap 15: only in a hard run
       if (S.laps === 40) banner('Astéroïdes rapides', 'Certains foncent droit sur vous', COL.rock);
@@ -505,14 +657,21 @@ function update(dt){
 
     // reversal warning: nothing new spawns, then the field is cleared and the direction flips
     if (S.revWarn > 0){
-      S.revWarn -= dt; S.spawnT = Math.max(S.spawnT, .1); S.gemT = Math.max(S.gemT, .1);
+      S.revWarn -= dt; S.spawnT = Math.max(S.spawnT, .1); S.gemTry = 0;
       if (S.revWarn <= 0) reverse();
     }
     S.spawnT -= dt;
     if (S.spawnT <= 0){ const lane = pickLane(); // if a spot is refused (it would block both orbits), try other spots on the same orbit
       const ok = spawnRocks(lane) || spawnRocks(lane) || spawnRocks(lane) || spawnRocks(lane); S.spawnT = ok ? Math.max(.38, 1.15 - S.t*0.017) * (S.hard ? .82 : 1) * (S.storm ? .65 : 1) * (0.75 + Math.random()*.5) : .1; }
-    S.gemT -= dt;
-    if (S.gemT <= 0){ spawnGem(); S.gemT = 1.6 + Math.random()*1.8; }
+    // Crystals: one every 5 laps, every 4th one rare (worth 3): ~10 per 50-lap run, 14 at most.
+    if (S.gemDue > 0 && S.revWarn <= 0){
+      S.gemTry += dt;
+      if (S.gemTry >= .15){
+        S.gemTry = 0; S.gemWait += .15;
+        const rare = (S.gemCount + 1) % 4 === 0 && S.gemWait < 4;  // a rare one waits up to 4 s for a rock to tuck against
+        if (rare ? spawnHardGem() : spawnGem()){ S.gemDue--; S.gemCount++; S.gemWait = 0; }
+      }
+    }
 
     const p = pos();
     S.trail.push({x:p.x, y:p.y}); if (S.trail.length > 22) S.trail.shift();
@@ -665,17 +824,8 @@ function draw(now){
 
   // trail + probe
   if (!S.dead){
-    for (let i=1;i<S.trail.length;i++){
-      const a = S.trail[i-1], b = S.trail[i];
-      ctx.strokeStyle = `rgba(191,243,255,${i/S.trail.length*.55})`; ctx.lineWidth = (i/S.trail.length)*5*unit;
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-    }
     const p = pos();
-    ctx.save(); ctx.shadowColor = COL.ion; ctx.shadowBlur = 20*unit;
-    ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(p.x, p.y, 7*unit, 0, TAU); ctx.fill();
-    ctx.restore();
-    ctx.strokeStyle = 'rgba(191,243,255,.5)'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(p.x, p.y, 11*unit + Math.sin(now/180)*1.5, 0, TAU); ctx.stroke();
+    drawProbe(ctx, p.x, p.y, S.trail, skin(), now, unit);
   }
 
   // particles
