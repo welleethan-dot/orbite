@@ -47,9 +47,9 @@ canvas{display:block;width:100%;height:100%;touch-action:none;}
 .icon{width:52px;height:52px;border-radius:50%;border:1px solid rgba(191,243,255,.25);background:rgba(21,26,68,.6);color:var(--ion);display:grid;place-items:center;cursor:pointer;padding:0;}
 .icon:focus-visible,.cta:focus-visible{outline:2px solid var(--shard);outline-offset:3px;}
 .icon svg{width:24px;height:24px;}
-.overlay{position:fixed;inset:0;overflow-y:auto;display:grid;place-items:center;padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));padding-block:24px;
+.overlay{position:fixed;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;display:grid;justify-items:center;align-items:start;padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));padding-top:calc(env(safe-area-inset-top,0px) + 20px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 20px);
   background:rgba(10,12,34,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
-.card{max-width:360px;width:100%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;}
+.card{max-width:360px;width:100%;margin-block:auto;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;}
 .eyebrow{font-size:.85rem;letter-spacing:.24em;text-transform:uppercase;color:var(--sun);}
 h1{font-family:var(--display);font-weight:800;font-size:clamp(2.8rem,14vw,4.2rem);letter-spacing:.04em;margin:0;line-height:1;text-wrap:balance;
   background:linear-gradient(180deg,var(--ion),var(--mist));-webkit-background-clip:text;background-clip:text;color:transparent;}
@@ -97,8 +97,8 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 .new{color:var(--shard);font-size:.95rem;letter-spacing:.2em;text-transform:uppercase;}
 .chrono{display:flex;flex-direction:column;align-items:center;gap:4px;padding-top:6px;}
 .chrono b{font-family:var(--mono);font-weight:700;font-size:1.4rem;font-variant-numeric:tabular-nums;letter-spacing:.02em;}
-.banner{position:fixed;left:0;right:0;top:24%;text-align:center;pointer-events:none;font-family:var(--display);font-weight:800;font-size:clamp(1.5rem,7.5vw,2.1rem);letter-spacing:.06em;text-transform:uppercase;padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));animation:bannerIn 2.4s ease forwards;}
-.banner small{display:block;font-family:var(--mono);font-weight:500;font-size:.9rem;letter-spacing:.16em;color:var(--mist);margin-top:6px;}
+.banner{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 64px);text-align:center;pointer-events:none;font-family:var(--display);font-weight:800;font-size:clamp(.95rem,4.2vw,1.12rem);letter-spacing:.06em;text-transform:uppercase;padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));animation:bannerIn 2.4s ease forwards;}
+.banner small{display:block;font-family:var(--mono);font-weight:500;font-size:.72rem;letter-spacing:.14em;color:var(--mist);margin-top:4px;}
 @keyframes bannerIn{0%{opacity:0;transform:scale(.9)}12%{opacity:1;transform:scale(1)}80%{opacity:1}100%{opacity:0}}
 @media (prefers-reduced-motion: reduce){.banner{animation:bannerFade 2.4s linear forwards}@keyframes bannerFade{0%,80%{opacity:1}100%{opacity:0}}}
 .hint{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);text-align:center;font-size:.9rem;letter-spacing:.16em;text-transform:uppercase;color:var(--mist);pointer-events:none;transition:opacity .6s;}
@@ -226,9 +226,9 @@ function recordRun(){
 // ---------- audio ----------
 let ac = null;
 function audio(){ if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){} } if (ac && ac.state === 'suspended') ac.resume(); return ac; }
-function tone(f1, f2, dur, type='sine', vol=.15){
+function tone(f1, f2, dur, type='sine', vol=.15, at=0){
   if (muted) return; const a = audio(); if (!a) return;
-  const o = a.createOscillator(), g = a.createGain(), t = a.currentTime;
+  const o = a.createOscillator(), g = a.createGain(), t = a.currentTime + at;
   o.type = type; o.frequency.setValueAtTime(f1, t); o.frequency.exponentialRampToValueAtTime(f2, t+dur);
   g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t+dur);
   o.connect(g).connect(a.destination); o.start(t); o.stop(t+dur);
@@ -245,14 +245,25 @@ const sfx = {
   hop(up){ tone(up?520:390, up?780:300, .09, 'triangle', .08); },
   shard(){ tone(880, 1760, .12, 'sine', .12); setTimeout(()=>tone(1320, 2200, .1, 'sine', .08), 60); },
   lap(){ tone(440, 660, .15, 'sine', .07); },
+  ui(){ tone(1250, 980, .045, 'triangle', .05); },                 // menu buttons
+  go(){ tone(520, 1040, .12, 'triangle', .07); },                   // play / replay / resume
+  piggy(){                                                          // skin bought: coins into a piggy bank
+    [0, .07, .15, .26, .38].forEach(at => {
+      const f = 2100 + Math.random()*700;
+      tone(f, f*.98, .14, 'sine', .07, at); tone(f*2.76, f*2.7, .08, 'sine', .025, at);   // metallic clink
+    });
+    tone(190, 80, .18, 'triangle', .12, .5);                         // thud of the coins landing
+    [1568, 1976, 2637].forEach((f, i) => tone(f, f, .22, 'sine', .05, .62 + i*.07));    // little sparkle
+  },
   crash(){ noise(.6, .35); tone(180, 40, .5, 'sawtooth', .12); }
 };
 function buzz(p){ try { navigator.vibrate && navigator.vibrate(p); } catch(e){} }
 
 // ---------- geometry ----------
 let W, H, cx, cy, R0, lanes = [0,0], unit;
+let DPR = 1;
 function resize(){
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const dpr = DPR = Math.min(window.devicePixelRatio || 1, 2);
   const r = cv.getBoundingClientRect(); W = r.width; H = r.height;
   cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr);
   ctx.setTransform(dpr,0,0,dpr,0,0);
@@ -264,6 +275,15 @@ function resize(){
   R0 = outer*0.31; lanes = [outer/1.55, outer];   // probe ~55 % faster on the outer orbit
 }
 addEventListener('resize', resize); resize();
+// Android can drop the canvas while the app is in the background and give it back with its scale reset
+// (the game then shrinks into the top-left corner). Re-measure whenever the app comes back.
+for (const ev of ['pageshow', 'focus', 'orientationchange']) addEventListener(ev, () => setTimeout(resize, 60));
+document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(resize, 60); });
+cv.addEventListener('contextrestored', resize);
+setInterval(() => {                                  // safety net: size changed without any event
+  const r = cv.getBoundingClientRect();
+  if (Math.abs(cv.width - Math.round(r.width*DPR)) > 1 || Math.abs(cv.height - Math.round(r.height*DPR)) > 1) resize();
+}, 1000);
 
 // ---------- background stars ----------
 const stars = Array.from({length:140}, () => ({a:Math.random()*TAU, d:Math.sqrt(Math.random()), s:Math.random()*1.4+.3, tw:Math.random()*TAU}));
@@ -424,7 +444,7 @@ let bannerTimer = 0;
 function banner(title, sub, color){
   const b = $('banner'); b.hidden = true; void b.offsetWidth; // restart the animation
   b.innerHTML = ''; b.append(title); const sm = document.createElement('small'); sm.textContent = sub; b.append(sm);
-  b.style.color = color; b.hidden = false;
+  b.style.color = color; b.hidden = false; $('hint').style.opacity = 0;   // never stack on the start hint
   clearTimeout(bannerTimer); bannerTimer = setTimeout(() => { b.hidden = true; }, 2400);
 }
 const fmtTime = t => { const m = Math.floor(t/60), s = t - m*60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(1); };
@@ -589,9 +609,15 @@ $('confirmYes').addEventListener('click', () => {
   if (sk && wallet >= sk.price && !owned.includes(sk.id)){
     wallet -= sk.price; owned.push(sk.id); equipped = sk.id;
     store.set('v2.wallet', wallet); store.set('v2.owned', owned); store.set('v2.skin', equipped);
-    sfx.shard(); buzz([15, 40, 15]);
+    sfx.piggy(); buzz([10, 30, 10, 30, 40]);
   }
   renderShop();
+});
+
+// Click sound on every button of the menus (not in game). Purchases have their own sound.
+document.addEventListener('click', e => {
+  const b = e.target.closest('.overlay button'); if (!b || b.disabled || b.id === 'confirmYes') return;
+  if (['play', 'again', 'testGo', 'resume'].includes(b.id)) sfx.go(); else sfx.ui();
 });
 
 // ---------- hidden test mode ----------
@@ -774,6 +800,7 @@ function update(dt){
 // ---------- draw ----------
 let starRot = 0;
 function draw(now){
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);          // re-applied every frame (lost if the canvas is reset)
   ctx.save();
   const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W,H)*.75);
   bg.addColorStop(0, COL.void2); bg.addColorStop(1, COL.void);
