@@ -1,6 +1,6 @@
 // Orbite service worker: the game keeps working offline once opened online.
 // Bump CACHE when publishing a new version so old files are dropped.
-const CACHE = 'orbite-v7';
+const CACHE = 'orbite-v8';
 const CORE = ['./', './index.html', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
