@@ -224,8 +224,36 @@ function recordRun(){
 }
 
 // ---------- audio ----------
-let ac = null;
-function audio(){ if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){} } if (ac && ac.state === 'suspended') ac.resume(); return ac; }
+let ac = null, audioCameBack = false;
+function newAudio(){ try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ ac = null; } }
+function audio(){
+  if (!ac || ac.state === 'closed') newAudio();
+  if (ac && ac.state !== 'running') ac.resume().catch(() => {});
+  return ac;
+}
+// iOS interrupts audio while the app is in the background and sometimes never gives it back
+// (state "interrupted", or "suspended" forever). We pause it ourselves when leaving; on the first
+// touch after coming back we resume it, and if it is still stuck we rebuild it from scratch
+// (all sounds are synthesised, so nothing is lost).
+function unlockAudio(){                       // a silent sample played inside the touch: required by iOS
+  try { const b = ac.createBuffer(1, 1, 22050), s = ac.createBufferSource(); s.buffer = b; s.connect(ac.destination); s.start(0); ac.resume().catch(() => {}); } catch(e){}
+}
+function wakeAudio(){
+  if (!ac || ac.state === 'running') return;
+  if (ac.state === 'suspended' && !audioCameBack){
+    const old = ac; old.resume().catch(() => {});
+    setTimeout(() => { if (ac === old && old.state !== 'running') audioCameBack = true; }, 300);  // stuck: rebuild on next touch
+    return;
+  }
+  try { ac.close(); } catch(e){}
+  newAudio(); if (ac) unlockAudio();
+  audioCameBack = false;
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden){ if (ac && ac.state === 'running') ac.suspend().catch(() => {}); }
+  else audioCameBack = true;
+});
+for (const ev of ['touchend', 'pointerdown', 'click', 'keydown']) addEventListener(ev, wakeAudio, {capture: true, passive: true});
 function tone(f1, f2, dur, type='sine', vol=.15, at=0){
   if (muted) return; const a = audio(); if (!a) return;
   const o = a.createOscillator(), g = a.createGain(), t = a.currentTime + at;
