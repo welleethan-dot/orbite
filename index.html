@@ -72,6 +72,20 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 .dot{width:12px;height:12px;border-radius:50%;margin-top:3px;}
 .cta{font-family:var(--display);font-weight:800;font-size:1.2rem;letter-spacing:.08em;color:var(--void);background:var(--sun);border:0;border-radius:999px;padding:18px 46px;cursor:pointer;margin-top:6px;box-shadow:0 0 32px rgba(242,165,65,.35);}
 .cta:active{transform:scale(.97);}
+.version{font-size:.8rem;opacity:.85;}
+.newsdate{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mist);margin-top:-6px;}
+.notes{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;text-align:left;width:100%;}
+.notes li{position:relative;padding-left:22px;color:var(--ion);font-size:1rem;line-height:1.4;}
+.notes li::before{content:"";position:absolute;left:4px;top:.5em;width:8px;height:8px;border-radius:2px;background:var(--sun);transform:rotate(45deg);}
+.history{width:100%;display:flex;flex-direction:column;gap:16px;text-align:left;border-top:1px solid rgba(191,243,255,.15);padding-top:14px;}
+.history h3{margin:0;font-family:var(--display);font-weight:800;font-size:1rem;color:var(--ion);}
+.history h3 span{font-family:var(--mono);font-weight:500;font-size:.75rem;color:var(--mist);margin-left:8px;letter-spacing:.08em;}
+.history .notes li{font-size:.88rem;color:var(--mist);}
+.history .notes li::before{background:var(--mist);width:6px;height:6px;}
+.updatebar{position:fixed;left:max(16px, env(safe-area-inset-left,0px));right:max(16px, env(safe-area-inset-right,0px));margin-inline:auto;max-width:420px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);z-index:20;
+  font-family:var(--mono);font-size:.85rem;color:var(--void);background:var(--sun);border:0;border-radius:999px;padding:12px 18px;cursor:pointer;box-shadow:0 6px 24px rgba(0,0,0,.4);text-align:center;}
+.updatebar b{display:block;margin-top:2px;font-weight:700;text-decoration:underline;text-underline-offset:2px;}
+.updatebar:focus-visible{outline:2px solid var(--ion);outline-offset:3px;}
 .cta.ghost{background:transparent;color:var(--sun);border:2px solid var(--sun);box-shadow:none;font-size:1rem;padding:12px 34px;margin-top:0;}
 .shopcard{max-width:440px;}
 .wallet{font-family:var(--display);font-weight:800;font-size:1.4rem;color:var(--shard);}
@@ -137,6 +151,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
     <button class="cta" id="play">JOUER</button>
     <button class="cta ghost" id="shopBtn">SKINS</button>
     <div class="stats"><div>Record<b id="menuBest">0</b></div><div>Moyenne<b id="menuAvg">0</b></div><div>Parties<b id="menuGames">0</b></div><div>Éclats<b id="menuGems">0</b></div></div>
+    <button class="link version" id="newsBtn">Version <span id="verLabel"></span> · Nouveautés</button>
   </div>
 </div>
 
@@ -153,6 +168,19 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
     <button class="link" id="shopClose">Retour à l'accueil</button>
   </div>
 </div>
+
+<div class="overlay" id="news" hidden>
+  <div class="card">
+    <div class="eyebrow">Nouveautés</div>
+    <h2 id="newsTitle"></h2>
+    <div class="newsdate" id="newsDate"></div>
+    <ul class="notes" id="newsList"></ul>
+    <button class="cta" id="newsOk">COMPRIS</button>
+    <button class="link" id="newsHistoryBtn">Voir toutes les versions</button>
+    <div class="history" id="newsHistory" hidden></div>
+  </div>
+</div>
+<button class="updatebar" id="updateBar" hidden>Nouvelle version disponible <b>Toucher pour mettre à jour</b></button>
 
 <div class="overlay" id="paused" hidden>
   <div class="card">
@@ -450,7 +478,7 @@ function popup(text, x, y, color){ S.popups.push({text, x, y, life:1, color}); }
 
 // ---------- UI ----------
 const ui = {
-  show(id){ for (const k of ['menu','paused','over','test','shop']) $(k).hidden = k !== id; },
+  show(id){ for (const k of ['menu','paused','over','test','shop','news']) $(k).hidden = k !== id; },
   hud(on){ $('hud').hidden = !on; },
   score(){ $('sc').textContent = S.laps; $('hs').textContent = 'Record ' + Math.max(best, testRun ? 0 : S.laps); $('gm').textContent = '◆ ' + S.shards; },
   stats(){ $('menuBest').textContent = best; $('menuGames').textContent = games; $('menuGems').textContent = wallet;
@@ -654,6 +682,103 @@ $('confirmYes').addEventListener('click', () => {
 document.addEventListener('click', e => {
   const b = e.target.closest('.overlay button'); if (!b || b.disabled || b.id === 'confirmYes') return;
   if (['play', 'again', 'testGo', 'resume'].includes(b.id)) sfx.go(); else sfx.ui();
+});
+
+// ---------- versions & news ----------
+// Newest first. Texts are written for players (no tech talk) and are proofread before each release.
+const CHANGELOG = [
+  {v:'1.8', date:'22/11/2026', notes:[
+    "Nouveautés : à chaque mise à jour, cette fenêtre vous montre ce qui a changé.",
+    "Le jeu vous prévient quand une nouvelle version est disponible : un toucher suffit pour l'installer.",
+    "Le numéro de version est affiché en bas de l'écran d'accueil.",
+  ]},
+  {v:'1.7', date:'22/11/2026', notes:[
+    "Chaque annonce en jeu a sa couleur : rouge pour la pluie d'astéroïdes, orange pour les astéroïdes rapides, violet pour l'inversion, or pour un nouveau record.",
+  ]},
+  {v:'1.6', date:'22/11/2026', notes:[
+    "Le son revient correctement quand vous revenez dans le jeu après l'avoir quitté.",
+    "L'application est plus légère à télécharger.",
+  ]},
+  {v:'1.5', date:'22/11/2026', notes:[
+    "Corrigé : le jeu ne se réduit plus en haut à gauche de l'écran quand vous revenez dans l'application.",
+    "Les annonces en jeu sont plus petites et s'affichent sous la zone de jeu.",
+    "Les écrans s'adaptent mieux à tous les téléphones (encoche, petits écrans).",
+    "Nouveaux sons sur les boutons, et un bruit de tirelire quand vous achetez un skin.",
+  ]},
+  {v:'1.4', date:'19/11/2026', notes:[
+    "Nouveau skin bonus : Mezen, à débloquer en cumulant 92 390 tours.",
+    "Nouveaux prix des skins.",
+  ]},
+  {v:'1.3', date:'19/11/2026', notes:[
+    "Les éclats rares apparaissent plus souvent.",
+    "La boutique est simplifiée.",
+  ]},
+  {v:'1.2', date:'19/11/2026', notes:[
+    "Nouvelle boutique : 5 skins pour votre sonde, à acheter avec vos éclats.",
+    "Un éclat apparaît tous les 5 tours.",
+    "L'écart de vitesse entre les deux orbites est réduit.",
+  ]},
+  {v:'1.1', date:'16/11/2026', notes:[
+    "Le jeu prend tout l'écran du téléphone, avec des textes plus grands.",
+    "Votre score et votre record se comptent en tours.",
+    "Le jeu est plus difficile.",
+    "Nouvelles statistiques sur l'accueil : record, moyenne, parties et éclats.",
+  ]},
+  {v:'1.0', date:'16/11/2026', notes:[
+    "Première version installable sur téléphone.",
+  ]},
+];
+const APP_VERSION = CHANGELOG[0].v;
+$('verLabel').textContent = APP_VERSION;
+const noteList = notes => notes.map(n => { const li = document.createElement('li'); li.textContent = n; return li; });
+function openNews(){
+  const c = CHANGELOG[0];
+  $('newsTitle').textContent = 'Version ' + c.v; $('newsDate').textContent = c.date;
+  $('newsList').replaceChildren(...noteList(c.notes));
+  const h = $('newsHistory'); h.hidden = true; h.replaceChildren();
+  for (const old of CHANGELOG.slice(1)){
+    const t = document.createElement('h3'); t.textContent = 'Version ' + old.v;
+    const d = document.createElement('span'); d.textContent = old.date; t.append(d);
+    const ul = document.createElement('ul'); ul.className = 'notes'; ul.append(...noteList(old.notes));
+    const box = document.createElement('div'); box.append(t, ul); h.append(box);
+  }
+  $('newsHistoryBtn').hidden = false;
+  ui.show('news');
+}
+$('newsBtn').addEventListener('click', openNews);
+$('newsOk').addEventListener('click', () => { store.set('seenVersion', APP_VERSION); ui.show('menu'); ui.stats(); });
+$('newsHistoryBtn').addEventListener('click', () => { $('newsHistory').hidden = false; $('newsHistoryBtn').hidden = true; });
+// Show the news once after an update (players who never played start on the home screen).
+(() => {
+  const seen = store.get('seenVersion', null);
+  if (seen === APP_VERSION) return;
+  if (seen === null && games === 0){ store.set('seenVersion', APP_VERSION); return; }
+  openNews();
+})();
+
+// A newer version is online? (version.json is published with each release.) Offer it outside of a run.
+let updateReady = false;
+function newerThan(a, b){
+  const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number);
+  for (let i = 0; i < Math.max(x.length, y.length); i++){ const d = (x[i] || 0) - (y[i] || 0); if (d) return d > 0; }
+  return false;
+}
+let remoteVersion = null;
+async function checkUpdate(){
+  try {
+    const r = await fetch('version.json?t=' + Date.now(), {cache: 'no-store'});
+    if (!r.ok) return;
+    const j = await r.json();
+    if (newerThan(j.version, APP_VERSION)){ updateReady = true; remoteVersion = j.version; }
+  } catch(e){}
+}
+setInterval(() => { $('updateBar').hidden = !(updateReady && ['menu', 'over', 'paused'].includes(mode)); }, 500);
+checkUpdate(); setInterval(checkUpdate, 5*60*1000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkUpdate(); });
+$('updateBar').addEventListener('click', async () => {
+  sfx.go();
+  try { const reg = await navigator.serviceWorker?.getRegistration(); await reg?.update(); } catch(e){}
+  location.replace('./?v=' + encodeURIComponent(remoteVersion || Date.now()));   // new address: skips any stale copy
 });
 
 // ---------- hidden test mode ----------

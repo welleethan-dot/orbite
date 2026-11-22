@@ -1,6 +1,6 @@
 // Orbite service worker: the game keeps working offline once opened online.
 // Bump CACHE when publishing a new version so old files are dropped.
-const CACHE = 'orbite-v8';
+const CACHE = 'orbite-v9';
 const CORE = ['./', './index.html', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
@@ -15,9 +15,11 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
+  // version.json says which version is online: always ask the network, never cache it.
+  if (new URL(req.url).pathname.endsWith('/version.json')) return;
   // The page itself: network first, so an update shows up as soon as you are online.
   if (req.mode === 'navigate') {
-    e.respondWith(fetch(req)
+    e.respondWith(fetch(req.url, {cache: 'no-cache'})   // check with the server, so an update is never served stale
       .then(res => { const copy = res.clone(); caches.open(CACHE).then(c => c.put('./index.html', copy)); return res; })
       .catch(() => caches.match('./index.html')));
     return;
