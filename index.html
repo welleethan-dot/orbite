@@ -82,8 +82,8 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 .history h3 span{font-family:var(--mono);font-weight:500;font-size:.75rem;color:var(--mist);margin-left:8px;letter-spacing:.08em;}
 .history .notes li{font-size:.88rem;color:var(--mist);}
 .history .notes li::before{background:var(--mist);width:6px;height:6px;}
-.updatebar{position:fixed;left:max(16px, env(safe-area-inset-left,0px));right:max(16px, env(safe-area-inset-right,0px));margin-inline:auto;max-width:420px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);z-index:20;
-  font-family:var(--mono);font-size:.85rem;color:var(--void);background:var(--sun);border:0;border-radius:999px;padding:12px 18px;cursor:pointer;box-shadow:0 6px 24px rgba(0,0,0,.4);text-align:center;}
+.updatebar{width:100%;
+  font-family:var(--mono);font-size:.85rem;color:var(--void);background:var(--sun);border:0;border-radius:999px;padding:12px 18px;cursor:pointer;box-shadow:0 0 24px rgba(242,165,65,.3);text-align:center;}
 .updatebar b{display:block;margin-top:2px;font-weight:700;text-decoration:underline;text-underline-offset:2px;}
 .updatebar:focus-visible{outline:2px solid var(--ion);outline-offset:3px;}
 .cta.ghost{background:transparent;color:var(--sun);border:2px solid var(--sun);box-shadow:none;font-size:1rem;padding:12px 34px;margin-top:0;}
@@ -772,7 +772,14 @@ async function checkUpdate(){
     if (newerThan(j.version, APP_VERSION)){ updateReady = true; remoteVersion = j.version; }
   } catch(e){}
 }
-setInterval(() => { $('updateBar').hidden = !(updateReady && ['menu', 'over', 'paused'].includes(mode)); }, 500);
+// The bar sits at the top of whichever screen is open (home, pause, end of run), never over the game.
+setInterval(() => {
+  const bar = $('updateBar'), host = ['menu', 'paused', 'over'].map(id => $(id)).find(o => !o.hidden);
+  if (!updateReady || !host){ bar.hidden = true; return; }
+  const card = host.querySelector('.card');
+  if (bar.parentElement !== card) card.prepend(bar);
+  bar.hidden = false;
+}, 500);
 checkUpdate(); setInterval(checkUpdate, 5*60*1000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) checkUpdate(); });
 $('updateBar').addEventListener('click', async () => {
