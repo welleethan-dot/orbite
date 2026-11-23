@@ -72,6 +72,19 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 .dot{width:12px;height:12px;border-radius:50%;margin-top:3px;}
 .cta{font-family:var(--display);font-weight:800;font-size:1.2rem;letter-spacing:.08em;color:var(--void);background:var(--sun);border:0;border-radius:999px;padding:18px 46px;cursor:pointer;margin-top:6px;box-shadow:0 0 32px rgba(242,165,65,.35);}
 .cta:active{transform:scale(.97);}
+.duo{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;}
+.duo .cta.ghost{padding:12px 20px;font-size:.88rem;}
+.tuto{position:fixed;left:max(16px, env(safe-area-inset-left,0px));right:max(16px, env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 16px);margin-inline:auto;max-width:440px;
+  background:rgba(10,12,34,.86);border:1px solid rgba(191,243,255,.25);border-radius:18px;padding:14px 16px 10px;display:flex;flex-direction:column;gap:6px;
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);text-align:left;}
+.tuto-step{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--sun);}
+.tuto p{margin:0;color:var(--ion);font-size:1rem;line-height:1.4;}
+.tuto-prog{font-size:.85rem;color:var(--shard);min-height:1.1em;font-variant-numeric:tabular-nums;}
+.tuto-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.tuto-row .pill{margin-top:0;}
+.tuto-row .link{margin-left:auto;}
+.score b.glow{animation:scoreGlow .9s ease-in-out infinite alternate;}
+@keyframes scoreGlow{from{text-shadow:0 0 0 transparent}to{text-shadow:0 0 18px var(--sun);color:var(--sun)}}
 .version{font-size:.8rem;opacity:.85;}
 .newsdate{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mist);margin-top:-6px;}
 .notes{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;text-align:left;width:100%;}
@@ -131,6 +144,12 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
   </div>
 </div>
 <div class="banner" id="banner" hidden></div>
+<div class="tuto" id="tuto" hidden>
+  <div class="tuto-step" id="tutoStep"></div>
+  <p id="tutoText"></p>
+  <div class="tuto-prog" id="tutoProg"></div>
+  <div class="tuto-row"><button class="pill buy" id="tutoNext" hidden>Suivant</button><button class="link" id="tutoSkip">Passer</button></div>
+</div>
 <div class="hint" id="hint" hidden>Touchez l'écran pour changer d'orbite</div>
 
 <div class="overlay" id="menu">
@@ -138,19 +157,31 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
     <div class="eyebrow">Arcade · une touche</div>
     <h1 id="title">ORBITE</h1>
     <p>Touchez l'écran pour changer d'orbite.</p>
-    <div class="rules">
-      <span class="dot" style="background:var(--rock)"></span><span>Évitez les astéroïdes</span>
-      <span class="dot" style="background:var(--ion)"></span><span>Votre score : le nombre de tours</span>
-      <span class="dot" style="background:transparent;border:2px solid var(--shard)"></span><span>Un éclat ◆ tous les 5 tours (les rares valent 3), à dépenser en skins</span>
-      <span class="dot" style="background:#FF4D6D"></span><span>30 tours : pluie d'astéroïdes</span>
-      <span class="dot" style="background:#19E6D2"></span><span>40 tours : astéroïdes rapides</span>
-      <span class="dot" style="background:#B46BFF"></span><span>50 tours : inversions</span>
-      <span class="dot" style="background:conic-gradient(#FF4D6D,#19E6D2,#B46BFF,#FFD66B,#FF4D6D)"></span><span>À chaque palier, son nom s'affiche en haut et les orbites prennent sa couleur (or : nouveau record)</span>
-    </div>
     <button class="cta" id="play">JOUER</button>
-    <button class="cta ghost" id="shopBtn">SKINS</button>
+    <div class="duo"><button class="cta ghost" id="shopBtn">SKINS</button><button class="cta ghost" id="howBtn">COMMENT JOUER</button></div>
     <div class="stats"><div>Record<b id="menuBest">0</b></div><div>Moyenne<b id="menuAvg">0</b></div><div>Parties<b id="menuGames">0</b></div><div>Éclats<b id="menuGems">0</b></div></div>
     <button class="link version" id="newsBtn">Version <span id="verLabel"></span> · Nouveautés</button>
+  </div>
+</div>
+
+<div class="overlay" id="howto" hidden>
+  <div class="card">
+    <div class="eyebrow">Comment jouer</div>
+    <h2>Les règles</h2>
+    <div class="rules">
+      <span class="dot" style="background:var(--ion)"></span><span>Touchez l'écran pour faire sauter la sonde d'une orbite à l'autre</span>
+      <span class="dot" style="background:var(--rock)"></span><span>Évitez les astéroïdes</span>
+      <span class="dot" style="background:var(--ion)"></span><span>Votre score : le nombre de tours</span>
+      <span class="dot" style="background:var(--shard)"></span><span>Un éclat ◆ apparaît tous les 5 tours, à dépenser en skins</span>
+      <span class="dot" style="background:transparent;border:2px solid var(--shard)"></span><span>Les éclats rares, collés à un astéroïde, valent 3 ◆</span>
+      <span class="dot" style="background:#FF4D6D"></span><span>30 tours : pluie d'astéroïdes, ils arrivent plus souvent</span>
+      <span class="dot" style="background:#19E6D2"></span><span>40 tours : astéroïdes rapides, repérez leur traînée</span>
+      <span class="dot" style="background:#B46BFF"></span><span>50 tours : inversions du sens de rotation, puis tous les 8 tours</span>
+      <span class="dot" style="background:#FFD66B"></span><span>Nouveau record : tout passe à l'or</span>
+      <span class="dot" style="background:conic-gradient(#FF4D6D,#19E6D2,#B46BFF,#FFD66B,#FF4D6D)"></span><span>À chaque palier, son nom s'affiche en haut et les orbites prennent sa couleur</span>
+    </div>
+    <button class="cta" id="tutoAgain">REFAIRE LE DIDACTICIEL</button>
+    <button class="link" id="howClose">Retour à l'accueil</button>
   </div>
 </div>
 
@@ -477,9 +508,9 @@ function popup(text, x, y, color){ S.popups.push({text, x, y, life:1, color}); }
 
 // ---------- UI ----------
 const ui = {
-  show(id){ for (const k of ['menu','paused','over','test','shop','news']) $(k).hidden = k !== id; },
+  show(id){ for (const k of ['menu','paused','over','test','shop','news','howto']) $(k).hidden = k !== id; },
   hud(on){ $('hud').hidden = !on; },
-  score(){ $('sc').textContent = S.laps; $('hs').textContent = 'Record ' + Math.max(best, testRun ? 0 : S.laps); $('gm').textContent = '◆ ' + S.shards; },
+  score(){ $('sc').textContent = S.laps; $('hs').textContent = 'Record ' + Math.max(best, testRun || S.tuto ? 0 : S.laps); $('gm').textContent = '◆ ' + S.shards; },
   stats(){ $('menuBest').textContent = best; $('menuGames').textContent = games; $('menuGems').textContent = wallet;
     $('menuAvg').textContent = games ? Math.round(lapsTotal/games) : 0; },
   muteIcon(){ $('wave').style.display = muted ? 'none' : ''; $('mute').setAttribute('aria-label', muted ? 'Activer le son' : 'Couper le son'); }
@@ -487,7 +518,7 @@ const ui = {
 ui.stats(); ui.muteIcon();
 
 function start(){
-  fx = null;
+  fx = null; $('tuto').hidden = true; $('sc').classList.remove('glow');
   audio();
   S = fresh(); mode = 'play'; ui.show(null); ui.hud(true); ui.score();
   S.hard = testRun && testRun.kind !== 'random' ? testRun.kind === 'hard' : Math.random() < 0.2; // one run in five, on average
@@ -693,9 +724,105 @@ $('confirmYes').addEventListener('click', () => {
 
 // Click sound on every button of the menus (not in game). Purchases have their own sound.
 document.addEventListener('click', e => {
-  const b = e.target.closest('.overlay button'); if (!b || b.disabled || b.id === 'confirmYes') return;
+  const b = e.target.closest('.overlay button, .tuto button'); if (!b || b.disabled || b.id === 'confirmYes') return;
   if (['play', 'again', 'testGo', 'resume'].includes(b.id)) sfx.go(); else sfx.ui();
 });
+
+// ---------- tutorial ----------
+// A guided first run: slow, no game over, one thing learnt per step. Launched on a new player's first
+// "Jouer", and again from "Comment jouer". Players who already played are not forced into it.
+let tutoDone = store.get('tutoDone', false) || games > 0, tutoFrom = 'play';
+const TUTO = [
+  {id:'tap',    goal:3, prog:'Sauts', text:"Touchez n'importe où sur l'écran : la sonde saute d'une orbite à l'autre."},
+  {id:'dodge',  goal:2, prog:'Astéroïdes évités', text:"Un astéroïde arrive sur votre orbite ! Changez d'orbite pour l'éviter."},
+  {id:'gem',    text:"Passez sur l'éclat ◆ pour le ramasser. Les éclats servent à acheter des skins dans la boutique."},
+  {id:'rare',   text:"Un éclat rare, collé à un astéroïde, vaut 3 ◆. Attrapez-le, puis changez vite d'orbite !"},
+  {id:'lap',    text:"Votre score, c'est le nombre de tours, affiché en haut à gauche. Faites un tour complet."},
+  {id:'rain',   info:true, ev:['Pluie d’astéroïdes', 'rain', 1, 1.2], text:"Plus vous tenez, plus ça se corse. À 30 tours, la pluie d'astéroïdes : ils arrivent bien plus souvent."},
+  {id:'fast',   info:true, ev:['Astéroïdes rapides', 'fast', 2, 1.2], text:"À 40 tours, les astéroïdes rapides : repérez leur traînée, ils foncent droit sur vous."},
+  {id:'flip',   info:true, ev:['Inversion', 'flip', 2, 1.6], text:"À 50 tours, l'inversion : la sonde change de sens. Pendant l'alerte, aucun astéroïde n'arrive."},
+  {id:'record', info:true, ev:['Nouveau record', 'record', 1, 1.2], text:"Et quand vous battez votre record, tout passe à l'or."},
+  {id:'ready',  info:true, last:true, text:"Vous êtes prêt ! Retenez les couleurs : chaque palier affiche son nom en haut de l'écran. Bonne chance !"},
+];
+function playPressed(){ if (!tutoDone) startTutorial('play'); else start(); }
+function startTutorial(from){
+  tutoFrom = from; fx = null; testRun = null; audio();
+  S = fresh(); S.tuto = {step: 0}; mode = 'play';
+  ui.show(null); ui.hud(true); ui.score(); $('clock').textContent = ''; $('testTag').hidden = true;
+  $('hint').hidden = true; $('tuto').hidden = false;
+  tutoEnter(0);
+}
+function tutoEnter(i){
+  const st = TUTO[i];
+  S.tuto = {step: i, count: 0, wait: .6, advance: 0, rock: null, gem: null, lapStart: S.laps};
+  S.rocks = []; S.gems = [];
+  $('tutoStep').textContent = `Didacticiel · ${i + 1}/${TUTO.length}`;
+  $('tutoText').textContent = st.text;
+  $('tutoNext').hidden = !st.info; $('tutoNext').textContent = st.last ? 'JOUER' : 'Suivant';
+  $('tutoSkip').hidden = !!st.last;
+  $('sc').classList.toggle('glow', st.id === 'lap');
+  tutoProg();
+  if (st.ev){ const [title, col, pulses, dur] = st.ev; banner(title, EVENT_COL[col], pulses, dur); }
+  if (st.id === 'flip') S.revWarn = 1.6;
+}
+function tutoProg(msg){
+  const st = TUTO[S.tuto.step];
+  $('tutoProg').textContent = msg || (st.goal ? `${st.prog} : ${S.tuto.count}/${st.goal}` : '');
+}
+function tutoStepDone(){ const T = S.tuto; if (T.advance) return; T.advance = .7; tutoProg('Bravo !'); sfx.go(); }
+function tutoHop(){
+  const T = S.tuto; if (TUTO[T.step].id !== 'tap' || T.advance) return;
+  T.count++; tutoProg(); if (T.count >= TUTO[T.step].goal) tutoStepDone();
+}
+function tutoHit(){                              // no game over in the tutorial: the step starts again
+  const T = S.tuto, p = pos();
+  burst(p.x, p.y, COL.rock, 16, 140); noise(.25, .15); buzz(40); S.shake = .5;
+  S.rocks = []; S.gems = []; T.rock = T.gem = null; T.wait = 1;
+  tutoProg('Touché ! On recommence.');
+}
+function tutoSpawn(){
+  const T = S.tuto, id = TUTO[T.step].id, other = 1 - S.lane;
+  if (id === 'dodge'){ T.rock = makeRock(S.lane, S.a + S.dir*2.4); S.rocks.push(T.rock); }
+  if (id === 'gem'){ addGem(other, S.a + S.dir*2.6, false, 0); T.gem = S.gems[S.gems.length - 1]; }
+  if (id === 'rare'){
+    const ra = S.a + S.dir*3.4;
+    T.rock = makeRock(other, ra); S.rocks.push(T.rock);
+    addGem(other, ra - S.dir*.75, true, 0); T.gem = S.gems[S.gems.length - 1];
+  }
+  if (id === 'fast'){                            // a harmless example rushing along the other orbit
+    const w = .9, meet = S.a + S.dir*2.4, r = makeRock(other, S.a + S.dir*2.4*(S.omega + w)/S.omega, w, meet);
+    r.ghost = true; S.rocks.push(r);
+  }
+}
+function tutoUpdate(dt){
+  const T = S.tuto, st = TUTO[T.step];
+  if (T.advance){ T.advance -= dt; if (T.advance <= 0){ T.advance = 0; tutoNext(); } return; }
+  if (T.wait > 0){ T.wait -= dt; if (T.wait <= 0){ T.wait = 0; tutoProg(); tutoSpawn(); } return; }
+  if (st.id === 'dodge' && T.rock && T.rock.passed){
+    T.count++; tutoProg(); T.rock = null;
+    if (T.count >= st.goal) tutoStepDone(); else T.wait = .5;
+  }
+  if (st.id === 'gem' && T.gem){
+    if (T.gem.got) tutoStepDone();
+    else if (T.gem.passed){ T.gem = null; T.wait = .3; tutoProg('Raté, il en revient un.'); }
+  }
+  if (st.id === 'rare' && T.gem){
+    if (T.gem.got && T.rock.passed) tutoStepDone();
+    else if (T.gem.passed && !T.gem.got){ S.rocks = []; T.gem = T.rock = null; T.wait = .6; tutoProg('Raté, on recommence.'); }
+  }
+  if (st.id === 'lap' && S.laps > T.lapStart) tutoStepDone();
+}
+function tutoNext(){ const i = S.tuto.step + 1; if (i < TUTO.length) tutoEnter(i); else tutoFinish(true); }
+function tutoFinish(play){
+  tutoDone = true; store.set('tutoDone', true);
+  $('tuto').hidden = true; $('sc').classList.remove('glow');
+  if (play) start(); else goHome();
+}
+$('tutoNext').addEventListener('click', () => { if (TUTO[S.tuto.step].last) tutoFinish(true); else tutoNext(); });
+$('tutoSkip').addEventListener('click', () => tutoFinish(tutoFrom === 'play'));
+$('howBtn').addEventListener('click', () => ui.show('howto'));
+$('howClose').addEventListener('click', () => ui.show('menu'));
+$('tutoAgain').addEventListener('click', () => startTutorial('howto'));
 
 // ---------- versions & news ----------
 // Newest first. Texts are written for players (no tech talk) and are proofread before each release.
@@ -703,6 +830,8 @@ const CHANGELOG = [
   {v:'1.9', date:'23/11/2026', notes:[
     "À chaque palier, son nom s'affiche en haut de l'écran et les orbites et les bords de l'écran s'illuminent de sa couleur : rouge pour la pluie d'astéroïdes, turquoise pour les astéroïdes rapides, violet pour l'inversion, or pour un nouveau record.",
     "Les annonces ne s'affichent plus en bas de l'écran.",
+    "Nouveau : un didacticiel guide votre première partie, pas à pas.",
+    "Nouvel écran « Comment jouer » sur l'accueil, avec toutes les règles et un bouton pour refaire le didacticiel.",
     "Le centre de la planète affiche seulement le nombre de tours.",
   ]},
   {v:'1.8', date:'22/11/2026', notes:[
@@ -852,7 +981,8 @@ $('resetSkins').addEventListener('click', () => {
 // Back to the home screen from the pause or game-over screen.
 // A run abandoned from the pause screen still counts (record + number of games), except in test mode.
 function goHome(){
-  if ((mode === 'paused' || mode === 'play') && !testRun){
+  $('tuto').hidden = true; $('sc').classList.remove('glow');
+  if ((mode === 'paused' || mode === 'play') && !testRun && !S.tuto){
     recordRun();
   }
   testRun = null; mode = 'menu'; S = fresh();
@@ -879,6 +1009,7 @@ function gameOver(){
 function hop(){
   if (mode !== 'play') return;
   S.lane = 1 - S.lane; S.campT = 0;
+  if (S.tuto) tutoHop();
   S.r += (lanes[S.lane] - S.r) * 0.4; // first part of the jump happens on the tap itself, not on the next frame
   sfx.hop(S.lane === 1); buzz(8);
   const p = pos(); burst(p.x, p.y, COL.ion, 6, 60);
@@ -889,10 +1020,10 @@ cv.addEventListener('pointerdown', e => { e.preventDefault(); if (mode === 'play
 addEventListener('keydown', e => {
   if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowDown'){
     e.preventDefault();
-    if (mode === 'play') hop(); else if (mode === 'menu' || mode === 'over') start(); else if (mode === 'paused') resume();
+    if (mode === 'play') hop(); else if (mode === 'menu') playPressed(); else if (mode === 'over') start(); else if (mode === 'paused') resume();
   } else if (e.code === 'KeyP' || e.code === 'Escape'){ mode === 'play' ? pause() : resume(); }
 });
-$('play').addEventListener('click', start);
+$('play').addEventListener('click', playPressed);
 $('again').addEventListener('click', start);
 $('resume').addEventListener('click', resume);
 $('pauseBtn').addEventListener('click', pause);
@@ -905,12 +1036,12 @@ function pos(a = S.a, r = S.r){ return {x: cx + Math.cos(a)*r, y: cy + Math.sin(
 function update(dt){
   if (mode === 'play'){
     S.t += dt; S.campT += dt;
-    S.omega = omegaAt(S.t);
-    const ct = fmtTime(S.t); if (ct !== S.clockShown){ S.clockShown = ct; $('clock').textContent = ct; }
+    S.omega = S.tuto ? 1.3 : omegaAt(S.t);           // the tutorial runs slowly
+    if (!S.tuto){ const ct = fmtTime(S.t); if (ct !== S.clockShown){ S.clockShown = ct; $('clock').textContent = ct; } }
     const da = S.omega*dt; S.a += S.dir*da; S.lapAcc += da;
     if (S.lapAcc >= TAU){ S.lapAcc -= TAU; S.laps++; S.pulse = 1; sfx.lap(); ui.score();
       if (S.laps % 5 === 0) S.gemDue++;
-      if (!testRun && best > 0 && S.laps === best + 1) banner('Nouveau record', EVENT_COL.record, 1, 1.2);
+      if (!testRun && !S.tuto && best > 0 && S.laps === best + 1) banner('Nouveau record', EVENT_COL.record, 1, 1.2);
       if (S.laps % 7 === 0 || (S.hard && S.laps === 15)) shootingStars(); // lap 15: only in a hard run
       if (S.laps === 40) banner('Astéroïdes rapides', EVENT_COL.fast, 2, 1.2);
       if (S.laps >= 50 && (S.laps - 50) % 8 === 0){ S.revWarn = 1.6; banner('Inversion', EVENT_COL.flip, 2, 1.6); buzz([20,40,20]); }
@@ -923,6 +1054,7 @@ function update(dt){
       S.revWarn -= dt; S.spawnT = Math.max(S.spawnT, .1); S.gemTry = 0;
       if (S.revWarn <= 0) reverse();
     }
+    if (S.tuto) tutoUpdate(dt); else {
     S.spawnT -= dt;
     if (S.spawnT <= 0){ const lane = pickLane(); // if a spot is refused (it would block both orbits), try other spots on the same orbit
       const ok = spawnRocks(lane) || spawnRocks(lane) || spawnRocks(lane) || spawnRocks(lane); S.spawnT = ok ? Math.max(.38, 1.15 - S.t*0.017) * (S.hard ? .82 : 1) * (S.storm ? .65 : 1) * (0.75 + Math.random()*.5) : .1; }
@@ -936,6 +1068,7 @@ function update(dt){
         if (rare ? spawnHardGem() : spawnGem()){ S.gemDue--; S.gemCount++; S.gemWait = 0; }
       }
     }
+    }
 
     const p = pos();
     S.trail.push({x:p.x, y:p.y}); if (S.trail.length > 22) S.trail.shift();
@@ -948,7 +1081,7 @@ function update(dt){
       }
       const op = pos(o.a, lanes[o.lane]);
       const fade = Math.min(1, (S.t - o.born)/.35);
-      if (!o.passed && fade > .6 && Math.hypot(op.x-p.x, op.y-p.y) < o.size*.8 + 6*unit){ gameOver(); break; }
+      if (!o.passed && !o.ghost && fade > .6 && Math.hypot(op.x-p.x, op.y-p.y) < o.size*.8 + 6*unit){ if (S.tuto) tutoHit(); else gameOver(); break; }
       const ah = ahead(o.a);
       if (!o.passed && ah > o.prev + Math.PI) o.passed = true;
       o.prev = ah;
