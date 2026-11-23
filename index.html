@@ -111,11 +111,9 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 .new{color:var(--shard);font-size:.95rem;letter-spacing:.2em;text-transform:uppercase;}
 .chrono{display:flex;flex-direction:column;align-items:center;gap:4px;padding-top:6px;}
 .chrono b{font-family:var(--mono);font-weight:700;font-size:1.4rem;font-variant-numeric:tabular-nums;letter-spacing:.02em;}
-.banner{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 64px);text-align:center;pointer-events:none;font-family:var(--display);font-weight:800;font-size:clamp(.95rem,4.2vw,1.12rem);letter-spacing:.06em;text-transform:uppercase;padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));animation:bannerIn 1.4s ease forwards;}
-.banner .evt{display:inline-block;padding:8px 18px 9px;border:1.5px solid;border-radius:14px;max-width:100%;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);}
-.banner small{display:block;font-family:var(--mono);font-weight:500;font-size:.72rem;letter-spacing:.14em;color:var(--mist);margin-top:4px;}
-@keyframes bannerIn{0%{opacity:0;transform:scale(.9)}12%{opacity:1;transform:scale(1)}80%{opacity:1}100%{opacity:0}}
-@media (prefers-reduced-motion: reduce){.banner{animation:bannerFade 1.4s linear forwards}@keyframes bannerFade{0%,80%{opacity:1}100%{opacity:0}}}
+.banner{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 120px);transform:translateY(-50%);text-align:center;pointer-events:none;font-family:var(--display);font-weight:800;font-size:clamp(1.15rem,5.6vw,1.65rem);line-height:1.1;letter-spacing:.05em;text-transform:uppercase;text-wrap:balance;padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));animation:bannerIn 1.9s ease forwards;}
+@keyframes bannerIn{0%{opacity:0;transform:translateY(-50%) scale(.85)}10%{opacity:1;transform:translateY(-50%) scale(1.06)}18%{transform:translateY(-50%) scale(1)}78%{opacity:1}100%{opacity:0;transform:translateY(-50%) scale(1)}}
+@media (prefers-reduced-motion: reduce){.banner{animation:bannerFade 1.9s linear forwards}@keyframes bannerFade{0%,80%{opacity:1}100%{opacity:0}}}
 .hint{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);text-align:center;font-size:.9rem;letter-spacing:.16em;text-transform:uppercase;color:var(--mist);pointer-events:none;transition:opacity .6s;}
 @media (prefers-reduced-motion: reduce){.cta{box-shadow:none;}}
 </style>
@@ -145,9 +143,9 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
       <span class="dot" style="background:var(--ion)"></span><span>Votre score : le nombre de tours</span>
       <span class="dot" style="background:transparent;border:2px solid var(--shard)"></span><span>Un éclat ◆ tous les 5 tours (les rares valent 3), à dépenser en skins</span>
       <span class="dot" style="background:#FF4D6D"></span><span>30 tours : pluie d'astéroïdes</span>
-      <span class="dot" style="background:#FF9F43"></span><span>40 tours : astéroïdes rapides</span>
+      <span class="dot" style="background:#19E6D2"></span><span>40 tours : astéroïdes rapides</span>
       <span class="dot" style="background:#B46BFF"></span><span>50 tours : inversions</span>
-      <span class="dot" style="background:conic-gradient(#FF4D6D,#FF9F43,#B46BFF,#FFD66B,#FF4D6D)"></span><span>À chaque palier, les orbites s'illuminent de sa couleur (or : nouveau record)</span>
+      <span class="dot" style="background:conic-gradient(#FF4D6D,#19E6D2,#B46BFF,#FFD66B,#FF4D6D)"></span><span>À chaque palier, son nom s'affiche en haut et les orbites prennent sa couleur (or : nouveau record)</span>
     </div>
     <button class="cta" id="play">JOUER</button>
     <button class="cta ghost" id="shopBtn">SKINS</button>
@@ -503,14 +501,22 @@ function start(){
 }
 let bannerTimer = 0;
 // One colour per event, so it can be recognised out of the corner of the eye without reading it.
-const EVENT_COL = {rain:'#FF4D6D', fast:'#FF9F43', flip:'#B46BFF', record:'#FFD66B'};
+const EVENT_COL = {rain:'#FF4D6D', fast:'#19E6D2', flip:'#B46BFF', record:'#FFD66B'};   // red, turquoise, violet, gold
 // One word, read in a glance (full explanations are in the rules on the home screen).
 // Events are shown without any text: the orbits and the screen edges light up in the event's colour.
 // Each event also has its own rhythm (1 flash, 2 flashes, a longer pulse) so it reads even without the colour.
-let fx = null;                                   // {color, pulses, dur, t}
-function banner(name, color, pulses = 1, dur = 1.2){   // name is only there to read the code
+// The event's name is also shown, big and bold, at the top of the screen between the score and the orbits.
+let fx = null, bannerTimer2 = 0;                 // fx: {color, pulses, dur, t}
+function banner(title, color, pulses = 1, dur = 1.2){
   fx = {color, pulses, dur, t: 0};
   $('hint').style.opacity = 0;
+  const b = $('banner'); b.hidden = true; void b.offsetWidth;   // restart the animation
+  b.textContent = title; b.style.color = color; b.style.textShadow = `0 0 18px ${hexA(color, .7)}, 0 2px 0 rgba(10,12,34,.6)`;
+  // centre it in the free band between the HUD and the top of the outer orbit (rocks included)
+  const hudBottom = $('hud').getBoundingClientRect().bottom, orbitTop = cy - lanes[1] - 26*unit;
+  b.style.top = Math.round(orbitTop - hudBottom > 34 ? (hudBottom + orbitTop)/2 : hudBottom + 22) + 'px';
+  b.hidden = false;
+  clearTimeout(bannerTimer2); bannerTimer2 = setTimeout(() => { b.hidden = true; }, 1900);
 }
 function fxLevel(){                              // 0..1, current brightness of the event light
   if (!fx) return 0;
@@ -695,7 +701,8 @@ document.addEventListener('click', e => {
 // Newest first. Texts are written for players (no tech talk) and are proofread before each release.
 const CHANGELOG = [
   {v:'1.9', date:'23/11/2026', notes:[
-    "Plus de texte pendant la partie : à chaque palier, les orbites et les bords de l'écran s'illuminent de sa couleur (rouge : pluie d'astéroïdes, orange : astéroïdes rapides, violet : inversion, or : nouveau record).",
+    "À chaque palier, son nom s'affiche en haut de l'écran et les orbites et les bords de l'écran s'illuminent de sa couleur : rouge pour la pluie d'astéroïdes, turquoise pour les astéroïdes rapides, violet pour l'inversion, or pour un nouveau record.",
+    "Les annonces ne s'affichent plus en bas de l'écran.",
     "Le centre de la planète affiche seulement le nombre de tours.",
   ]},
   {v:'1.8', date:'22/11/2026', notes:[
@@ -903,11 +910,11 @@ function update(dt){
     const da = S.omega*dt; S.a += S.dir*da; S.lapAcc += da;
     if (S.lapAcc >= TAU){ S.lapAcc -= TAU; S.laps++; S.pulse = 1; sfx.lap(); ui.score();
       if (S.laps % 5 === 0) S.gemDue++;
-      if (!testRun && best > 0 && S.laps === best + 1) banner('Record', EVENT_COL.record, 1, 1.2);
+      if (!testRun && best > 0 && S.laps === best + 1) banner('Nouveau record', EVENT_COL.record, 1, 1.2);
       if (S.laps % 7 === 0 || (S.hard && S.laps === 15)) shootingStars(); // lap 15: only in a hard run
-      if (S.laps === 40) banner('Rapides', EVENT_COL.fast, 2, 1.2);
+      if (S.laps === 40) banner('Astéroïdes rapides', EVENT_COL.fast, 2, 1.2);
       if (S.laps >= 50 && (S.laps - 50) % 8 === 0){ S.revWarn = 1.6; banner('Inversion', EVENT_COL.flip, 2, 1.6); buzz([20,40,20]); }
-      if (S.laps === 30){ S.storm = true; banner('Pluie', EVENT_COL.rain, 1, 1.2); buzz([30,50,30]); }
+      if (S.laps === 30){ S.storm = true; banner('Pluie d’astéroïdes', EVENT_COL.rain, 1, 1.2); buzz([30,50,30]); }
     }
     S.r += (lanes[S.lane] - S.r) * Math.min(1, dt*40);
 
