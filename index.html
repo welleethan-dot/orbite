@@ -111,11 +111,11 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 .new{color:var(--shard);font-size:.95rem;letter-spacing:.2em;text-transform:uppercase;}
 .chrono{display:flex;flex-direction:column;align-items:center;gap:4px;padding-top:6px;}
 .chrono b{font-family:var(--mono);font-weight:700;font-size:1.4rem;font-variant-numeric:tabular-nums;letter-spacing:.02em;}
-.banner{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 64px);text-align:center;pointer-events:none;font-family:var(--display);font-weight:800;font-size:clamp(.95rem,4.2vw,1.12rem);letter-spacing:.06em;text-transform:uppercase;padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));animation:bannerIn 2.4s ease forwards;}
+.banner{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 64px);text-align:center;pointer-events:none;font-family:var(--display);font-weight:800;font-size:clamp(.95rem,4.2vw,1.12rem);letter-spacing:.06em;text-transform:uppercase;padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));animation:bannerIn 1.4s ease forwards;}
 .banner .evt{display:inline-block;padding:8px 18px 9px;border:1.5px solid;border-radius:14px;max-width:100%;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);}
 .banner small{display:block;font-family:var(--mono);font-weight:500;font-size:.72rem;letter-spacing:.14em;color:var(--mist);margin-top:4px;}
 @keyframes bannerIn{0%{opacity:0;transform:scale(.9)}12%{opacity:1;transform:scale(1)}80%{opacity:1}100%{opacity:0}}
-@media (prefers-reduced-motion: reduce){.banner{animation:bannerFade 2.4s linear forwards}@keyframes bannerFade{0%,80%{opacity:1}100%{opacity:0}}}
+@media (prefers-reduced-motion: reduce){.banner{animation:bannerFade 1.4s linear forwards}@keyframes bannerFade{0%,80%{opacity:1}100%{opacity:0}}}
 .hint{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);text-align:center;font-size:.9rem;letter-spacing:.16em;text-transform:uppercase;color:var(--mist);pointer-events:none;transition:opacity .6s;}
 @media (prefers-reduced-motion: reduce){.cta{box-shadow:none;}}
 </style>
@@ -502,14 +502,15 @@ function start(){
 let bannerTimer = 0;
 // One colour per event, so it can be recognised out of the corner of the eye without reading it.
 const EVENT_COL = {rain:'#FF4D6D', fast:'#FF9F43', flip:'#B46BFF', record:'#FFD66B'};
-function banner(title, sub, color){
+// One word, read in a glance (full explanations are in the rules on the home screen).
+function banner(title, color){
   const b = $('banner'); b.hidden = true; void b.offsetWidth; // restart the animation
   const box = document.createElement('span'); box.className = 'evt';
   box.style.borderColor = color; box.style.background = hexA(color, .16); box.style.boxShadow = `0 0 22px ${hexA(color, .45)}`;
-  box.append(title); const sm = document.createElement('small'); sm.textContent = sub; box.append(sm);
+  box.append(title);
   b.innerHTML = ''; b.append(box);
   b.style.color = color; b.hidden = false; $('hint').style.opacity = 0;   // never stack on the start hint
-  clearTimeout(bannerTimer); bannerTimer = setTimeout(() => { b.hidden = true; }, 2400);
+  clearTimeout(bannerTimer); bannerTimer = setTimeout(() => { b.hidden = true; }, 1400);
 }
 const fmtTime = t => { const m = Math.floor(t/60), s = t - m*60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(1); };
 function reverse(){
@@ -687,6 +688,10 @@ document.addEventListener('click', e => {
 // ---------- versions & news ----------
 // Newest first. Texts are written for players (no tech talk) and are proofread before each release.
 const CHANGELOG = [
+  {v:'1.9', date:'23/11/2026', notes:[
+    "Les annonces en jeu tiennent en un seul mot et disparaissent plus vite, pour ne plus vous gêner.",
+    "Le centre de la planète affiche seulement le nombre de tours.",
+  ]},
   {v:'1.8', date:'22/11/2026', notes:[
     "Nouveautés : à chaque mise à jour, cette fenêtre vous montre ce qui a changé.",
     "Le jeu vous prévient quand une nouvelle version est disponible : un toucher suffit pour l'installer.",
@@ -892,11 +897,11 @@ function update(dt){
     const da = S.omega*dt; S.a += S.dir*da; S.lapAcc += da;
     if (S.lapAcc >= TAU){ S.lapAcc -= TAU; S.laps++; S.pulse = 1; sfx.lap(); ui.score();
       if (S.laps % 5 === 0) S.gemDue++;
-      if (!testRun && best > 0 && S.laps === best + 1) banner('Nouveau record', best + 1 + ' tours', EVENT_COL.record);
+      if (!testRun && best > 0 && S.laps === best + 1) banner('Record', EVENT_COL.record);
       if (S.laps % 7 === 0 || (S.hard && S.laps === 15)) shootingStars(); // lap 15: only in a hard run
-      if (S.laps === 40) banner('Astéroïdes rapides', 'Certains foncent droit sur vous', EVENT_COL.fast);
-      if (S.laps >= 50 && (S.laps - 50) % 8 === 0){ S.revWarn = 1.6; banner('Inversion', 'Le sens de rotation va changer', EVENT_COL.flip); buzz([20,40,20]); }
-      if (S.laps === 30){ S.storm = true; banner('Pluie d’astéroïdes', '30 tours · ça se complique', EVENT_COL.rain); buzz([30,50,30]); }
+      if (S.laps === 40) banner('Rapides', EVENT_COL.fast);
+      if (S.laps >= 50 && (S.laps - 50) % 8 === 0){ S.revWarn = 1.6; banner('Inversion', EVENT_COL.flip); buzz([20,40,20]); }
+      if (S.laps === 30){ S.storm = true; banner('Pluie', EVENT_COL.rain); buzz([30,50,30]); }
     }
     S.r += (lanes[S.lane] - S.r) * Math.min(1, dt*40);
 
@@ -1028,7 +1033,7 @@ function draw(now){
   if (mode === 'play' || mode === 'dying'){
     ctx.fillStyle = 'rgba(10,12,34,.75)'; ctx.font = `700 ${Math.round(13*unit)}px "JetBrains Mono", monospace`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('T' + S.laps, cx, cy);
+    ctx.fillText(String(S.laps), cx, cy);
   }
 
   // gems
