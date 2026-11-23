@@ -75,10 +75,12 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 .duo{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;}
 .duo .cta.ghost{padding:12px 20px;font-size:.88rem;}
 .tuto{position:fixed;left:max(16px, env(safe-area-inset-left,0px));right:max(16px, env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 16px);margin-inline:auto;max-width:440px;
-  background:rgba(10,12,34,.86);border:1px solid rgba(191,243,255,.25);border-radius:18px;padding:14px 16px 10px;display:flex;flex-direction:column;gap:6px;
+  background:rgba(10,12,34,.86);border:1px solid rgba(191,243,255,.25);border-radius:18px;padding:11px 14px 6px;display:flex;flex-direction:column;gap:4px;
   -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);text-align:left;}
+.banner.hold{animation:bannerHold .5s ease forwards;}
+@keyframes bannerHold{0%{opacity:0;transform:translateY(-50%) scale(.85)}60%{opacity:1;transform:translateY(-50%) scale(1.06)}100%{opacity:1;transform:translateY(-50%) scale(1)}}
 .tuto-step{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--sun);}
-.tuto p{margin:0;color:var(--ion);font-size:1rem;line-height:1.4;}
+.tuto p{margin:0;color:var(--ion);font-size:.92rem;line-height:1.35;}
 .tuto-prog{font-size:.85rem;color:var(--shard);min-height:1.1em;font-variant-numeric:tabular-nums;}
 .tuto-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
 .tuto-row .pill{margin-top:0;}
@@ -359,8 +361,16 @@ function resize(){
   // Outer orbit as wide as the screen allows (keeping room for a rock at the edge and the HUD above).
   const small = W < 700;                       // phones and small tablets
   const boost = small ? 1.35 : 1;              // objects drawn bigger on phones
-  const outer = Math.max(80, Math.min(W/2 - 30*boost, H*0.38));
-  unit = outer/154 * boost; cx = W/2; cy = H*0.53;
+  let outer = Math.max(80, Math.min(W/2 - 30*boost, H*0.38)), cyv = H*0.53;
+  // Tutorial: fit the orbits whole between the event title (top) and the tutorial card (bottom).
+  let st = null; try { st = S; } catch(e){}      // resize() also runs before the game state exists
+  const card = document.getElementById('tuto');
+  if (st && st.tuto && card && !card.hidden){
+    const top = document.getElementById('hud').getBoundingClientRect().bottom + 52, bottom = card.getBoundingClientRect().top - 8;
+    const o2 = Math.min(outer, (bottom - top)/2 - 22);
+    if (o2 > 60){ outer = o2; cyv = (top + bottom)/2; }
+  }
+  unit = outer/154 * boost; cx = W/2; cy = cyv;
   R0 = outer*0.31; lanes = [outer/1.55, outer];   // probe ~55 % faster on the outer orbit
 }
 addEventListener('resize', resize); resize();
@@ -518,7 +528,7 @@ const ui = {
 ui.stats(); ui.muteIcon();
 
 function start(){
-  fx = null; $('tuto').hidden = true; $('sc').classList.remove('glow');
+  clearEvent(); $('tuto').hidden = true; $('sc').classList.remove('glow'); resize();
   audio();
   S = fresh(); mode = 'play'; ui.show(null); ui.hud(true); ui.score();
   S.hard = testRun && testRun.kind !== 'random' ? testRun.kind === 'hard' : Math.random() < 0.2; // one run in five, on average
@@ -538,20 +548,22 @@ const EVENT_COL = {rain:'#FF4D6D', fast:'#19E6D2', flip:'#B46BFF', record:'#FFD6
 // Each event also has its own rhythm (1 flash, 2 flashes, a longer pulse) so it reads even without the colour.
 // The event's name is also shown, big and bold, at the top of the screen between the score and the orbits.
 let fx = null, bannerTimer2 = 0;                 // fx: {color, pulses, dur, t}
-function banner(title, color, pulses = 1, dur = 1.2){
-  fx = {color, pulses, dur, t: 0};
+// hold = true (tutorial): the colour and the title stay until the player moves on.
+function banner(title, color, pulses = 1, dur = 1.2, hold = false){
+  fx = {color, pulses, dur, t: 0, hold};
   $('hint').style.opacity = 0;
   const b = $('banner'); b.hidden = true; void b.offsetWidth;   // restart the animation
   b.textContent = title; b.style.color = color; b.style.textShadow = `0 0 18px ${hexA(color, .7)}, 0 2px 0 rgba(10,12,34,.6)`;
   // centre it in the free band between the HUD and the top of the outer orbit (rocks included)
   const hudBottom = $('hud').getBoundingClientRect().bottom, orbitTop = cy - lanes[1] - 26*unit;
   b.style.top = Math.round(orbitTop - hudBottom > 34 ? (hudBottom + orbitTop)/2 : hudBottom + 22) + 'px';
-  b.hidden = false;
-  clearTimeout(bannerTimer2); bannerTimer2 = setTimeout(() => { b.hidden = true; }, 1900);
+  b.classList.toggle('hold', hold); b.hidden = false;
+  clearTimeout(bannerTimer2); if (!hold) bannerTimer2 = setTimeout(() => { b.hidden = true; }, 1900);
 }
 function fxLevel(){                              // 0..1, current brightness of the event light
   if (!fx) return 0;
-  const k = fx.t / fx.dur; if (k >= 1) return 0;
+  const k = fx.t / fx.dur;
+  if (k >= 1) return fx.hold ? .5 + .25*Math.sin((fx.t - fx.dur)*3) : 0;   // held: gentle breathing
   const phase = (k * fx.pulses) % 1;
   return Math.sin(Math.PI * phase) * (1 - .35*k);
 }
@@ -738,10 +750,10 @@ const TUTO = [
   {id:'gem',    text:"Passez sur l'éclat ◆ pour le ramasser. Les éclats servent à acheter des skins dans la boutique."},
   {id:'rare',   text:"Un éclat rare, collé à un astéroïde, vaut 3 ◆. Attrapez-le, puis changez vite d'orbite !"},
   {id:'lap',    text:"Votre score, c'est le nombre de tours, affiché en haut à gauche. Faites un tour complet."},
-  {id:'rain',   info:true, ev:['Pluie d’astéroïdes', 'rain', 1, 1.2], text:"Plus vous tenez, plus ça se corse. À 30 tours, la pluie d'astéroïdes : ils arrivent bien plus souvent."},
-  {id:'fast',   info:true, ev:['Astéroïdes rapides', 'fast', 2, 1.2], text:"À 40 tours, les astéroïdes rapides : repérez leur traînée, ils foncent droit sur vous."},
-  {id:'flip',   info:true, ev:['Inversion', 'flip', 2, 1.6], text:"À 50 tours, l'inversion : la sonde change de sens. Pendant l'alerte, aucun astéroïde n'arrive."},
-  {id:'record', info:true, ev:['Nouveau record', 'record', 1, 1.2], text:"Et quand vous battez votre record, tout passe à l'or."},
+  {id:'rain',   info:true, ev:['Pluie d’astéroïdes', 'rain', 1, 1.2], text:"Plus vous tenez, plus ça se corse. À 30 tours, voici ce qui s'affichera : la pluie d'astéroïdes. Ils arrivent bien plus souvent."},
+  {id:'fast',   info:true, ev:['Astéroïdes rapides', 'fast', 2, 1.2], text:"À 40 tours, voici ce qui s'affichera : les astéroïdes rapides. Repérez leur traînée, ils foncent droit sur vous."},
+  {id:'flip',   info:true, ev:['Inversion', 'flip', 2, 1.6], text:"À 50 tours, voici ce qui s'affichera : l'inversion. La sonde change de sens, et pendant l'alerte aucun astéroïde n'arrive."},
+  {id:'record', info:true, ev:['Nouveau record', 'record', 1, 1.2], text:"Et voici ce qui s'affichera quand vous battrez votre record : tout passe à l'or."},
   {id:'ready',  info:true, last:true, text:"Vous êtes prêt ! Retenez les couleurs : chaque palier affiche son nom en haut de l'écran. Bonne chance !"},
 ];
 function playPressed(){ if (!tutoDone) startTutorial('play'); else start(); }
@@ -752,8 +764,10 @@ function startTutorial(from){
   $('hint').hidden = true; $('tuto').hidden = false;
   tutoEnter(0);
 }
+function clearEvent(){ fx = null; clearTimeout(bannerTimer2); $('banner').hidden = true; $('banner').classList.remove('hold'); }
 function tutoEnter(i){
   const st = TUTO[i];
+  clearEvent();
   S.tuto = {step: i, count: 0, wait: .6, advance: 0, rock: null, gem: null, lapStart: S.laps};
   S.rocks = []; S.gems = [];
   $('tutoStep').textContent = `Didacticiel · ${i + 1}/${TUTO.length}`;
@@ -762,7 +776,8 @@ function tutoEnter(i){
   $('tutoSkip').hidden = !!st.last;
   $('sc').classList.toggle('glow', st.id === 'lap');
   tutoProg();
-  if (st.ev){ const [title, col, pulses, dur] = st.ev; banner(title, EVENT_COL[col], pulses, dur); }
+  resize();                                     // re-fit the orbits above the card (its height follows the text)
+  if (st.ev){ const [title, col, pulses, dur] = st.ev; banner(title, EVENT_COL[col], pulses, dur, true); }
   if (st.id === 'flip') S.revWarn = 1.6;
 }
 function tutoProg(msg){
@@ -789,15 +804,27 @@ function tutoSpawn(){
     T.rock = makeRock(other, ra); S.rocks.push(T.rock);
     addGem(other, ra - S.dir*.75, true, 0); T.gem = S.gems[S.gems.length - 1];
   }
-  if (id === 'fast'){                            // a harmless example rushing along the other orbit
-    const w = .9, meet = S.a + S.dir*2.4, r = makeRock(other, S.a + S.dir*2.4*(S.omega + w)/S.omega, w, meet);
-    r.ghost = true; S.rocks.push(r);
+}
+// Event steps: a live, harmless demo keeps running until the player taps "Suivant".
+function tutoDemo(dt){
+  const T = S.tuto, id = TUTO[T.step].id, lane = Math.random() < .5 ? 0 : 1;
+  if (id === 'flip' && S.revWarn <= 0){            // flip again every few seconds
+    T.flipT = (T.flipT ?? 2.6) - dt;
+    if (T.flipT <= 0){ T.flipT = 2.6; S.revWarn = 1.6; }
   }
+  T.demoT = (T.demoT || 0) - dt; if (T.demoT > 0) return;
+  if (id === 'rain'){ const r = makeRock(lane, S.a + S.dir*(1.8 + Math.random()*2.6)); r.ghost = true; S.rocks.push(r); T.demoT = .28; }
+  if (id === 'fast'){
+    const w = .9 + Math.random()*.4, m = 1.8 + Math.random(), r = makeRock(lane, S.a + S.dir*m*(S.omega + w)/S.omega, w, S.a + S.dir*m);
+    r.ghost = true; S.rocks.push(r); T.demoT = .9;
+  }
+  if (id === 'flip' && S.revWarn <= 0){ const r = makeRock(lane, S.a + S.dir*(2 + Math.random()*1.5)); r.ghost = true; S.rocks.push(r); T.demoT = .7; }
 }
 function tutoUpdate(dt){
   const T = S.tuto, st = TUTO[T.step];
   if (T.advance){ T.advance -= dt; if (T.advance <= 0){ T.advance = 0; tutoNext(); } return; }
   if (T.wait > 0){ T.wait -= dt; if (T.wait <= 0){ T.wait = 0; tutoProg(); tutoSpawn(); } return; }
+  if (st.info){ tutoDemo(dt); return; }
   if (st.id === 'dodge' && T.rock && T.rock.passed){
     T.count++; tutoProg(); T.rock = null;
     if (T.count >= st.goal) tutoStepDone(); else T.wait = .5;
@@ -815,7 +842,7 @@ function tutoUpdate(dt){
 function tutoNext(){ const i = S.tuto.step + 1; if (i < TUTO.length) tutoEnter(i); else tutoFinish(true); }
 function tutoFinish(play){
   tutoDone = true; store.set('tutoDone', true);
-  $('tuto').hidden = true; $('sc').classList.remove('glow');
+  clearEvent(); $('tuto').hidden = true; $('sc').classList.remove('glow'); resize();
   if (play) start(); else goHome();
 }
 $('tutoNext').addEventListener('click', () => { if (TUTO[S.tuto.step].last) tutoFinish(true); else tutoNext(); });
@@ -981,7 +1008,7 @@ $('resetSkins').addEventListener('click', () => {
 // Back to the home screen from the pause or game-over screen.
 // A run abandoned from the pause screen still counts (record + number of games), except in test mode.
 function goHome(){
-  $('tuto').hidden = true; $('sc').classList.remove('glow');
+  $('tuto').hidden = true; $('sc').classList.remove('glow'); clearEvent(); resize();
   if ((mode === 'paused' || mode === 'play') && !testRun && !S.tuto){
     recordRun();
   }
@@ -1113,7 +1140,7 @@ function update(dt){
     S.popups = S.popups.filter(u => u.life > 0);
     S.shake = Math.max(0, S.shake - dt*2.2);
     S.pulse = Math.max(0, S.pulse - dt*2);
-    if (fx){ fx.t += dt; if (fx.t >= fx.dur) fx = null; }
+    if (fx){ fx.t += dt; if (fx.t >= fx.dur && !fx.hold) fx = null; }
   }
 }
 
