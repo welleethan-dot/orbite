@@ -174,7 +174,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
       <span class="dot" style="background:var(--ion)"></span><span>Touchez l'écran pour faire sauter la sonde d'une orbite à l'autre</span>
       <span class="dot" style="background:var(--rock)"></span><span>Évitez les astéroïdes</span>
       <span class="dot" style="background:var(--ion)"></span><span>Votre score : le nombre de tours</span>
-      <span class="dot" style="background:#FFFFFF"></span><span>Passez tout près d'un astéroïde sans le toucher : « Frôlé ! »</span>
+      <span class="dot" style="background:#FFFFFF"></span><span>Esquivez un astéroïde au tout dernier moment : c'est un frôlement, compté en fin de partie</span>
       <span class="dot" style="background:var(--shard)"></span><span>Un éclat ◆ apparaît tous les 5 tours, à dépenser en skins</span>
       <span class="dot" style="background:transparent;border:2px solid var(--shard)"></span><span>Les éclats rares, collés à un astéroïde, valent 3 ◆</span>
       <span class="dot" style="background:#FF4D6D"></span><span>30 tours : pluie d'astéroïdes, ils arrivent plus souvent</span>
@@ -517,17 +517,17 @@ function shootingStars(){
     });
   }
 }
-// ---------- near miss ("Frôlé !") ----------
+// ---------- near miss (frôlement) ----------
+// No text on screen (it was distracting): a white ring, sparks and a swish confirm it.
 // A rock dodged at the last moment (the probe leaves its orbit less than NEAR_TIME before impact),
 // or that passes within NEAR_GAP (x unit) of the probe, without touching it. Counted per run (S.near)
 // and in total (v2.near), ready for future daily challenges or crystal rewards.
-const NEAR_GAP = 8, NEAR_TIME = .22;   // edge-to-edge gap (x unit) / last-moment dodge (seconds before impact)
+const NEAR_GAP = 5, NEAR_TIME = .12;   // edge-to-edge gap (x unit) / last-moment dodge (seconds before impact)
 function nearMiss(o){
   S.near = (S.near || 0) + 1;
   S.nearChain = S.t - (S.lastNear ?? -9) < 2.5 ? (S.nearChain || 0) + 1 : 1; S.lastNear = S.t;
   const p = pos(), op = pos(o.a, lanes[o.lane]);
   burst((p.x + op.x)/2, (p.y + op.y)/2, '#FFFFFF', 10 + 3*Math.min(S.nearChain, 4), 170);
-  popup(S.nearChain > 1 ? 'Frôlé x' + S.nearChain : 'Frôlé !', p.x, p.y - 14*unit, '#FFFFFF');
   S.nearFlash = 1; sfx.near(S.nearChain); buzz(8);
 }
 function burst(x, y, color, n, spd){
@@ -881,7 +881,7 @@ const CHANGELOG = [
     "Nouveau : un didacticiel guide votre première partie, pas à pas.",
     "Nouvel écran « Comment jouer » sur l'accueil, avec toutes les règles et un bouton pour refaire le didacticiel.",
     "Le centre de la planète affiche seulement le nombre de tours.",
-    "Nouveau : passez tout près d'un astéroïde sans le toucher pour un « Frôlé ! ». Enchaînez-les pour faire monter le compteur, et retrouvez le total en fin de partie.",
+    "Nouveau : esquivez un astéroïde au tout dernier moment pour un frôlement, signalé par un anneau lumineux et un son. Retrouvez vos frôlements en fin de partie.",
     "Un petit son quand vous équipez un skin dans la boutique.",
   ]},
   {v:'1.8', date:'22/11/2026', notes:[
