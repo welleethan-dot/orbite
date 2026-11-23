@@ -174,6 +174,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
       <span class="dot" style="background:var(--ion)"></span><span>Touchez l'écran pour faire sauter la sonde d'une orbite à l'autre</span>
       <span class="dot" style="background:var(--rock)"></span><span>Évitez les astéroïdes</span>
       <span class="dot" style="background:var(--ion)"></span><span>Votre score : le nombre de tours</span>
+      <span class="dot" style="background:#FFFFFF"></span><span>Passez tout près d'un astéroïde sans le toucher : « Frôlé ! »</span>
       <span class="dot" style="background:var(--shard)"></span><span>Un éclat ◆ apparaît tous les 5 tours, à dépenser en skins</span>
       <span class="dot" style="background:transparent;border:2px solid var(--shard)"></span><span>Les éclats rares, collés à un astéroïde, valent 3 ◆</span>
       <span class="dot" style="background:#FF4D6D"></span><span>30 tours : pluie d'astéroïdes, ils arrivent plus souvent</span>
@@ -253,7 +254,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
     <div class="big" id="finalScore">0</div>
     <div class="eyebrow" style="color:var(--mist)">tours</div>
     <div class="new" id="newBest" hidden>Nouveau record</div>
-    <div class="stats"><div>Record<b id="overBest">0</b></div><div>Temps<b id="overTime">0:00.0</b></div><div>Éclats<b id="overShards">0</b></div></div>
+    <div class="stats"><div>Record<b id="overBest">0</b></div><div>Temps<b id="overTime">0:00.0</b></div><div>Éclats<b id="overShards">0</b></div><div>Frôlés<b id="overNear">0</b></div></div>
     <button class="cta" id="again">REJOUER</button>
     <button class="link" id="homeFromOver">Retour à l'accueil</button>
   </div>
@@ -275,12 +276,13 @@ const store = {
 // Stats v2: the record is the best number of laps. (v1 stored points, which are not comparable.)
 let best = store.get('v2.best', 0), games = store.get('v2.games', 0), lapsTotal = store.get('v2.laps', 0),
     gemsTotal = store.get('v2.gems', 0), muted = store.get('muted', false);
-let wallet = store.get('v2.wallet', gemsTotal);            // spendable crystals (gemsTotal = lifetime)
+let wallet = store.get('v2.wallet', gemsTotal), nearTotal = store.get('v2.near', 0);            // spendable crystals (gemsTotal = lifetime)
 let owned = store.get('v2.owned', ['sonde']), equipped = store.get('v2.skin', 'sonde');
 // Count a finished run in the stats (never for test runs). Returns true on a new record.
 function recordRun(){
   if (testRun) return false;
   games++; lapsTotal += S.laps; gemsTotal += S.shards; wallet += S.shards; store.set('v2.wallet', wallet);
+  nearTotal += S.near || 0; store.set('v2.near', nearTotal);
   const isBest = S.laps > best; if (isBest) best = S.laps;
   store.set('v2.games', games); store.set('v2.laps', lapsTotal); store.set('v2.gems', gemsTotal); store.set('v2.best', best);
   return isBest;
@@ -337,6 +339,11 @@ const sfx = {
   shard(){ tone(880, 1760, .12, 'sine', .12); setTimeout(()=>tone(1320, 2200, .1, 'sine', .08), 60); },
   lap(){ tone(440, 660, .15, 'sine', .07); },
   ui(){ tone(1250, 980, .045, 'triangle', .05); },                 // menu buttons
+  equip(){ tone(660, 990, .08, 'triangle', .07); tone(990, 1480, .12, 'sine', .06, .07); tone(2640, 2640, .1, 'sine', .025, .16); },   // skin equipped
+  near(chain){                                                      // near miss: a swish, pitched up along a chain
+    const f = 1400 + Math.min(chain - 1, 4)*180;
+    tone(f*1.4, f*.55, .14, 'sawtooth', .022); tone(f, f*1.5, .09, 'sine', .06, .02);
+  },
   go(){ tone(520, 1040, .12, 'triangle', .07); },                   // play / replay / resume
   piggy(){                                                          // skin bought: coins into a piggy bank
     [0, .07, .15, .26, .38].forEach(at => {
@@ -509,6 +516,19 @@ function shootingStars(){
       len: (70 + Math.random()*50)*unit
     });
   }
+}
+// ---------- near miss ("Frôlé !") ----------
+// A rock dodged at the last moment (the probe leaves its orbit less than NEAR_TIME before impact),
+// or that passes within NEAR_GAP (x unit) of the probe, without touching it. Counted per run (S.near)
+// and in total (v2.near), ready for future daily challenges or crystal rewards.
+const NEAR_GAP = 8, NEAR_TIME = .22;   // edge-to-edge gap (x unit) / last-moment dodge (seconds before impact)
+function nearMiss(o){
+  S.near = (S.near || 0) + 1;
+  S.nearChain = S.t - (S.lastNear ?? -9) < 2.5 ? (S.nearChain || 0) + 1 : 1; S.lastNear = S.t;
+  const p = pos(), op = pos(o.a, lanes[o.lane]);
+  burst((p.x + op.x)/2, (p.y + op.y)/2, '#FFFFFF', 10 + 3*Math.min(S.nearChain, 4), 170);
+  popup(S.nearChain > 1 ? 'Frôlé x' + S.nearChain : 'Frôlé !', p.x, p.y - 14*unit, '#FFFFFF');
+  S.nearFlash = 1; sfx.near(S.nearChain); buzz(8);
 }
 function burst(x, y, color, n, spd){
   for (let i=0;i<n;i++){ const a = Math.random()*TAU, v = (Math.random()*.8+.2)*spd*unit;
@@ -720,7 +740,7 @@ $('shopBtn').addEventListener('click', openShop);
 $('shopClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
 $('skins').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b || b.disabled) return;
-  if (b.dataset.equip){ equipped = b.dataset.equip; store.set('v2.skin', equipped); pendingBuy = null; renderShop(); }
+  if (b.dataset.equip){ equipped = b.dataset.equip; store.set('v2.skin', equipped); pendingBuy = null; sfx.equip(); buzz(10); renderShop(); }
   if (b.dataset.buy){ pendingBuy = b.dataset.buy; renderShop(); $('confirm').scrollIntoView({block:'nearest'}); }
 });
 $('confirmNo').addEventListener('click', () => { pendingBuy = null; renderShop(); });
@@ -737,6 +757,7 @@ $('confirmYes').addEventListener('click', () => {
 // Click sound on every button of the menus (not in game). Purchases have their own sound.
 document.addEventListener('click', e => {
   const b = e.target.closest('.overlay button, .tuto button'); if (!b || b.disabled || b.id === 'confirmYes') return;
+  if (b.dataset.equip) return;                   // equipping has its own sound
   if (['play', 'again', 'testGo', 'resume'].includes(b.id)) sfx.go(); else sfx.ui();
 });
 
@@ -860,6 +881,8 @@ const CHANGELOG = [
     "Nouveau : un didacticiel guide votre première partie, pas à pas.",
     "Nouvel écran « Comment jouer » sur l'accueil, avec toutes les règles et un bouton pour refaire le didacticiel.",
     "Le centre de la planète affiche seulement le nombre de tours.",
+    "Nouveau : passez tout près d'un astéroïde sans le toucher pour un « Frôlé ! ». Enchaînez-les pour faire monter le compteur, et retrouvez le total en fin de partie.",
+    "Un petit son quand vous équipez un skin dans la boutique.",
   ]},
   {v:'1.8', date:'22/11/2026', notes:[
     "Nouveautés : à chaque mise à jour, cette fenêtre vous montre ce qui a changé.",
@@ -1027,7 +1050,7 @@ function gameOver(){
   setTimeout(() => {
     mode = 'over'; ui.hud(false);
     $('finalScore').textContent = S.laps; $('overBest').textContent = best;
-    $('overShards').textContent = S.shards;
+    $('overShards').textContent = S.shards; $('overNear').textContent = S.near || 0;
     $('overTime').textContent = fmtTime(S.t);
     $('overTitle').textContent = testRun ? 'Fin du test' : 'Collision';
     $('newBest').hidden = !isBest; ui.show('over'); ui.stats();
@@ -1035,6 +1058,12 @@ function gameOver(){
 }
 function hop(){
   if (mode !== 'play') return;
+  // last-moment dodge: a rock on the orbit we leave would have hit within NEAR_TIME
+  for (const o of S.rocks){
+    if (o.passed || o.ghost || o.lane !== S.lane) continue;
+    const R = lanes[o.lane], half = (o.size*.8 + 6*unit)/R, ttc = (ahead(o.a) - half) / (S.omega + (o.w || 0));
+    if (ttc < NEAR_TIME && ahead(o.a) < Math.PI) o.nearArmed = true;
+  }
   S.lane = 1 - S.lane; S.campT = 0;
   if (S.tuto) tutoHop();
   S.r += (lanes[S.lane] - S.r) * 0.4; // first part of the jump happens on the tap itself, not on the next frame
@@ -1108,9 +1137,11 @@ function update(dt){
       }
       const op = pos(o.a, lanes[o.lane]);
       const fade = Math.min(1, (S.t - o.born)/.35);
-      if (!o.passed && !o.ghost && fade > .6 && Math.hypot(op.x-p.x, op.y-p.y) < o.size*.8 + 6*unit){ if (S.tuto) tutoHit(); else gameOver(); break; }
+      const d = Math.hypot(op.x-p.x, op.y-p.y), hitR = o.size*.8 + 6*unit;
+      if (!o.passed && !o.ghost && fade > .6 && d < hitR){ if (S.tuto) tutoHit(); else gameOver(); break; }
+      if (!o.passed && !o.ghost && fade > .6) o.minD = Math.min(o.minD ?? 1e9, d - hitR);   // closest it came, edge to edge
       const ah = ahead(o.a);
-      if (!o.passed && ah > o.prev + Math.PI) o.passed = true;
+      if (!o.passed && ah > o.prev + Math.PI){ o.passed = true; if (o.nearArmed || (o.minD !== undefined && o.minD < NEAR_GAP*unit)) nearMiss(o); }
       o.prev = ah;
     }
     S.rocks = S.rocks.filter(o => !(o.passed && ahead(o.a) < 5.4));
@@ -1140,6 +1171,7 @@ function update(dt){
     S.popups = S.popups.filter(u => u.life > 0);
     S.shake = Math.max(0, S.shake - dt*2.2);
     S.pulse = Math.max(0, S.pulse - dt*2);
+    S.nearFlash = Math.max(0, (S.nearFlash || 0) - dt*2.5);
     if (fx){ fx.t += dt; if (fx.t >= fx.dur && !fx.hold) fx = null; }
   }
 }
@@ -1254,6 +1286,10 @@ function draw(now){
   if (!S.dead){
     const p = pos();
     drawProbe(ctx, p.x, p.y, S.trail, skin(), now, unit);
+    if (S.nearFlash > 0){                          // near miss: a white ring bursting out of the probe
+      ctx.strokeStyle = `rgba(255,255,255,${S.nearFlash})`; ctx.lineWidth = 2.5*unit*S.nearFlash;
+      ctx.beginPath(); ctx.arc(p.x, p.y, (12 + (1 - S.nearFlash)*26)*unit, 0, TAU); ctx.stroke();
+    }
   }
 
   // particles
