@@ -72,6 +72,40 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 .dot{width:12px;height:12px;border-radius:50%;margin-top:3px;}
 .cta{font-family:var(--display);font-weight:800;font-size:1.2rem;letter-spacing:.08em;color:var(--void);background:var(--sun);border:0;border-radius:999px;padding:18px 46px;cursor:pointer;margin-top:6px;box-shadow:0 0 32px rgba(242,165,65,.35);}
 .cta:active{transform:scale(.97);}
+.profcard{max-width:440px;}
+.avatar{width:84px;height:84px;display:block;}
+.pname{font-family:var(--display);font-weight:800;font-size:1.5rem;margin-top:-6px;}
+.ranks{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;font-size:.8rem;}
+.ranks span{border-radius:999px;padding:5px 11px;background:rgba(191,243,255,.08);border:1px solid rgba(191,243,255,.22);}
+.ranks b{color:var(--shard);}
+.psec{width:100%;display:flex;flex-direction:column;gap:8px;text-align:left;}
+.psec h3{margin:0;font-family:var(--mono);font-weight:500;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--mist);display:flex;align-items:center;gap:8px;}
+.psec h3::after{content:"";flex:1;height:1px;background:rgba(154,163,217,.22);}
+.pgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.ptile{background:rgba(21,26,68,.62);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0;}
+.ptile.phero{grid-column:1/-1;flex-direction:row;align-items:center;justify-content:space-between;background:linear-gradient(90deg,rgba(242,165,65,.18),rgba(21,26,68,.62));border:1px solid rgba(242,165,65,.35);}
+.pv{font-family:var(--display);font-weight:800;font-size:1.3rem;font-variant-numeric:tabular-nums;}
+.phero .pv{font-size:1.9rem;color:var(--sun);}
+.pv.gold{color:var(--shard);}
+.pl{font-size:.72rem;color:var(--mist);line-height:1.3;}
+.phero .pl:last-child{text-align:right;}
+.plist{display:flex;flex-direction:column;}
+.prow{display:flex;justify-content:space-between;gap:10px;font-size:.86rem;padding:8px 2px;border-bottom:1px dashed rgba(154,163,217,.18);}
+.prow span{color:var(--mist);} .prow b{font-variant-numeric:tabular-nums;}
+.pskins{display:flex;gap:8px;flex-wrap:wrap;}
+.pskins canvas{width:38px;height:38px;border-radius:50%;background:rgba(21,26,68,.8);border:1px solid rgba(191,243,255,.18);}
+.pskins canvas.off{opacity:.28;}
+.pprog{display:flex;flex-direction:column;gap:6px;font-size:.8rem;color:var(--mist);}
+.pprog b{color:var(--ion);}
+.pbar{height:8px;border-radius:5px;background:rgba(191,243,255,.12);overflow:hidden;}
+.pbar i{display:block;height:100%;background:#FF7AC8;border-radius:5px;min-width:2px;}
+.psoon{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.psoon div{border:1px dashed rgba(154,163,217,.35);border-radius:14px;padding:10px 12px;font-size:.76rem;color:var(--mist);line-height:1.35;}
+.psoon b{display:block;color:var(--ion);font-size:.84rem;margin-bottom:2px;}
+.pfoot{font-size:.72rem;color:var(--mist);}
+.unlockcv{width:180px;height:180px;display:block;}
+.rarchip{font-size:.8rem;letter-spacing:.18em;text-transform:uppercase;border:1.5px solid;border-radius:999px;padding:4px 12px;}
+.shareimg{width:100%;max-width:320px;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.5);}
 .boardcard{max-width:440px;}
 .seg{display:flex;width:100%;border:1px solid rgba(191,243,255,.25);border-radius:999px;padding:3px;gap:3px;}
 .seg button{flex:1;font-family:var(--mono);font-size:.88rem;color:var(--mist);background:transparent;border:0;border-radius:999px;padding:9px 6px;cursor:pointer;}
@@ -185,7 +219,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
     <h1 id="title">ORBITE</h1>
     <p>Touchez l'écran pour changer d'orbite.</p>
     <button class="cta" id="play">JOUER</button>
-    <div class="duo"><button class="cta ghost" id="boardBtn">CLASSEMENT</button><button class="cta ghost" id="shopBtn">SKINS</button><button class="cta ghost" id="howBtn">COMMENT JOUER</button></div>
+    <div class="duo"><button class="cta ghost" id="boardBtn">CLASSEMENT</button><button class="cta ghost" id="profileBtn">PROFIL</button><button class="cta ghost" id="shopBtn">SKINS</button><button class="cta ghost" id="howBtn">COMMENT JOUER</button></div>
     <div class="stats"><div>Record<b id="menuBest">0</b></div><div>Moyenne<b id="menuAvg">0</b></div><div>Parties<b id="menuGames">0</b></div><div>Éclats<b id="menuGems">0</b></div></div>
     <button class="link version" id="newsBtn">Version <span id="verLabel"></span> · Nouveautés</button>
   </div>
@@ -239,6 +273,65 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
     <button class="cta" id="pseudoOk">VALIDER</button>
     <button class="link" id="pseudoLater">Plus tard</button>
     <p class="note">Seuls votre pseudo et vos scores sont envoyés. Aucune donnée personnelle.</p>
+  </div>
+</div>
+
+<div class="overlay" id="profile" hidden>
+  <div class="card profcard">
+    <div class="eyebrow">Profil</div>
+    <canvas class="avatar" id="profAvatar" aria-hidden="true"></canvas>
+    <div class="pname" id="profName"></div>
+    <div class="ranks" id="profRanks"></div>
+    <section class="psec"><h3>Performances</h3>
+      <div class="pgrid">
+        <div class="ptile phero"><div><div class="pl">Record</div><div class="pv" id="pBest">0 tours</div></div><div class="pl" id="pBestDate"></div></div>
+        <div class="ptile"><div class="pv" id="pChain">x0</div><div class="pl">Meilleure série de frôlements</div></div>
+        <div class="ptile"><div class="pv" id="pNearRun">0</div><div class="pl">Frôlements en une partie</div></div>
+        <div class="ptile"><div class="pv gold" id="pGemsRun">0 ◆</div><div class="pl">Éclats en une partie</div></div>
+        <div class="ptile"><div class="pv" id="pLongest">0:00</div><div class="pl">Plus longue partie</div></div>
+      </div>
+    </section>
+    <section class="psec"><h3>Progression</h3>
+      <div class="plist">
+        <div class="prow"><span>Parties jouées</span><b id="pGames">0</b></div>
+        <div class="prow"><span>Moyenne par partie</span><b id="pAvg">0 tours</b></div>
+        <div class="prow"><span>Tours cumulés</span><b id="pLaps">0</b></div>
+        <div class="prow"><span>Sauts cumulés</span><b id="pHops">0</b></div>
+        <div class="prow"><span>Frôlements cumulés</span><b id="pNear">0</b></div>
+        <div class="prow"><span>Éclats gagnés au total</span><b id="pGems">0 ◆</b></div>
+      </div>
+    </section>
+    <section class="psec"><h3>Collection</h3>
+      <div class="pskins" id="pSkins"></div>
+      <div class="pprog"><span>Skins : <b id="pSkinCount">1 / 7</b></span><span id="pMezen"></span><div class="pbar"><i id="pMezenBar"></i></div></div>
+    </section>
+    <section class="psec"><h3>Bientôt</h3>
+      <div class="psoon"><div><b>Défis du jour</b>Des défis renouvelés chaque jour</div><div><b>Skin secret</b>??? Atteindre une série de x…</div></div>
+    </section>
+    <div class="pfoot" id="profSince"></div>
+    <button class="link" id="profClose">Retour à l'accueil</button>
+  </div>
+</div>
+
+<div class="overlay" id="unlock" hidden>
+  <div class="card">
+    <div class="eyebrow" style="color:var(--shard)">Nouveau skin débloqué</div>
+    <canvas class="unlockcv" id="unlockCv" aria-hidden="true"></canvas>
+    <h2 id="unlockName"></h2>
+    <div class="rarchip" id="unlockRar"></div>
+    <button class="cta" id="unlockShare">PARTAGER</button>
+    <button class="link" id="unlockClose">Continuer</button>
+  </div>
+</div>
+
+<div class="overlay" id="sharebox" hidden>
+  <div class="card">
+    <div class="eyebrow">Partager</div>
+    <img class="shareimg" id="shareImg" alt="Image à partager">
+    <p class="note" id="shareHint"></p>
+    <button class="cta" id="shareGo">PARTAGER</button>
+    <button class="cta ghost" id="shareCopy">COPIER LE TEXTE</button>
+    <button class="link" id="shareClose">Fermer</button>
   </div>
 </div>
 
@@ -312,6 +405,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
     <div class="overrank" id="overRank" hidden></div>
     <button class="pill buy" id="overPseudo" hidden>Choisir un pseudo pour le classement</button>
     <button class="cta" id="again">REJOUER</button>
+    <button class="cta ghost" id="shareRun">PARTAGER</button>
     <button class="link" id="homeFromOver">Retour à l'accueil</button>
   </div>
 </div>
@@ -371,6 +465,8 @@ function recordRun(){
   st.bestTime    = Math.max(st.bestTime    || 0, Math.round(S.t));   // longest run (s)
   st.timeTotal   = (st.timeTotal || 0) + Math.round(S.t);            // total play time (s)
   st.since       = st.since || new Date().toISOString().slice(0, 10);
+  st.hops        = (st.hops || 0) + (S.hops || 0);                    // total jumps (2.1)
+  if (S.laps > (st.bestLapsSeen || 0)){ st.bestLapsSeen = S.laps; st.bestDate = new Date().toISOString().slice(0, 10); }   // date of the record
   store.set('v2.stats', st);
   const isBest = S.laps > best; if (isBest) best = S.laps;
   store.set('v2.games', games); store.set('v2.laps', lapsTotal); store.set('v2.gems', gemsTotal); store.set('v2.best', best);
@@ -630,7 +726,7 @@ function popup(text, x, y, color){ S.popups.push({text, x, y, life:1, color}); }
 
 // ---------- UI ----------
 const ui = {
-  show(id){ for (const k of ['menu','paused','over','test','shop','news','howto','board','pseudoBox']) $(k).hidden = k !== id; },
+  show(id){ for (const k of ['menu','paused','over','test','shop','news','howto','board','pseudoBox','profile','unlock','sharebox']) $(k).hidden = k !== id; },
   hud(on){ $('hud').hidden = !on; },
   score(){ $('sc').textContent = S.laps; $('hs').textContent = 'Record ' + Math.max(best, testRun || S.tuto ? 0 : S.laps); $('gm').textContent = '◆ ' + S.shards; },
   stats(){ $('menuBest').textContent = best; $('menuGames').textContent = games; $('menuGems').textContent = wallet;
@@ -825,7 +921,9 @@ function previewLoop(now){
   previewRaf = $('shop').hidden ? 0 : requestAnimationFrame(previewLoop);
 }
 function unlockBonus(){
-  for (const sk of SKINS) if (sk.unlockLaps && lapsTotal >= sk.unlockLaps && !owned.includes(sk.id)){ owned.push(sk.id); store.set('v2.owned', owned); }
+  for (const sk of SKINS) if (sk.unlockLaps && lapsTotal >= sk.unlockLaps && !owned.includes(sk.id)){
+    owned.push(sk.id); store.set('v2.owned', owned); setTimeout(() => celebrateSkin(sk.id), 300);
+  }
 }
 function openShop(){ pendingBuy = null; renderShop(); ui.show('shop'); if (!previewRaf) previewRaf = requestAnimationFrame(previewLoop); }
 $('shopBtn').addEventListener('click', openShop);
@@ -842,6 +940,8 @@ $('confirmYes').addEventListener('click', () => {
     wallet -= sk.price; owned.push(sk.id); equipped = sk.id;
     store.set('v2.wallet', wallet); store.set('v2.owned', owned); store.set('v2.skin', equipped);
     sfx.piggy(); buzz([10, 30, 10, 30, 40]);
+    renderShop(); setTimeout(() => celebrateSkin(sk.id), 700);   // after the piggy-bank sound
+    return;
   }
   renderShop();
 });
@@ -967,6 +1067,11 @@ $('tutoAgain').addEventListener('click', () => startTutorial('howto'));
 // ---------- versions & news ----------
 // Newest first. Texts are written for players (no tech talk) and are proofread before each release.
 const CHANGELOG = [
+  {v:'2.1', date:'25/11/2026', notes:[
+    "Nouveau : votre Profil, avec vos performances, votre progression, votre collection de skins et votre rang au classement.",
+    "Partagez vos parties depuis l'écran de fin, avec une image spéciale quand vous battez votre record.",
+    "Quand vous débloquez un skin, il s'affiche en grand et vous pouvez le partager.",
+  ]},
   {v:'2.0', date:'25/11/2026', notes:[
     "Nouveau : le classement en ligne ! Comparez vos meilleures parties en tours, en éclats et en série de frôlements, cette semaine ou depuis toujours.",
     "Choisissez votre pseudo : vos parties sont envoyées automatiquement, même jouées sans connexion (elles partent dès que vous êtes en ligne).",
@@ -1137,7 +1242,9 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) flus
 setTimeout(flushScores, 1500);
 
 // End of a run: rank of the week, or an invitation to pick a pseudo.
+let lastRunRank = null;
 async function showOverRank(){
+  lastRunRank = null;
   const out = $('overRank'), ask = $('overPseudo');
   out.hidden = true; ask.hidden = true;
   if (testRun) return;
@@ -1147,6 +1254,7 @@ async function showOverRank(){
   try {
     const rows = await rpc('get_leaderboard', {p_sort: 'laps', p_period: 'week', p_me: playerId, p_limit: 1});
     const me = rows.find(r => r.is_me);
+    if (me) lastRunRank = me.rank;
     if (me && mode === 'over'){ out.textContent = `${me.rank}${me.rank == 1 ? 'er' : 'e'} du classement cette semaine`; out.hidden = false; }
   } catch(e){}
 }
@@ -1254,6 +1362,183 @@ $('boardClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); }
 $('boardPeriod').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ boardPeriod = b.dataset.p; store.set('boardPeriod', boardPeriod); loadBoard(); } });
 $('boardSort').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b){ boardSort = b.dataset.s; store.set('boardSort', boardSort); loadBoard(); } });
 
+// ---------- profile ----------
+const fmtInt = n => Math.round(n || 0).toLocaleString('fr-FR');
+const fmtDate = iso => { if (!iso) return ''; const [y, m, d] = iso.split('-'); return `${d}/${m}/${y}`; };
+let animRaf = 0;
+// Animated skin previews (profile avatar, unlock screen): runs while one of them is visible.
+function animLoop(now){
+  const jobs = [['profile', 'profAvatar', equipped, 30], ['unlock', 'unlockCv', unlockSkinId, 17]];
+  let any = false;
+  for (const [ov, id, skId, scale] of jobs){
+    if ($(ov).hidden || !skId) continue; any = true;
+    const cvs = $(id), sk = SKINS.find(k => k.id === skId), dpr = Math.min(devicePixelRatio || 1, 2), w = cvs.clientWidth, h = cvs.clientHeight;
+    if (!w || !h || !sk) continue;
+    if (cvs.width !== Math.round(w*dpr)){ cvs.width = Math.round(w*dpr); cvs.height = Math.round(h*dpr); }
+    const c = cvs.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h);
+    const R = Math.min(w, h)*.34, x0 = w/2, y0 = h/2, u = R/scale*(sk.sprite ? .55 : 1), tr = [], a = now/800;   // the pixel portrait is much bigger than a probe
+    c.strokeStyle = 'rgba(154,163,217,.22)'; c.setLineDash([3, 5]); c.beginPath(); c.arc(x0, y0, R, 0, TAU); c.stroke(); c.setLineDash([]);
+    for (let i = 18; i >= 0; i--){ const b = a - i*.06; tr.push({x: x0 + Math.cos(b)*R, y: y0 + Math.sin(b)*R}); }
+    drawProbe(c, tr[tr.length-1].x, tr[tr.length-1].y, tr, sk, now, u);
+  }
+  animRaf = any ? requestAnimationFrame(animLoop) : 0;
+}
+function startAnim(){ if (!animRaf) animRaf = requestAnimationFrame(animLoop); }
+// Small static skin badge for the collection row.
+function drawSkinBadge(cvs, sk){
+  const dpr = Math.min(devicePixelRatio || 1, 2); cvs.width = cvs.height = Math.round(38*dpr);
+  const c = cvs.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0);
+  const tr = []; for (let i = 10; i >= 0; i--){ const b = -1.1 - i*.12; tr.push({x: 19 + Math.cos(b)*11, y: 22 + Math.sin(b)*11}); }
+  drawProbe(c, 19, 19, sk.sprite ? [] : tr.map(p => ({x: p.x - 8, y: p.y + 6})), sk, 0, sk.sprite ? .55 : .9);
+}
+async function openProfile(){
+  unlockBonus();
+  const st = store.get('v2.stats', {});
+  $('profName').textContent = pseudo || 'Sans pseudo';
+  $('pBest').textContent = fmtInt(best) + ' tours';
+  $('pBestDate').textContent = st.bestDate && st.bestLapsSeen === best ? 'le ' + fmtDate(st.bestDate) : '';
+  $('pChain').textContent = 'x' + (st.bestChain || 0);
+  $('pNearRun').textContent = fmtInt(st.bestNearRun);
+  $('pGemsRun').textContent = fmtInt(st.bestGemsRun) + ' ◆';
+  $('pLongest').textContent = fmtTime(st.bestTime || 0).replace(/\.\d$/, '');
+  $('pGames').textContent = fmtInt(games);
+  $('pAvg').textContent = (games ? fmtInt(lapsTotal/games) : 0) + ' tours';
+  $('pLaps').textContent = fmtInt(lapsTotal);
+  $('pHops').textContent = fmtInt(st.hops);
+  $('pNear').textContent = fmtInt(nearTotal);
+  $('pGems').textContent = fmtInt(gemsTotal) + ' ◆';
+  const box = $('pSkins'); box.replaceChildren();
+  for (const sk of SKINS){ const cv = document.createElement('canvas'); cv.title = sk.name; if (!owned.includes(sk.id)) cv.className = 'off'; box.append(cv); drawSkinBadge(cv, sk); }
+  $('pSkinCount').textContent = `${owned.length} / ${SKINS.length}`;
+  const mz = SKINS.find(k => k.unlockLaps), done = Math.min(lapsTotal, mz.unlockLaps);
+  $('pMezen').innerHTML = ''; const lab = document.createElement('span'); lab.append('Mezen : '); const bb = document.createElement('b');
+  bb.textContent = owned.includes(mz.id) ? 'débloqué' : `${fmtInt(done)} / ${fmtInt(mz.unlockLaps)} tours`; lab.append(bb); $('pMezen').append(lab);
+  $('pMezenBar').style.width = (owned.includes(mz.id) ? 100 : done/mz.unlockLaps*100).toFixed(2) + '%';
+  $('profSince').textContent = 'Statistiques détaillées depuis le ' + fmtDate(st.since || new Date().toISOString().slice(0, 10));
+  const rk = $('profRanks'); rk.replaceChildren();
+  if (!pseudo){ const b = document.createElement('button'); b.className = 'pill buy'; b.textContent = 'Choisir un pseudo pour le classement'; b.addEventListener('click', () => openPseudo('menu')); rk.append(b); }
+  ui.show('profile'); startAnim();
+  if (pseudo){
+    const span = (label, v) => { const x = document.createElement('span'); x.append(label + ' '); const b = document.createElement('b'); b.textContent = v; x.append(b); return x; };
+    try {
+      await flushScores();
+      const [w, a] = await Promise.all([rpc('get_leaderboard', {p_sort: 'laps', p_period: 'week', p_me: playerId, p_limit: 1}), rpc('get_leaderboard', {p_sort: 'laps', p_period: 'all', p_me: playerId, p_limit: 1})]);
+      const me = rows => rows.find(r => r.is_me); const mw = me(w), ma = me(a);
+      rk.replaceChildren(span('Cette semaine', mw ? mw.rank + (mw.rank == 1 ? 'er' : 'e') : '—'), span('Tous les temps', ma ? ma.rank + (ma.rank == 1 ? 'er' : 'e') : '—'));
+    } catch(e){ rk.replaceChildren(span('Classement', 'hors ligne')); }
+  }
+}
+$('profileBtn').addEventListener('click', openProfile);
+$('profClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
+
+// ---------- new skin celebration ----------
+let unlockSkinId = null, unlockBack = 'shop';
+function celebrateSkin(id){
+  const sk = SKINS.find(k => k.id === id); if (!sk) return;
+  unlockSkinId = id; unlockBack = !$('shop').hidden ? 'shop' : 'menu';
+  $('unlockName').textContent = sk.name;
+  const r = $('unlockRar'); r.textContent = sk.rarity; r.style.color = r.style.borderColor = RARITY_COL[sk.rarity];
+  ui.show('unlock'); startAnim(); buzz([10, 40, 10]);
+}
+$('unlockClose').addEventListener('click', () => { if (unlockBack === 'shop'){ renderShop(); ui.show('shop'); if (!previewRaf) previewRaf = requestAnimationFrame(previewLoop); } else ui.show('menu'); });
+$('unlockShare').addEventListener('click', () => openShare('skin', {skin: unlockSkinId}, 'unlock'));
+
+// ---------- sharing ----------
+// A picture of the run (or of the new skin) is drawn first and previewed; the second tap opens the phone's
+// share sheet (it has to happen directly inside a tap on iPhone). Without a share sheet: copy the text.
+const GAME_URL = 'https://welleethan-dot.github.io/orbite/';
+let shareFile = null, shareText = '', shareBack = 'over', shareUrl = null;
+if (!CanvasRenderingContext2D.prototype.roundRect){                  // older iPhones
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r){
+    this.moveTo(x + r, y); this.arcTo(x + w, y, x + w, y + h, r); this.arcTo(x + w, y + h, x, y + h, r);
+    this.arcTo(x, y + h, x, y, r); this.arcTo(x, y, x + w, y, r); this.closePath();
+  };
+}
+async function shareImage(kind, d){
+  try { await Promise.all([document.fonts.load('800 100px Unbounded'), document.fonts.load('700 40px "JetBrains Mono"')]); } catch(e){}
+  const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d');
+  const rec = kind === 'run' && d.record, gold = '#FFD66B', accent = kind === 'skin' ? RARITY_COL[SKINS.find(k => k.id === d.skin).rarity] : rec ? gold : COL.ion;
+  const bg = c.createRadialGradient(W/2, H*.42, 0, W/2, H*.42, H*.8); bg.addColorStop(0, rec ? '#2A2350' : COL.void2); bg.addColorStop(1, COL.void);
+  c.fillStyle = bg; c.fillRect(0, 0, W, H);
+  let seed = 11; const rnd = () => (seed = (seed*16807) % 2147483647)/2147483647;
+  for (let i = 0; i < 160; i++){ c.globalAlpha = .2 + rnd()*.6; c.fillStyle = COL.ion; c.beginPath(); c.arc(rnd()*W, rnd()*H, rnd()*2.4 + .4, 0, TAU); c.fill(); }
+  c.globalAlpha = 1;
+  if (rec){                                        // record: golden rays and confetti
+    c.save(); c.translate(W/2, 520);
+    for (let i = 0; i < 24; i++){ c.rotate(TAU/24); const g = c.createLinearGradient(0, 0, 0, -700); g.addColorStop(0, 'rgba(255,214,107,.22)'); g.addColorStop(1, 'rgba(255,214,107,0)'); c.fillStyle = g; c.beginPath(); c.moveTo(-26, 0); c.lineTo(26, 0); c.lineTo(0, -700); c.fill(); }
+    c.restore();
+    for (let i = 0; i < 70; i++){ c.save(); c.translate(rnd()*W, rnd()*H*.75); c.rotate(rnd()*TAU); c.fillStyle = ['#FFD66B','#F2A541','#BFF3FF','#FF7AC8'][i % 4]; c.globalAlpha = .75; c.fillRect(-7, -3, 14, 6); c.restore(); }
+    c.globalAlpha = 1;
+  }
+  // frame
+  c.strokeStyle = hexA(accent, rec || kind === 'skin' ? .9 : .35); c.lineWidth = rec ? 10 : 4; c.beginPath(); c.roundRect(36, 36, W - 72, H - 72, 48); c.stroke();
+  c.textAlign = 'center'; c.textBaseline = 'alphabetic';
+  // title
+  const tg = c.createLinearGradient(0, 120, 0, 210); tg.addColorStop(0, COL.ion); tg.addColorStop(1, COL.mist);
+  c.fillStyle = tg; c.font = '800 96px Unbounded, sans-serif'; c.fillText('ORBITE', W/2, 200);
+  // orbit scene
+  const cx = W/2, cy = kind === 'skin' ? 640 : 560, R = 230;
+  c.lineWidth = 3; c.setLineDash([10, 18]); c.strokeStyle = 'rgba(154,163,217,.35)';
+  for (const r of [R/1.55, R]){ c.beginPath(); c.arc(cx, cy, r, 0, TAU); c.stroke(); }
+  c.setLineDash([]);
+  const sk = SKINS.find(k => k.id === (kind === 'skin' ? d.skin : equipped)) || SKINS[0];
+  if (kind === 'skin'){                              // the skin is the star: big, alone on its orbit
+    const halo = c.createRadialGradient(cx, cy, 0, cx, cy, 260); halo.addColorStop(0, hexA(accent, .28)); halo.addColorStop(1, hexA(accent, 0));
+    c.fillStyle = halo; c.beginPath(); c.arc(cx, cy, 260, 0, TAU); c.fill();
+    const tr = []; for (let i = 0; i <= 26; i++){ const t = i/26; tr.push({x: cx - 400*(1 - t), y: cy - 170*(1 - t)*(1 - t)}); }   // trail sweeping in from the left
+    drawProbe(c, cx, cy, tr, sk, 1200, sk.sprite ? 9 : 11);
+  } else {
+    const pg = c.createRadialGradient(cx - 30, cy - 34, 8, cx, cy, 88); pg.addColorStop(0, '#FFE2A8'); pg.addColorStop(.45, COL.sun); pg.addColorStop(1, '#B4482A');
+    c.fillStyle = pg; c.beginPath(); c.arc(cx, cy, 86, 0, TAU); c.fill();
+    const tr = []; for (let i = 22; i >= 0; i--){ const b = -.75 - i*.07; tr.push({x: cx + Math.cos(b)*R, y: cy + Math.sin(b)*R}); }
+    drawProbe(c, tr[tr.length-1].x, tr[tr.length-1].y, tr, sk, 1200, sk.sprite ? 4.2 : 3.4);
+  }
+  if (kind === 'run'){
+    c.fillStyle = COL.void; c.font = '800 64px Unbounded, sans-serif'; c.textBaseline = 'middle'; c.fillText(String(d.laps), cx, cy + 4); c.textBaseline = 'alphabetic';
+    if (rec){ c.fillStyle = gold; c.font = '800 54px Unbounded, sans-serif'; c.fillText('NOUVEAU RECORD', W/2, 900); }
+    c.fillStyle = rec ? gold : COL.ion; c.font = '800 150px Unbounded, sans-serif'; c.fillText(String(d.laps), W/2, rec ? 1050 : 990);
+    c.fillStyle = COL.mist; c.font = '700 40px "JetBrains Mono", monospace'; c.fillText('TOURS', W/2, rec ? 1100 : 1045);
+    const bits = [d.gems + ' ◆'];
+    if (d.chain > 1) bits.push('série x' + d.chain);
+    if (d.rank) bits.push(d.rank + (d.rank == 1 ? 'er' : 'e') + ' cette semaine');
+    c.fillStyle = COL.ion; c.font = '700 36px "JetBrains Mono", monospace'; c.fillText(bits.join('  ·  '), W/2, rec ? 1165 : 1120);
+    if (pseudo){ c.fillStyle = COL.mist; c.font = '500 32px "JetBrains Mono", monospace'; c.fillText('par ' + pseudo, W/2, rec ? 1215 : 1175); }
+  } else {
+    c.fillStyle = gold; c.font = '800 50px Unbounded, sans-serif'; c.fillText('NOUVEAU SKIN', W/2, 330);
+    c.fillStyle = COL.ion; c.font = '800 110px Unbounded, sans-serif'; c.fillText(sk.name, W/2, 1010);
+    c.font = '700 40px "JetBrains Mono", monospace'; const label = sk.rarity.toUpperCase(), tw = c.measureText(label).width + 60;
+    c.strokeStyle = accent; c.lineWidth = 4; c.beginPath(); c.roundRect(W/2 - tw/2, 1045, tw, 70, 35); c.stroke();
+    c.fillStyle = accent; c.fillText(label, W/2, 1094);
+    if (pseudo){ c.fillStyle = COL.mist; c.font = '500 32px "JetBrains Mono", monospace'; c.fillText('débloqué par ' + pseudo, W/2, 1170); }
+  }
+  c.fillStyle = COL.sun; c.font = '700 34px "JetBrains Mono", monospace'; c.fillText('welleethan-dot.github.io/orbite', W/2, H - 80);
+  return await new Promise(res => cv.toBlob(res, 'image/png'));
+}
+async function openShare(kind, d, back){
+  shareBack = back; $('shareGo').disabled = true; $('shareHint').textContent = 'Préparation de l\'image…';
+  if (shareUrl){ URL.revokeObjectURL(shareUrl); shareUrl = null; }
+  $('shareImg').removeAttribute('src'); ui.show('sharebox');
+  const blob = await shareImage(kind, d);
+  shareFile = new File([blob], kind === 'skin' ? 'orbite-skin.png' : 'orbite-partie.png', {type: 'image/png'});
+  shareUrl = URL.createObjectURL(blob); $('shareImg').src = shareUrl;
+  if (kind === 'skin'){ const sk = SKINS.find(k => k.id === d.skin); shareText = `J'ai débloqué le skin ${sk.name} (${sk.rarity}) sur Orbite ! ${GAME_URL}`; }
+  else shareText = d.record ? `Nouveau record sur Orbite : ${d.laps} tours ! Tu fais mieux ? ${GAME_URL}` : `J'ai fait ${d.laps} tours sur Orbite. Tu fais mieux ? ${GAME_URL}`;
+  const canFiles = !!(navigator.canShare && navigator.canShare({files: [shareFile]}));
+  $('shareGo').hidden = !navigator.share; $('shareGo').disabled = false;
+  $('shareHint').textContent = navigator.share ? (canFiles ? '' : 'Votre appareil partagera le texte et le lien.') : 'Le partage n\'est pas disponible ici : appui long sur l\'image pour l\'enregistrer, ou copiez le texte.';
+}
+$('shareGo').addEventListener('click', async () => {
+  const data = {text: shareText};
+  if (shareFile && navigator.canShare && navigator.canShare({files: [shareFile]})) data.files = [shareFile]; else data.url = GAME_URL;
+  try { await navigator.share(data); } catch(e){}
+});
+$('shareCopy').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(shareText); $('shareHint').textContent = 'Texte copié.'; }
+  catch(e){ $('shareHint').textContent = shareText; }
+});
+$('shareClose').addEventListener('click', () => { if (shareBack === 'unlock'){ ui.show('unlock'); startAnim(); } else ui.show(shareBack); });
+$('shareRun').addEventListener('click', () => openShare('run', {laps: S.laps, gems: S.shards, chain: S.bestChain || 0, record: !$('newBest').hidden, rank: lastRunRank}, 'over'));
+
 // ---------- hidden test mode ----------
 let testRun = null;                              // {lap, kind} while a test run is active
 let testCfg = store.get('test', {lap: 29, kind: 'random'});
@@ -1289,7 +1574,7 @@ $('testClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); })
 // test helpers for the shop (hidden mode only)
 $('addGems').addEventListener('click', () => { wallet += 1000; store.set('v2.wallet', wallet); $('addGems').textContent = '+1 000 ◆ (solde ' + fmtN(wallet) + ')'; });
 $('unlockMezen').addEventListener('click', () => {
-  if (!owned.includes('mezen')){ owned.push('mezen'); store.set('v2.owned', owned); }
+  if (!owned.includes('mezen')){ owned.push('mezen'); store.set('v2.owned', owned); setTimeout(() => celebrateSkin('mezen'), 200); }
   $('unlockMezen').textContent = 'Mezen débloqué';
 });
 $('resetSkins').addEventListener('click', () => {
@@ -1335,6 +1620,7 @@ function hop(){
     if (ttc < NEAR_TIME && ahead(o.a) < Math.PI) o.nearArmed = true;
   }
   S.lane = 1 - S.lane; S.campT = 0;
+  if (!S.tuto) S.hops = (S.hops || 0) + 1;
   if (S.tuto) tutoHop();
   S.r += (lanes[S.lane] - S.r) * 0.4; // first part of the jump happens on the tap itself, not on the next frame
   sfx.hop(S.lane === 1); buzz(8);
