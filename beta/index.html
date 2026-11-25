@@ -1,0 +1,1556 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Orbite">
+<meta name="description" content="Jeu d'arcade à une touche : sautez d'une orbite à l'autre pour éviter les astéroïdes.">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="../icons/icon-192.png">
+<title>Orbite (test 2.0)</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0A0C22">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one full-screen canvas (space), HUD pinned to the safe-area corners, centered overlay cards for menu / pause / game over. Single deliberate dark look. */
+:root{
+  --void:#0A0C22;
+  --void-2:#151A44;
+  --sun:#F2A541;
+  --ion:#BFF3FF;
+  --rock:#FF4D6D;
+  --shard:#FFD66B;
+  --mist:#9AA3D9;
+  --display:"Unbounded", "Arial Black", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme:dark;
+}
+[hidden]{display:none!important;}
+html{font-size:clamp(16px, 4.4vw, 19px);}
+html,body{height:100%;margin:0;overscroll-behavior:none;}
+body{-webkit-touch-callout:none;}
+body{background:var(--void);color:var(--ion);overflow:hidden;font-family:var(--mono);-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+#stage{position:fixed;inset:0;}
+canvas{display:block;width:100%;height:100%;touch-action:none;}
+.hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+  padding-top:calc(env(safe-area-inset-top,0px) + 14px);
+  padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));pointer-events:none;}
+.score{display:flex;flex-direction:column;gap:2px;}
+.score b{font-family:var(--display);font-weight:800;font-size:2.9rem;line-height:1;font-variant-numeric:tabular-nums;}
+.score .gems{color:var(--shard);}
+.score span{font-size:.85rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mist);font-variant-numeric:tabular-nums;}
+.btns{display:flex;gap:8px;pointer-events:auto;}
+.icon{width:52px;height:52px;border-radius:50%;border:1px solid rgba(191,243,255,.25);background:rgba(21,26,68,.6);color:var(--ion);display:grid;place-items:center;cursor:pointer;padding:0;}
+.icon:focus-visible,.cta:focus-visible{outline:2px solid var(--shard);outline-offset:3px;}
+.icon svg{width:24px;height:24px;}
+.overlay{position:fixed;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;display:grid;justify-items:center;align-items:start;padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));padding-top:calc(env(safe-area-inset-top,0px) + 20px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 20px);
+  background:rgba(10,12,34,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
+.card{max-width:360px;width:100%;margin-block:auto;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;}
+.eyebrow{font-size:.85rem;letter-spacing:.24em;text-transform:uppercase;color:var(--sun);}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2.8rem,14vw,4.2rem);letter-spacing:.04em;margin:0;line-height:1;text-wrap:balance;
+  background:linear-gradient(180deg,var(--ion),var(--mist));-webkit-background-clip:text;background-clip:text;color:transparent;}
+h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wrap:balance;}
+.stepper{display:flex;align-items:center;gap:14px;}
+.stepper input{width:4.2ch;text-align:center;font-family:var(--display);font-weight:800;font-size:2.4rem;color:var(--ion);background:transparent;border:0;border-bottom:2px solid rgba(191,243,255,.3);padding:2px 0;-moz-appearance:textfield;font-variant-numeric:tabular-nums;}
+.stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.stepper input:focus-visible{outline:none;border-bottom-color:var(--shard);}
+.stepper .icon{font-size:1.4rem;font-family:var(--mono);}
+.chips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;}
+.chip{font-family:var(--mono);font-size:.95rem;color:var(--ion);background:rgba(21,26,68,.6);border:1px solid rgba(191,243,255,.25);border-radius:999px;padding:8px 14px;cursor:pointer;}
+.chip[aria-pressed="true"]{background:var(--ion);color:var(--void);border-color:var(--ion);}
+.chip:focus-visible,.link:focus-visible{outline:2px solid var(--shard);outline-offset:2px;}
+.link{background:none;border:0;color:var(--mist);font-family:var(--mono);font-size:.82rem;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:8px;font-size:.95rem;}
+.note{font-size:.85rem !important;}
+.testtag{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--shard);}
+#title{cursor:default;}
+.card p{margin:0;color:var(--mist);line-height:1.5;font-size:1rem;max-width:30ch;}
+.rules{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;text-align:left;font-size:.95rem;line-height:1.35;color:var(--mist);}
+.dot{width:12px;height:12px;border-radius:50%;margin-top:3px;}
+.cta{font-family:var(--display);font-weight:800;font-size:1.2rem;letter-spacing:.08em;color:var(--void);background:var(--sun);border:0;border-radius:999px;padding:18px 46px;cursor:pointer;margin-top:6px;box-shadow:0 0 32px rgba(242,165,65,.35);}
+.cta:active{transform:scale(.97);}
+.boardcard{max-width:440px;}
+.seg{display:flex;width:100%;border:1px solid rgba(191,243,255,.25);border-radius:999px;padding:3px;gap:3px;}
+.seg button{flex:1;font-family:var(--mono);font-size:.88rem;color:var(--mist);background:transparent;border:0;border-radius:999px;padding:9px 6px;cursor:pointer;}
+.seg button[aria-pressed="true"]{background:var(--ion);color:var(--void);font-weight:700;}
+.seg button:focus-visible{outline:2px solid var(--shard);outline-offset:2px;}
+.lbnote{font-size:.75rem;color:var(--mist);letter-spacing:.06em;margin-top:-4px;}
+.lb{list-style:none;margin:0;padding:0;width:100%;display:flex;flex-direction:column;gap:6px;text-align:left;}
+.lb li{display:grid;grid-template-columns:2.2em minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:10px;align-items:center;padding:9px 12px;border-radius:12px;background:rgba(21,26,68,.55);border:1px solid transparent;}
+.lb li.me{border-color:var(--sun);background:rgba(242,165,65,.1);}
+.lb li.sep{margin-top:6px;}
+.lb .rk{grid-column:1;grid-row:1 / span 2;font-family:var(--display);font-weight:800;font-size:1.05rem;color:var(--mist);text-align:center;font-variant-numeric:tabular-nums;}
+.lb li.r1 .rk{color:#FFD66B;} .lb li.r2 .rk{color:#D9DEF2;} .lb li.r3 .rk{color:#E0A068;}
+.lb .nm{grid-column:2;grid-row:1;font-weight:700;color:var(--ion);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lb .val{grid-column:3;grid-row:1 / span 2;text-align:right;font-family:var(--display);font-weight:800;font-size:1.15rem;color:var(--ion);font-variant-numeric:tabular-nums;}
+.lb small{grid-column:2;grid-row:2;font-size:.72rem;color:var(--mist);font-variant-numeric:tabular-nums;}
+.lbmsg{font-size:.9rem;color:var(--mist);min-height:1em;}
+.lbme{font-size:.85rem;color:var(--mist);display:flex;flex-wrap:wrap;gap:6px 10px;justify-content:center;align-items:center;}
+.lbme b{color:var(--ion);}
+.field{width:100%;font-family:var(--mono);font-size:1.1rem;color:var(--ion);background:rgba(21,26,68,.7);border:1.5px solid rgba(191,243,255,.3);border-radius:12px;padding:12px 14px;text-align:center;}
+.field:focus{outline:none;border-color:var(--shard);}
+.err{color:var(--rock);font-size:.88rem;min-height:1.2em;}
+.overrank{font-family:var(--mono);font-size:.95rem;color:var(--sun);}
+.duo{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;}
+.duo .cta.ghost{padding:12px 20px;font-size:.88rem;}
+.tuto{position:fixed;left:max(16px, env(safe-area-inset-left,0px));right:max(16px, env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 16px);margin-inline:auto;max-width:440px;
+  background:rgba(10,12,34,.86);border:1px solid rgba(191,243,255,.25);border-radius:18px;padding:11px 14px 6px;display:flex;flex-direction:column;gap:4px;
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);text-align:left;}
+.banner.hold{animation:bannerHold .5s ease forwards;}
+@keyframes bannerHold{0%{opacity:0;transform:translateY(-50%) scale(.85)}60%{opacity:1;transform:translateY(-50%) scale(1.06)}100%{opacity:1;transform:translateY(-50%) scale(1)}}
+.tuto-step{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--sun);}
+.tuto p{margin:0;color:var(--ion);font-size:.92rem;line-height:1.35;}
+.tuto-prog{font-size:.85rem;color:var(--shard);min-height:1.1em;font-variant-numeric:tabular-nums;}
+.tuto-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.tuto-row .pill{margin-top:0;}
+.tuto-row .link{margin-left:auto;}
+.score b.glow{animation:scoreGlow .9s ease-in-out infinite alternate;}
+@keyframes scoreGlow{from{text-shadow:0 0 0 transparent}to{text-shadow:0 0 18px var(--sun);color:var(--sun)}}
+.version{font-size:.8rem;opacity:.85;}
+.newsdate{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mist);margin-top:-6px;}
+.notes{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;text-align:left;width:100%;}
+.notes li{position:relative;padding-left:22px;color:var(--ion);font-size:1rem;line-height:1.4;}
+.notes li::before{content:"";position:absolute;left:4px;top:.5em;width:8px;height:8px;border-radius:2px;background:var(--sun);transform:rotate(45deg);}
+.history{width:100%;display:flex;flex-direction:column;gap:16px;text-align:left;border-top:1px solid rgba(191,243,255,.15);padding-top:14px;}
+.history h3{margin:0;font-family:var(--display);font-weight:800;font-size:1rem;color:var(--ion);}
+.history h3 span{font-family:var(--mono);font-weight:500;font-size:.75rem;color:var(--mist);margin-left:8px;letter-spacing:.08em;}
+.history .notes li{font-size:.88rem;color:var(--mist);}
+.history .notes li::before{background:var(--mist);width:6px;height:6px;}
+.updatebar{width:100%;
+  font-family:var(--mono);font-size:.85rem;color:var(--void);background:var(--sun);border:0;border-radius:999px;padding:12px 18px;cursor:pointer;box-shadow:0 0 24px rgba(242,165,65,.3);text-align:center;}
+.updatebar b{display:block;margin-top:2px;font-weight:700;text-decoration:underline;text-underline-offset:2px;}
+.updatebar:focus-visible{outline:2px solid var(--ion);outline-offset:3px;}
+.cta.ghost{background:transparent;color:var(--sun);border:2px solid var(--sun);box-shadow:none;font-size:1rem;padding:12px 34px;margin-top:0;}
+.shopcard{max-width:440px;}
+.wallet{font-family:var(--display);font-weight:800;font-size:1.4rem;color:var(--shard);}
+.wallet b{font-variant-numeric:tabular-nums;}
+.skins{display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:10px;width:100%;}
+.skin{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px 12px;border-radius:16px;border:1px solid color-mix(in srgb, var(--rar) 45%, transparent);background:rgba(21,26,68,.55);min-width:0;}
+.skin.on{border-color:var(--rar);box-shadow:0 0 0 1px var(--rar) inset;}
+.skin canvas{width:100%;height:84px;display:block;}
+.skin b{font-family:var(--display);font-weight:800;font-size:1rem;}
+.skin .rar{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--rar);}
+.skin small{font-size:.72rem;color:var(--mist);line-height:1.35;min-height:1em;text-align:center;}
+.pill{font-family:var(--mono);font-weight:700;font-size:.9rem;color:var(--ion);background:rgba(191,243,255,.08);border:1px solid rgba(191,243,255,.3);border-radius:999px;padding:8px 14px;cursor:pointer;margin-top:4px;}
+.skin .bar{display:block;height:5px;border-radius:3px;background:rgba(191,243,255,.15);margin-top:5px;overflow:hidden;}
+.skin .bar i{display:block;height:100%;background:var(--rar);min-width:2px;}
+.pill.buy{background:var(--shard);color:var(--void);border-color:var(--shard);}
+.pill:disabled{opacity:.55;cursor:default;}
+.pill:focus-visible{outline:2px solid var(--shard);outline-offset:2px;}
+.confirm{width:100%;border:1px solid var(--shard);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px;align-items:center;background:rgba(255,214,107,.06);}
+.confirm .row{display:flex;gap:10px;}
+.big{font-family:var(--display);font-weight:800;font-size:5.2rem;line-height:1;font-variant-numeric:tabular-nums;color:var(--ion);}
+.stats{display:flex;flex-wrap:wrap;justify-content:center;gap:12px 22px;font-size:.85rem;color:var(--mist);letter-spacing:.1em;text-transform:uppercase;}
+.stats b{display:block;font-size:1.6rem;color:var(--ion);font-family:var(--display);letter-spacing:0;}
+.new{color:var(--shard);font-size:.95rem;letter-spacing:.2em;text-transform:uppercase;}
+.chrono{display:flex;flex-direction:column;align-items:center;gap:4px;padding-top:6px;}
+.chrono b{font-family:var(--mono);font-weight:700;font-size:1.4rem;font-variant-numeric:tabular-nums;letter-spacing:.02em;}
+.banner{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 120px);transform:translateY(-50%);text-align:center;pointer-events:none;font-family:var(--display);font-weight:800;font-size:clamp(1.15rem,5.6vw,1.65rem);line-height:1.1;letter-spacing:.05em;text-transform:uppercase;text-wrap:balance;padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));animation:bannerIn 1.9s ease forwards;}
+@keyframes bannerIn{0%{opacity:0;transform:translateY(-50%) scale(.85)}10%{opacity:1;transform:translateY(-50%) scale(1.06)}18%{transform:translateY(-50%) scale(1)}78%{opacity:1}100%{opacity:0;transform:translateY(-50%) scale(1)}}
+@media (prefers-reduced-motion: reduce){.banner{animation:bannerFade 1.9s linear forwards}@keyframes bannerFade{0%,80%{opacity:1}100%{opacity:0}}}
+.hint{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);text-align:center;font-size:.9rem;letter-spacing:.16em;text-transform:uppercase;color:var(--mist);pointer-events:none;transition:opacity .6s;}
+@media (prefers-reduced-motion: reduce){.cta{box-shadow:none;}}
+</style>
+
+</head>
+<body>
+<div id="stage"><canvas id="c" aria-label="Zone de jeu Orbite"></canvas></div>
+
+<div class="hud" id="hud" hidden>
+  <div class="score"><b id="sc">0</b><span id="hs">Record 0</span><span id="gm" class="gems">◆ 0</span></div>
+  <div class="chrono"><b id="clock">0:00.0</b><span class="testtag" id="testTag" hidden></span></div>
+  <div class="btns">
+    <button class="icon" id="mute" aria-label="Couper le son"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/><path id="wave" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+    <button class="icon" id="pauseBtn" aria-label="Pause"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+  </div>
+</div>
+<div class="banner" id="banner" hidden></div>
+<div class="tuto" id="tuto" hidden>
+  <div class="tuto-step" id="tutoStep"></div>
+  <p id="tutoText"></p>
+  <div class="tuto-prog" id="tutoProg"></div>
+  <div class="tuto-row"><button class="pill buy" id="tutoNext" hidden>Suivant</button><button class="link" id="tutoSkip">Passer</button></div>
+</div>
+<div class="hint" id="hint" hidden>Touchez l'écran pour changer d'orbite</div>
+
+<div class="overlay" id="menu">
+  <div class="card">
+    <div class="eyebrow">Version de test · 2.0</div>
+    <h1 id="title">ORBITE</h1>
+    <p>Touchez l'écran pour changer d'orbite.</p>
+    <button class="cta" id="play">JOUER</button>
+    <div class="duo"><button class="cta ghost" id="boardBtn">CLASSEMENT</button><button class="cta ghost" id="shopBtn">SKINS</button><button class="cta ghost" id="howBtn">COMMENT JOUER</button></div>
+    <div class="stats"><div>Record<b id="menuBest">0</b></div><div>Moyenne<b id="menuAvg">0</b></div><div>Parties<b id="menuGames">0</b></div><div>Éclats<b id="menuGems">0</b></div></div>
+    <button class="link version" id="newsBtn">Version <span id="verLabel"></span> · Nouveautés</button>
+  </div>
+</div>
+
+<div class="overlay" id="howto" hidden>
+  <div class="card">
+    <div class="eyebrow">Comment jouer</div>
+    <h2>Les règles</h2>
+    <div class="rules">
+      <span class="dot" style="background:var(--ion)"></span><span>Touchez l'écran pour faire sauter la sonde d'une orbite à l'autre</span>
+      <span class="dot" style="background:var(--rock)"></span><span>Évitez les astéroïdes</span>
+      <span class="dot" style="background:var(--ion)"></span><span>Votre score : le nombre de tours</span>
+      <span class="dot" style="background:var(--sun)"></span><span>Classement en ligne : choisissez un pseudo, vos parties y sont envoyées automatiquement</span>
+      <span class="dot" style="background:#FFFFFF"></span><span>Esquivez un astéroïde au tout dernier moment : c'est un frôlement. Enchaînez-les pour faire monter le multiplicateur (x2, x3…)</span>
+      <span class="dot" style="background:var(--shard)"></span><span>Un éclat ◆ apparaît tous les 5 tours, à dépenser en skins</span>
+      <span class="dot" style="background:transparent;border:2px solid var(--shard)"></span><span>Les éclats rares, collés à un astéroïde, valent 3 ◆</span>
+      <span class="dot" style="background:#FF4D6D"></span><span>30 tours : pluie d'astéroïdes, ils arrivent plus souvent</span>
+      <span class="dot" style="background:#19E6D2"></span><span>40 tours : astéroïdes rapides, repérez leur traînée</span>
+      <span class="dot" style="background:#B46BFF"></span><span>50 tours : inversions du sens de rotation, puis tous les 8 tours</span>
+      <span class="dot" style="background:#FFD66B"></span><span>Nouveau record : tout passe à l'or</span>
+      <span class="dot" style="background:conic-gradient(#FF4D6D,#19E6D2,#B46BFF,#FFD66B,#FF4D6D)"></span><span>À chaque palier, son nom s'affiche en haut et les orbites prennent sa couleur</span>
+    </div>
+    <button class="cta" id="tutoAgain">REFAIRE LE DIDACTICIEL</button>
+    <button class="link" id="howClose">Retour à l'accueil</button>
+  </div>
+</div>
+
+<div class="overlay" id="board" hidden>
+  <div class="card boardcard">
+    <div class="eyebrow">Classement en ligne</div>
+    <h2>Les meilleurs</h2>
+    <div class="seg" id="boardPeriod" role="group" aria-label="Période"><button data-p="week">Cette semaine</button><button data-p="all">Tous les temps</button></div>
+    <div class="chips" id="boardSort" role="group" aria-label="Classer par"><button class="chip" data-s="laps">Tours</button><button class="chip" data-s="gems">Éclats ◆</button><button class="chip" data-s="chain">Série de frôlés</button></div>
+    <div class="lbnote" id="boardNote"></div>
+    <ol class="lb" id="boardList"></ol>
+    <div class="lbmsg" id="boardMsg"></div>
+    <div class="lbme" id="boardMe"></div>
+    <button class="link" id="boardClose">Retour à l'accueil</button>
+  </div>
+</div>
+
+<div class="overlay" id="pseudoBox" hidden>
+  <div class="card">
+    <div class="eyebrow">Classement en ligne</div>
+    <h2>Votre pseudo</h2>
+    <p>Il s'affichera dans le classement. De 3 à 16 caractères : lettres, chiffres, espace, point, tiret ou _.</p>
+    <input class="field" id="pseudoInput" maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ex. : Comète_42" aria-label="Pseudo">
+    <div class="err" id="pseudoErr" role="alert"></div>
+    <button class="cta" id="pseudoOk">VALIDER</button>
+    <button class="link" id="pseudoLater">Plus tard</button>
+    <p class="note">Seuls votre pseudo et vos scores sont envoyés. Aucune donnée personnelle.</p>
+  </div>
+</div>
+
+<div class="overlay" id="shop" hidden>
+  <div class="card shopcard">
+    <div class="eyebrow">Boutique</div>
+    <h2>Skins de la sonde</h2>
+    <div class="wallet">◆ <b id="wallet">0</b> éclats</div>
+    <div class="confirm" id="confirm" hidden>
+      <p id="confirmText"></p>
+      <div class="row"><button class="pill buy" id="confirmYes">Acheter</button><button class="pill" id="confirmNo">Annuler</button></div>
+    </div>
+    <div class="skins" id="skins"></div>
+    <button class="link" id="shopClose">Retour à l'accueil</button>
+  </div>
+</div>
+
+<div class="overlay" id="news" hidden>
+  <div class="card">
+    <div class="eyebrow">Nouveautés</div>
+    <h2 id="newsTitle"></h2>
+    <div class="newsdate" id="newsDate"></div>
+    <ul class="notes" id="newsList"></ul>
+    <button class="cta" id="newsOk">COMPRIS</button>
+    <button class="link" id="newsHistoryBtn">Voir toutes les versions</button>
+    <div class="history" id="newsHistory" hidden></div>
+  </div>
+</div>
+<button class="updatebar" id="updateBar" hidden>Nouvelle version disponible <b>Toucher pour mettre à jour</b></button>
+
+<div class="overlay" id="paused" hidden>
+  <div class="card">
+    <div class="eyebrow">Pause</div>
+    <h2>En suspens</h2>
+    <button class="cta" id="resume">REPRENDRE</button>
+    <button class="link" id="homeFromPause">Retour à l'accueil</button>
+  </div>
+</div>
+
+<!-- hidden test mode: tap the ORBITE title 5 times on the home screen -->
+<div class="overlay" id="test" hidden>
+  <div class="card">
+    <div class="eyebrow">Mode test</div>
+    <h2>Commencer au tour</h2>
+    <div class="stepper">
+      <button class="icon" id="lapMinus" aria-label="Un tour de moins">−</button>
+      <input id="lapInput" type="number" inputmode="numeric" min="0" max="200" step="1" value="29" aria-label="Tour de départ">
+      <button class="icon" id="lapPlus" aria-label="Un tour de plus">+</button>
+    </div>
+    <div class="chips" id="lapChips">
+      <button class="chip" data-lap="0">0</button><button class="chip" data-lap="29">29</button><button class="chip" data-lap="39">39</button><button class="chip" data-lap="49">49</button><button class="chip" data-lap="57">57</button><button class="chip" data-lap="70">70</button>
+    </div>
+    <p class="note">29 : juste avant la pluie<br>39 : avant les astéroïdes rapides<br>49 et 57 : avant une inversion</p>
+    <div class="chips" id="kindChips" role="group" aria-label="Type de partie">
+      <button class="chip" data-kind="random">Tirage normal</button><button class="chip" data-kind="normal">Normale</button><button class="chip" data-kind="hard">Difficile</button>
+    </div>
+    <div class="chips"><button class="chip" id="addGems">+1 000 ◆</button><button class="chip" id="unlockMezen">Débloquer Mezen</button><button class="chip" id="resetSkins">Remettre la boutique à zéro</button></div>
+    <button class="cta" id="testGo">LANCER LE TEST</button>
+    <button class="link" id="testClose">Fermer</button>
+    <p class="note">Les parties de test ne comptent ni dans le record ni dans le nombre de parties.</p>
+  </div>
+</div>
+
+<div class="overlay" id="over" hidden>
+  <div class="card">
+    <div class="eyebrow" id="overTitle">Collision</div>
+    <div class="big" id="finalScore">0</div>
+    <div class="eyebrow" style="color:var(--mist)">tours</div>
+    <div class="new" id="newBest" hidden>Nouveau record</div>
+    <div class="stats"><div>Record<b id="overBest">0</b></div><div>Temps<b id="overTime">0:00.0</b></div><div>Éclats<b id="overShards">0</b></div><div>Frôlés<b id="overNear">0</b></div></div>
+    <div class="overrank" id="overRank" hidden></div>
+    <button class="pill buy" id="overPseudo" hidden>Choisir un pseudo pour le classement</button>
+    <button class="cta" id="again">REJOUER</button>
+    <button class="link" id="homeFromOver">Retour à l'accueil</button>
+  </div>
+</div>
+
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const cv = $('c'), ctx = cv.getContext('2d');
+const TAU = Math.PI * 2;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const COL = {void:'#0A0C22', void2:'#151A44', sun:'#F2A541', ion:'#BFF3FF', rock:'#FF4D6D', shard:'#FFD66B', mist:'#9AA3D9'};
+
+// ---------- storage (best-effort) ----------
+const STORE_PREFIX = 'orbite-beta.';                  // the beta build uses its own prefix (separate save)
+const hypot = Math.hypot;                        // private copy: cannot be replaced from the console
+const store = {
+  get(k, d){ try { const v = localStorage.getItem(STORE_PREFIX+k); return v == null ? d : JSON.parse(v); } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem(STORE_PREFIX+k, JSON.stringify(v)); } catch(e){} if (SEALED.includes(k)) seal(); }
+};
+// Progress is sealed: editing these values by hand (browser console) breaks the seal and the progress is reset.
+// It stops casual cheating only; the online leaderboard is protected on the server.
+const SEALED = ['v2.best', 'v2.games', 'v2.laps', 'v2.gems', 'v2.wallet', 'v2.owned', 'v2.near'];
+function sealOf(){
+  let h = 0x811c9dc5, txt = 'orbite·' + SEALED.map(k => { try { return localStorage.getItem(STORE_PREFIX + k); } catch(e){ return ''; } }).join('|');
+  for (let i = 0; i < txt.length; i++){ h ^= txt.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h.toString(36);
+}
+function seal(){ try { localStorage.setItem(STORE_PREFIX + 'v2.seal', sealOf()); } catch(e){} }
+(() => {
+  let saved = null; try { saved = localStorage.getItem(STORE_PREFIX + 'v2.seal'); } catch(e){}
+  if (saved === null){ seal(); return; }                       // first time with sealing: trust what is there
+  if (saved !== sealOf()){                                       // edited by hand: progress reset
+    try { for (const k of SEALED) localStorage.removeItem(STORE_PREFIX + k); localStorage.setItem(STORE_PREFIX + 'v2.skin', '"sonde"'); } catch(e){}
+    seal();
+  }
+})();
+// Stats v2: the record is the best number of laps. (v1 stored points, which are not comparable.)
+let best = store.get('v2.best', 0), games = store.get('v2.games', 0), lapsTotal = store.get('v2.laps', 0),
+    gemsTotal = store.get('v2.gems', 0), muted = store.get('muted', false);
+let wallet = store.get('v2.wallet', gemsTotal), nearTotal = store.get('v2.near', 0);            // spendable crystals (gemsTotal = lifetime)
+let owned = store.get('v2.owned', ['sonde']), equipped = store.get('v2.skin', 'sonde');
+// Count a finished run in the stats (never for test runs). Returns true on a new record.
+function recordRun(){
+  if (testRun) return false;
+  games++; lapsTotal += S.laps; gemsTotal += S.shards; wallet += S.shards; store.set('v2.wallet', wallet);
+  nearTotal += S.near || 0; store.set('v2.near', nearTotal);
+  const isBest = S.laps > best; if (isBest) best = S.laps;
+  store.set('v2.games', games); store.set('v2.laps', lapsTotal); store.set('v2.gems', gemsTotal); store.set('v2.best', best);
+  queueScore();                                  // online leaderboard
+  return isBest;
+}
+
+// ---------- audio ----------
+let ac = null, audioCameBack = false;
+function newAudio(){ try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ ac = null; } }
+function audio(){
+  if (!ac || ac.state === 'closed') newAudio();
+  if (ac && ac.state !== 'running') ac.resume().catch(() => {});
+  return ac;
+}
+// iOS interrupts audio while the app is in the background and sometimes never gives it back
+// (state "interrupted", or "suspended" forever). We pause it ourselves when leaving; on the first
+// touch after coming back we resume it, and if it is still stuck we rebuild it from scratch
+// (all sounds are synthesised, so nothing is lost).
+function unlockAudio(){                       // a silent sample played inside the touch: required by iOS
+  try { const b = ac.createBuffer(1, 1, 22050), s = ac.createBufferSource(); s.buffer = b; s.connect(ac.destination); s.start(0); ac.resume().catch(() => {}); } catch(e){}
+}
+function wakeAudio(){
+  if (!ac || ac.state === 'running') return;
+  if (ac.state === 'suspended' && !audioCameBack){
+    const old = ac; old.resume().catch(() => {});
+    setTimeout(() => { if (ac === old && old.state !== 'running') audioCameBack = true; }, 300);  // stuck: rebuild on next touch
+    return;
+  }
+  try { ac.close(); } catch(e){}
+  newAudio(); if (ac) unlockAudio();
+  audioCameBack = false;
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden){ if (ac && ac.state === 'running') ac.suspend().catch(() => {}); }
+  else audioCameBack = true;
+});
+for (const ev of ['touchend', 'pointerdown', 'click', 'keydown']) addEventListener(ev, wakeAudio, {capture: true, passive: true});
+function tone(f1, f2, dur, type='sine', vol=.15, at=0){
+  if (muted) return; const a = audio(); if (!a) return;
+  const o = a.createOscillator(), g = a.createGain(), t = a.currentTime + at;
+  o.type = type; o.frequency.setValueAtTime(f1, t); o.frequency.exponentialRampToValueAtTime(f2, t+dur);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t+dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t+dur);
+}
+function noise(dur=.5, vol=.3){
+  if (muted) return; const a = audio(); if (!a) return;
+  const len = a.sampleRate*dur, b = a.createBuffer(1, len, a.sampleRate), d = b.getChannelData(0);
+  for (let i=0;i<len;i++) d[i] = (Math.random()*2-1) * Math.pow(1-i/len, 2);
+  const s = a.createBufferSource(), g = a.createGain(), f = a.createBiquadFilter();
+  f.type='lowpass'; f.frequency.value = 900; s.buffer = b; g.gain.value = vol;
+  s.connect(f).connect(g).connect(a.destination); s.start();
+}
+const sfx = {
+  hop(up){ tone(up?520:390, up?780:300, .09, 'triangle', .08); },
+  shard(){ tone(880, 1760, .12, 'sine', .12); setTimeout(()=>tone(1320, 2200, .1, 'sine', .08), 60); },
+  lap(){ tone(440, 660, .15, 'sine', .07); },
+  ui(){ tone(1250, 980, .045, 'triangle', .05); },                 // menu buttons
+  equip(){ tone(660, 990, .08, 'triangle', .07); tone(990, 1480, .12, 'sine', .06, .07); tone(2640, 2640, .1, 'sine', .025, .16); },   // skin equipped
+  near(chain){                                                      // near miss: a swish, pitched up along a chain
+    const f = 1400 + Math.min(chain - 1, 4)*180;
+    tone(f*1.4, f*.55, .14, 'sawtooth', .022); tone(f, f*1.5, .09, 'sine', .06, .02);
+  },
+  go(){ tone(520, 1040, .12, 'triangle', .07); },                   // play / replay / resume
+  piggy(){                                                          // skin bought: coins into a piggy bank
+    [0, .07, .15, .26, .38].forEach(at => {
+      const f = 2100 + Math.random()*700;
+      tone(f, f*.98, .14, 'sine', .07, at); tone(f*2.76, f*2.7, .08, 'sine', .025, at);   // metallic clink
+    });
+    tone(190, 80, .18, 'triangle', .12, .5);                         // thud of the coins landing
+    [1568, 1976, 2637].forEach((f, i) => tone(f, f, .22, 'sine', .05, .62 + i*.07));    // little sparkle
+  },
+  crash(){ noise(.6, .35); tone(180, 40, .5, 'sawtooth', .12); }
+};
+function buzz(p){ try { navigator.vibrate && navigator.vibrate(p); } catch(e){} }
+
+// ---------- geometry ----------
+let W, H, cx, cy, R0, lanes = [0,0], unit;
+let DPR = 1;
+function resize(){
+  const dpr = DPR = Math.min(window.devicePixelRatio || 1, 2);
+  const r = cv.getBoundingClientRect(); W = r.width; H = r.height;
+  cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  // Outer orbit as wide as the screen allows (keeping room for a rock at the edge and the HUD above).
+  const small = W < 700;                       // phones and small tablets
+  const boost = small ? 1.35 : 1;              // objects drawn bigger on phones
+  let outer = Math.max(80, Math.min(W/2 - 30*boost, H*0.38)), cyv = H*0.53;
+  // Tutorial: fit the orbits whole between the event title (top) and the tutorial card (bottom).
+  let st = null; try { st = S; } catch(e){}      // resize() also runs before the game state exists
+  const card = document.getElementById('tuto');
+  if (st && st.tuto && card && !card.hidden){
+    const top = document.getElementById('hud').getBoundingClientRect().bottom + 52, bottom = card.getBoundingClientRect().top - 8;
+    const o2 = Math.min(outer, (bottom - top)/2 - 22);
+    if (o2 > 60){ outer = o2; cyv = (top + bottom)/2; }
+  }
+  unit = outer/154 * boost; cx = W/2; cy = cyv;
+  R0 = outer*0.31; lanes = [outer/1.55, outer];   // probe ~55 % faster on the outer orbit
+}
+addEventListener('resize', resize); resize();
+// Android can drop the canvas while the app is in the background and give it back with its scale reset
+// (the game then shrinks into the top-left corner). Re-measure whenever the app comes back.
+for (const ev of ['pageshow', 'focus', 'orientationchange']) addEventListener(ev, () => setTimeout(resize, 60));
+document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(resize, 60); });
+cv.addEventListener('contextrestored', resize);
+setInterval(() => {                                  // safety net: size changed without any event
+  const r = cv.getBoundingClientRect();
+  if (Math.abs(cv.width - Math.round(r.width*DPR)) > 1 || Math.abs(cv.height - Math.round(r.height*DPR)) > 1) resize();
+}, 1000);
+
+// ---------- background stars ----------
+const stars = Array.from({length:140}, () => ({a:Math.random()*TAU, d:Math.sqrt(Math.random()), s:Math.random()*1.4+.3, tw:Math.random()*TAU}));
+
+// ---------- rock shapes ----------
+function rockShape(){ const n = 7 + (Math.random()*4|0); return Array.from({length:n}, (_,i)=>({a:i/n*TAU, r:.72+Math.random()*.32})); }
+
+// ---------- state ----------
+let mode = 'menu';
+let S;
+function fresh(){
+  return { t:0, a:-Math.PI/2, lane:1, r:lanes[1], omega:1.5, score:0, shards:0, laps:0, lapAcc:0, campT:0, dir:1, revWarn:0, meteors:[], hard:false, storm:false, omegaMax:3.25, clockShown:'',
+    rocks:[], gems:[], parts:[], trail:[], spawnT:1.2, gemDue:0, gemTry:0, gemWait:0, gemCount:0, shake:0, pulse:0, popups:[], dead:false, deadT:0 };
+}
+S = fresh();
+
+const mod = (x, m) => ((x % m) + m) % m;
+const ahead = a => mod(S.dir*(a - S.a), TAU); // angular distance ahead of the player, in its direction of travel
+const lapProgress = (from, span) => Math.max(0, Math.min(1, (S.laps - from)/span));
+
+const angDist = (a, b) => Math.abs(mod(a - b + Math.PI, TAU) - Math.PI);
+function laneBlockedNear(lane, a, gap){
+  // `meet` = where the probe will actually cross the rock (differs from `a` for rushing rocks)
+  return S.rocks.some(o => o.lane === lane && angDist(a, o.meet) < gap);
+}
+// Free arc a crystal needs on its own lane, on each side, so the player can
+// slip in after one rock, take it, and slip out before the next one.
+// rock half-width (collision radius as an angle) + the arc travelled during `secs`.
+function gemClearance(lane, secs){
+  const rockHalf = 21*unit / lanes[lane];
+  const omegaSoon = Math.min(S.omega + 0.2, S.omegaMax);   // speed a little later, when the crystal is reached
+  return rockHalf + omegaSoon*secs;
+}
+// Margins tighten as the run goes on: full progress after 90 s.
+const progress = () => Math.min(1, S.t / 90);
+// a hard run trims every margin by 15 %
+const gemEasySecs = () => (0.8 - 0.35*progress()) * (S.hard ? .85 : 1);   // 0.80 s -> 0.45 s
+const gemHardSecs = () => (0.32 - 0.14*progress()) * (S.hard ? .85 : 1);  // 0.32 s -> 0.18 s (0.15 s in a hard run)
+function gemBlocks(lane, a){
+  return S.gems.some(g => !g.got && g.lane === lane && angDist(a, g.a) < g.clear);
+}
+// Rocks aim at the probe's orbit more and more, and always once it has stayed on one orbit too long.
+function pickLane(){
+  const lapTime = TAU / S.omega;
+  let p = 0.6 + 0.2*lapProgress(20, 20);        // 60 % at the start -> 80 % from lap 40
+  if (S.campT > lapTime*0.5) p = 0.9;           // half a lap on the same orbit
+  if (S.campT > lapTime*0.9) p = 1;             // almost a full lap: no escape
+  return Math.random() < p ? S.lane : 1 - S.lane;
+}
+function spawnRocks(lane){
+  const minGap = S.omega*0.42 + 0.42;          // time the player needs to switch, as an angle
+  const d = S.dir;
+  // From lap 30, rocks appear closer: lead shrinks from 2.3 rad to 1.75 rad by lap 60.
+  const lead = 2.3 - 0.55*lapProgress(30, 30);
+  // From lap 40, some rocks rush along the orbit toward the probe (more often, faster, up to lap 70).
+  const rushChance = S.laps < 40 ? 0 : 0.15 + 0.25*lapProgress(40, 30);
+  if (Math.random() < rushChance){
+    const w = 0.6 + Math.random()*0.6 + 0.3*lapProgress(40, 30);   // its own speed, rad/s
+    const meetAhead = lead + Math.random()*1.0;                    // where the probe will cross it
+    const meet = S.a + d*meetAhead;
+    if (laneBlockedNear(1-lane, meet, minGap) || gemBlocks(lane, meet)) return false;
+    S.rocks.push(makeRock(lane, S.a + d*meetAhead*(S.omega + w)/S.omega, w, meet));
+    return true;
+  }
+  const cluster = S.t > 18 && Math.random() < Math.min(S.storm ? .6 : .45, S.t*.008) ? 2 + (Math.random()<.35?1:0) : 1;
+  const base = S.a + d*(lead + Math.random()*1.4);
+  const step = 0.34*d;
+  // fairness: the other lane must stay open across the whole cluster
+  for (let k=0;k<cluster;k++) if (laneBlockedNear(1-lane, base + k*step, minGap)) return false;
+  // never drop a rock inside a crystal's reserved arc
+  for (let k=0;k<cluster;k++) if (gemBlocks(lane, base + k*step)) return false;
+  for (let k=0;k<cluster;k++){
+    S.rocks.push(makeRock(lane, base + k*step));
+  }
+  return true;
+}
+// Speed of the probe (rad/s) after t seconds: top speed after ~45 s (~40 s in a hard run).
+function omegaAt(t){ return S.hard ? 1.75 + Math.min(1.85, t*0.046) : 1.5 + Math.min(1.75, t*0.039); }
+function makeRock(lane, a, w = 0, meet = a){
+  return {lane, a, w, meet, rot:Math.random()*TAU, vr:(Math.random()-.5)*2, shape:rockShape(), born:S.t, passed:false, prev:ahead(a), size:(13+Math.random()*4)*unit};
+}
+function addGem(lane, a, hard, clear){
+  S.gems.push({lane, a, hard, clear, val: hard ? 3 : 1, born:S.t, prev:ahead(a), spin:Math.random()*TAU});
+}
+function spawnGem(){
+  // easy: a wide free arc on its own lane
+  for (let tries = 0; tries < 6; tries++){
+    const lane = Math.random() < .5 ? 0 : 1;
+    const a = S.a + S.dir*(2.2 + Math.random()*1.6);
+    const clear = gemClearance(lane, gemEasySecs());
+    if (laneBlockedNear(lane, a, clear) || gemBlocks(lane, a)) continue;
+    addGem(lane, a, false, clear);
+    return true;
+  }
+  return false;
+}
+// hard: tucked right next to an incoming rock, with just enough room to grab it
+function spawnHardGem(){
+  const cands = S.rocks.filter(o => !o.passed && !o.w && ahead(o.a) > 1.9);
+  for (let tries = 0; tries < 6 && cands.length; tries++){
+    const o = cands[(Math.random()*cands.length)|0];
+    const clear = gemClearance(o.lane, gemHardSecs());
+    const a = o.a + (Math.random() < .5 ? -1 : 1) * (clear + (.03 + Math.random()*.08)*(1 - .7*progress()));
+    if (ahead(a) < 1.8 || ahead(a) > 5.2) continue;
+    if (laneBlockedNear(o.lane, a, clear) || gemBlocks(o.lane, a)) continue;
+    addGem(o.lane, a, true, clear);
+    return true;
+  }
+  return false;
+}
+// a few faint shooting stars crossing the background, staggered
+function shootingStars(){
+  if (reduceMotion) return;
+  const n = 2 + (Math.random() < .5 ? 1 : 0), big = Math.max(W, H);
+  const dir = Math.random() < .5 ? 1 : -1;
+  for (let i = 0; i < n; i++){
+    const ang = (0.35 + Math.random()*0.35);           // 20 to 40 degrees below horizontal
+    const spd = big*(0.9 + Math.random()*0.4);
+    S.meteors.push({
+      x: dir > 0 ? Math.random()*W*0.5 : W*0.5 + Math.random()*W*0.5,
+      y: Math.random()*H*0.35,
+      vx: Math.cos(ang)*spd*dir, vy: Math.sin(ang)*spd,
+      age: -(i*0.45 + Math.random()*0.25), life: 0.8 + Math.random()*0.3,
+      len: (70 + Math.random()*50)*unit
+    });
+  }
+}
+// ---------- near miss (frôlement) ----------
+// No "Frôlé !" text (it was distracting): a white ring, sparks and a swish confirm it; a chain shows x2, x3…
+// A rock dodged at the last moment (the probe leaves its orbit less than NEAR_TIME before impact),
+// or that passes within NEAR_GAP (x unit) of the probe, without touching it. Counted per run (S.near)
+// and in total (v2.near), ready for future daily challenges or crystal rewards.
+const NEAR_GAP = 5, NEAR_TIME = .12;   // edge-to-edge gap (x unit) / last-moment dodge (seconds before impact)
+function nearMiss(o){
+  S.near = (S.near || 0) + 1;
+  S.nearChain = S.t - (S.lastNear ?? -9) < 2.5 ? (S.nearChain || 0) + 1 : 1; S.lastNear = S.t;
+  S.bestChain = Math.max(S.bestChain || 0, S.nearChain);
+  const p = pos(), op = pos(o.a, lanes[o.lane]);
+  burst((p.x + op.x)/2, (p.y + op.y)/2, '#FFFFFF', 10 + 3*Math.min(S.nearChain, 4), 170);
+  if (S.nearChain >= 2) popup('x' + S.nearChain, p.x, p.y - 14*unit, '#FFFFFF');   // only the chain multiplier, from x2
+  S.nearFlash = 1; sfx.near(S.nearChain); buzz(8);
+}
+function burst(x, y, color, n, spd){
+  for (let i=0;i<n;i++){ const a = Math.random()*TAU, v = (Math.random()*.8+.2)*spd*unit;
+    S.parts.push({x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v, life:1, decay:.8+Math.random()*1.2, color, s:(Math.random()*2+1)*unit}); }
+}
+function popup(text, x, y, color){ S.popups.push({text, x, y, life:1, color}); }
+
+// ---------- UI ----------
+const ui = {
+  show(id){ for (const k of ['menu','paused','over','test','shop','news','howto','board','pseudoBox']) $(k).hidden = k !== id; },
+  hud(on){ $('hud').hidden = !on; },
+  score(){ $('sc').textContent = S.laps; $('hs').textContent = 'Record ' + Math.max(best, testRun || S.tuto ? 0 : S.laps); $('gm').textContent = '◆ ' + S.shards; },
+  stats(){ $('menuBest').textContent = best; $('menuGames').textContent = games; $('menuGems').textContent = wallet;
+    $('menuAvg').textContent = games ? Math.round(lapsTotal/games) : 0; },
+  muteIcon(){ $('wave').style.display = muted ? 'none' : ''; $('mute').setAttribute('aria-label', muted ? 'Activer le son' : 'Couper le son'); }
+};
+ui.stats(); ui.muteIcon();
+
+function start(){
+  clearEvent(); $('tuto').hidden = true; $('sc').classList.remove('glow'); resize();
+  audio();
+  S = fresh(); mode = 'play'; ui.show(null); ui.hud(true); ui.score();
+  S.hard = testRun && testRun.kind !== 'random' ? testRun.kind === 'hard' : Math.random() < 0.2; // one run in five, on average
+  S.omegaMax = S.hard ? 3.6 : 3.25;
+  if (testRun && testRun.lap > 0) jumpToLap(testRun.lap);
+  $('testTag').hidden = !testRun;
+  if (testRun) $('testTag').textContent = 'Test · T' + testRun.lap + (S.hard ? ' · difficile' : ' · normale');
+  // hard runs are never announced: the player only feels it
+  $('hint').hidden = false; $('hint').style.opacity = 1;
+  setTimeout(()=>{ $('hint').style.opacity = 0; }, 2600);
+}
+let bannerTimer = 0;
+// One colour per event, so it can be recognised out of the corner of the eye without reading it.
+const EVENT_COL = {rain:'#FF4D6D', fast:'#19E6D2', flip:'#B46BFF', record:'#FFD66B'};   // red, turquoise, violet, gold
+// One word, read in a glance (full explanations are in the rules on the home screen).
+// Events are shown without any text: the orbits and the screen edges light up in the event's colour.
+// Each event also has its own rhythm (1 flash, 2 flashes, a longer pulse) so it reads even without the colour.
+// The event's name is also shown, big and bold, at the top of the screen between the score and the orbits.
+let fx = null, bannerTimer2 = 0;                 // fx: {color, pulses, dur, t}
+// hold = true (tutorial): the colour and the title stay until the player moves on.
+function banner(title, color, pulses = 1, dur = 1.2, hold = false){
+  fx = {color, pulses, dur, t: 0, hold};
+  $('hint').style.opacity = 0;
+  const b = $('banner'); b.hidden = true; void b.offsetWidth;   // restart the animation
+  b.textContent = title; b.style.color = color; b.style.textShadow = `0 0 18px ${hexA(color, .7)}, 0 2px 0 rgba(10,12,34,.6)`;
+  // centre it in the free band between the HUD and the top of the outer orbit (rocks included)
+  const hudBottom = $('hud').getBoundingClientRect().bottom, orbitTop = cy - lanes[1] - 26*unit;
+  b.style.top = Math.round(orbitTop - hudBottom > 34 ? (hudBottom + orbitTop)/2 : hudBottom + 22) + 'px';
+  b.classList.toggle('hold', hold); b.hidden = false;
+  clearTimeout(bannerTimer2); if (!hold) bannerTimer2 = setTimeout(() => { b.hidden = true; }, 1900);
+}
+function fxLevel(){                              // 0..1, current brightness of the event light
+  if (!fx) return 0;
+  const k = fx.t / fx.dur;
+  if (k >= 1) return fx.hold ? .5 + .25*Math.sin((fx.t - fx.dur)*3) : 0;   // held: gentle breathing
+  const phase = (k * fx.pulses) % 1;
+  return Math.sin(Math.PI * phase) * (1 - .35*k);
+}
+const fmtTime = t => { const m = Math.floor(t/60), s = t - m*60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(1); };
+function reverse(){
+  for (const o of S.rocks){ const p = pos(o.a, lanes[o.lane]); burst(p.x, p.y, COL.rock, 6, 90); }
+  S.rocks = [];
+  S.dir = -S.dir;
+  for (const g of S.gems) g.prev = ahead(g.a);
+  S.spawnT = .5; S.shake = .35;
+  tone(300, 900, .25, 'sine', .1);
+}
+function pause(){ if (mode !== 'play') return; mode = 'paused'; ui.show('paused'); }
+function resume(){ if (mode !== 'paused') return; mode = 'play'; ui.show(null); last = performance.now(); }
+// ---------- skins ----------
+// Prices = "N runs of 50 laps" (10, 20, 50, 100, 1 000 runs) at ~14 crystals per 50-lap run.
+// Mezen is a bonus skin: no price, unlocked at 92 390 laps in total.
+const SKINS = [
+  {id:'sonde',     name:'Sonde',     rarity:'Défaut',     price:0,     core:'#FFFFFF', glow:'#BFF3FF', trail:[191,243,255], width:5},
+  {id:'comete',    name:'Comète',    rarity:'Commun',     price:140,   core:'#FFE1C2', glow:'#FF9F43', trail:[255,159,67],  width:5},
+  {id:'glacier',   name:'Glacier',   rarity:'Commun',     price:280,   core:'#F0FCFF', glow:'#6FD3FF', trail:[111,211,255], width:6, ring:true},
+  {id:'nebuleuse', name:'Nébuleuse', rarity:'Rare',       price:700,   core:'#F6DDFF', glow:'#C86BFF', trail:'nebula',      width:7},
+  {id:'aurore',    name:'Aurore',    rarity:'Épique',     price:1400,  core:'#E4FFF4', glow:'#4DFFB5', trail:'aurora',      width:7, sparks:2},
+  {id:'trounoir',  name:'Trou noir', rarity:'Légendaire', price:14000, core:'#05060F', glow:'#FFFFFF', trail:'rainbow',     width:8, disk:true, sparks:3},
+  {id:'mezen',     name:'Mezen',     rarity:'Bonus',      price:0, unlockLaps:92390, core:'#FFFFFF', glow:'#FFFFFF', trail:'tie', width:6, sprite:true},
+];
+const RARITY_COL = {'Bonus':'#FF7AC8', 'Défaut':'#9AA3D9', 'Commun':'#C3CAEE', 'Rare':'#5AA8FF', 'Épique':'#B46BFF', 'Légendaire':'#FFB13B'};
+const skin = () => SKINS.find(k => k.id === equipped) || SKINS[0];
+function hexA(hex, a){ const n = parseInt(hex.slice(1), 16); return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`; }
+function trailColor(sk, k, now, i = 0){
+  const a = k*.6;
+  if (sk.trail === 'tie') return Math.floor(i/2) % 2 ? `rgba(136,144,176,${a})` : `rgba(242,242,248,${a})`;   // striped like the tie
+  if (Array.isArray(sk.trail)) return `rgba(${sk.trail[0]},${sk.trail[1]},${sk.trail[2]},${a})`;
+  if (sk.trail === 'nebula'){ const r = 255 - 115*k, g = 110 - 20*k; return `rgba(${r|0},${g|0},255,${a})`; }
+  if (sk.trail === 'aurora') return `hsla(${150 + 50*Math.sin(now/500 + k*4)},100%,65%,${a})`;
+  return `hsla(${(now/6 + k*320) % 360},100%,65%,${a})`;                       // rainbow
+}
+// Mezen: pixel portrait (16 x 18), short dark hair, full beard, black suit, white shirt, striped tie.
+const MEZEN = [
+  '....HHHHHHHH....',
+  '...HHHHHHHHHH...',
+  '..HHHHhHHHHHHH..',
+  '..HHSSSSSSSSHH..',
+  '..HSSSSSSSSSSH..',
+  '..SBBBSSSSBBBS..',
+  '.NSSWESSSSEWSSN.',
+  '.NSSSSSssSSSSSN.',
+  '..MSSSSssSSSSM..',
+  '..MSMMMMMMMMSM..',
+  '..MMMSLLLLSMMM..',
+  '..MMMMMMMMMMMM..',
+  '...MMMMMMMMMM...',
+  '....MMMMMMMM....',
+  '..JJJTTTTTTJJJ..',
+  '.JJJJTTKKTTJJJJ.',
+  '.JJjJJTkKTJJjJJ.',
+  '.JJJJJTKkTJJJJJ.',
+];
+const MEZEN_COL = {H:'#231A16', h:'#3D2E26', S:'#D9A582', s:'#B98060', N:'#C99272', B:'#1E1612', E:'#2A1D18', W:'#E9DDD2',
+  M:'#1D1512', L:'#8E5A50', J:'#16171E', j:'#30323D', T:'#EEEEF2', K:'#111114', k:'#E8E8EC'};
+function drawSprite(c, x, y, u){
+  const ps = 1.6*u, w = 16*ps, h = 18*ps, x0 = Math.round(x - w/2), y0 = Math.round(y - h/2);
+  const g = c.createRadialGradient(x, y, 0, x, y, 19*u);                    // soft halo so the black suit reads on space
+  g.addColorStop(0, 'rgba(191,243,255,.35)'); g.addColorStop(1, 'rgba(191,243,255,0)');
+  c.fillStyle = g; c.beginPath(); c.arc(x, y, 19*u, 0, TAU); c.fill();
+  c.fillStyle = 'rgba(191,243,255,.75)';                                     // 1-pixel light outline
+  for (let r = 0; r < 18; r++) for (let q = 0; q < 16; q++)
+    if (MEZEN[r][q] !== '.') c.fillRect(x0 + (q-1)*ps, y0 + (r-1)*ps, ps*3, ps*3);
+  for (let r = 0; r < 18; r++) for (let q = 0; q < 16; q++){
+    const ch = MEZEN[r][q]; if (ch === '.') continue;
+    c.fillStyle = MEZEN_COL[ch]; c.fillRect(x0 + q*ps, y0 + r*ps, Math.ceil(ps), Math.ceil(ps));
+  }
+}
+function drawProbe(c, x, y, trail, sk, now, u){
+  c.lineCap = 'round';
+  for (let i = 1; i < trail.length; i++){
+    const k = i/trail.length;
+    c.strokeStyle = trailColor(sk, k, now, i); c.lineWidth = k*sk.width*u;
+    c.beginPath(); c.moveTo(trail[i-1].x, trail[i-1].y); c.lineTo(trail[i].x, trail[i].y); c.stroke();
+  }
+  c.lineCap = 'butt';
+  if (sk.sprite){ drawSprite(c, x, y, u); return; }
+  if (sk.disk){                                   // accretion disk: rotating rainbow ring
+    c.lineWidth = 3.2*u;
+    for (let j = 0; j < 12; j++){
+      const a0 = now/260 + j/12*TAU;
+      c.strokeStyle = `hsl(${(j*30 + now/5) % 360},100%,65%)`;
+      c.beginPath(); c.arc(x, y, 11*u, a0, a0 + TAU/12 + .03); c.stroke();
+    }
+  }
+  c.save(); c.shadowColor = sk.glow; c.shadowBlur = 20*u;
+  c.fillStyle = sk.core; c.beginPath(); c.arc(x, y, 7*u, 0, TAU); c.fill(); c.restore();
+  if (sk.disk){ c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 1.2*u; c.beginPath(); c.arc(x, y, 7*u, 0, TAU); c.stroke(); }
+  else {
+    c.strokeStyle = hexA(sk.glow, .5); c.lineWidth = 1.5;
+    c.beginPath(); c.arc(x, y, Math.max(0, 11*u + Math.sin(now/180)*1.5*Math.min(1, u)), 0, TAU); c.stroke();
+  }
+  if (sk.ring){ c.strokeStyle = hexA(sk.glow, .28); c.lineWidth = 1.2; c.beginPath(); c.arc(x, y, Math.max(0, 15*u + Math.sin(now/240)*2*Math.min(1, u)), 0, TAU); c.stroke(); }
+  if (sk.sparks){
+    for (let j = 0; j < sk.sparks; j++){
+      const a = now/240 + j/sk.sparks*TAU, r = (sk.disk ? 17 : 15)*u;
+      c.fillStyle = sk.disk ? '#FFFFFF' : sk.glow;
+      c.beginPath(); c.arc(x + Math.cos(a)*r, y + Math.sin(a)*r, 1.9*u, 0, TAU); c.fill();
+    }
+  }
+}
+
+// ---------- shop ----------
+let pendingBuy = null, previewRaf = 0;
+const fmtN = n => n.toLocaleString('fr-FR');
+function renderShop(){
+  unlockBonus();
+  $('wallet').textContent = fmtN(wallet);
+  const box = $('skins'); box.innerHTML = '';
+  for (const sk of SKINS){
+    const has = owned.includes(sk.id), on = equipped === sk.id;
+    const t = document.createElement('div'); t.className = 'skin' + (on ? ' on' : ''); t.style.setProperty('--rar', RARITY_COL[sk.rarity]);
+    let action, sub = '';
+    if (sk.unlockLaps && !has){
+      const done = Math.min(lapsTotal, sk.unlockLaps);
+      action = '<button class="pill" disabled>Verrouillé</button>';
+      sub = `${fmtN(done)} / ${fmtN(sk.unlockLaps)} tours cumulés<span class="bar"><i style="width:${(done/sk.unlockLaps*100).toFixed(2)}%"></i></span>`;
+    }
+    else if (on) action = '<button class="pill" disabled>Équipé</button>';
+    else if (has) action = `<button class="pill" data-equip="${sk.id}">Équiper</button>`;
+    else if (wallet >= sk.price) action = `<button class="pill buy" data-buy="${sk.id}">◆ ${fmtN(sk.price)}</button>`;
+    else { action = `<button class="pill" disabled>◆ ${fmtN(sk.price)}</button>`; sub = `Il manque ◆ ${fmtN(sk.price - wallet)}`; }
+    t.innerHTML = `<canvas data-skin="${sk.id}"></canvas><b>${sk.name}</b><span class="rar">${sk.rarity}</span>${action}<small>${sub}</small>`;
+    box.append(t);
+  }
+  $('confirm').hidden = !pendingBuy;
+  if (pendingBuy){ const sk = SKINS.find(k => k.id === pendingBuy); $('confirmText').textContent = `Acheter ${sk.name} pour ◆ ${fmtN(sk.price)} ?`; }
+}
+function previewLoop(now){
+  for (const cvs of document.querySelectorAll('#skins canvas')){
+    const sk = SKINS.find(k => k.id === cvs.dataset.skin), dpr = Math.min(devicePixelRatio || 1, 2);
+    const w = cvs.clientWidth, h = cvs.clientHeight;
+    if (!w || !h || !sk) continue;               // not laid out yet
+    if (cvs.width !== Math.round(w*dpr)){ cvs.width = Math.round(w*dpr); cvs.height = Math.round(h*dpr); }
+    const c = cvs.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h);
+    const R = Math.min(w, h)*.34, x0 = w/2, y0 = h/2, u = R/40, tr = [];
+    c.strokeStyle = 'rgba(154,163,217,.18)'; c.setLineDash([3,5]); c.beginPath(); c.arc(x0, y0, R, 0, TAU); c.stroke(); c.setLineDash([]);
+    const a = now/700;
+    for (let i = 16; i >= 0; i--){ const b = a - i*.06; tr.push({x: x0 + Math.cos(b)*R, y: y0 + Math.sin(b)*R}); }
+    drawProbe(c, tr[tr.length-1].x, tr[tr.length-1].y, tr, sk, now, sk.sprite ? u*1.4 : u);
+  }
+  previewRaf = $('shop').hidden ? 0 : requestAnimationFrame(previewLoop);
+}
+function unlockBonus(){
+  for (const sk of SKINS) if (sk.unlockLaps && lapsTotal >= sk.unlockLaps && !owned.includes(sk.id)){ owned.push(sk.id); store.set('v2.owned', owned); }
+}
+function openShop(){ pendingBuy = null; renderShop(); ui.show('shop'); if (!previewRaf) previewRaf = requestAnimationFrame(previewLoop); }
+$('shopBtn').addEventListener('click', openShop);
+$('shopClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
+$('skins').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || b.disabled) return;
+  if (b.dataset.equip){ equipped = b.dataset.equip; store.set('v2.skin', equipped); pendingBuy = null; sfx.equip(); buzz(10); renderShop(); }
+  if (b.dataset.buy){ pendingBuy = b.dataset.buy; renderShop(); $('confirm').scrollIntoView({block:'nearest'}); }
+});
+$('confirmNo').addEventListener('click', () => { pendingBuy = null; renderShop(); });
+$('confirmYes').addEventListener('click', () => {
+  const sk = SKINS.find(k => k.id === pendingBuy); pendingBuy = null;
+  if (sk && wallet >= sk.price && !owned.includes(sk.id)){
+    wallet -= sk.price; owned.push(sk.id); equipped = sk.id;
+    store.set('v2.wallet', wallet); store.set('v2.owned', owned); store.set('v2.skin', equipped);
+    sfx.piggy(); buzz([10, 30, 10, 30, 40]);
+  }
+  renderShop();
+});
+
+// Click sound on every button of the menus (not in game). Purchases have their own sound.
+document.addEventListener('click', e => {
+  const b = e.target.closest('.overlay button, .tuto button'); if (!b || b.disabled || b.id === 'confirmYes') return;
+  if (b.dataset.equip) return;                   // equipping has its own sound
+  if (['play', 'again', 'testGo', 'resume'].includes(b.id)) sfx.go(); else sfx.ui();
+});
+
+// ---------- tutorial ----------
+// A guided first run: slow, no game over, one thing learnt per step. Launched on a new player's first
+// "Jouer", and again from "Comment jouer". Players who already played are not forced into it.
+let tutoDone = store.get('tutoDone', false) || games > 0, tutoFrom = 'play';
+const TUTO = [
+  {id:'tap',    goal:3, prog:'Sauts', text:"Touchez n'importe où sur l'écran : la sonde saute d'une orbite à l'autre."},
+  {id:'dodge',  goal:2, prog:'Astéroïdes évités', text:"Un astéroïde arrive sur votre orbite ! Changez d'orbite pour l'éviter."},
+  {id:'gem',    text:"Passez sur l'éclat ◆ pour le ramasser. Les éclats servent à acheter des skins dans la boutique."},
+  {id:'rare',   text:"Un éclat rare, collé à un astéroïde, vaut 3 ◆. Attrapez-le, puis changez vite d'orbite !"},
+  {id:'lap',    text:"Votre score, c'est le nombre de tours, affiché en haut à gauche. Faites un tour complet."},
+  {id:'rain',   info:true, ev:['Pluie d’astéroïdes', 'rain', 1, 1.2], text:"Plus vous tenez, plus ça se corse. À 30 tours, voici ce qui s'affichera : la pluie d'astéroïdes. Ils arrivent bien plus souvent."},
+  {id:'fast',   info:true, ev:['Astéroïdes rapides', 'fast', 2, 1.2], text:"À 40 tours, voici ce qui s'affichera : les astéroïdes rapides. Repérez leur traînée, ils foncent droit sur vous."},
+  {id:'flip',   info:true, ev:['Inversion', 'flip', 2, 1.6], text:"À 50 tours, voici ce qui s'affichera : l'inversion. La sonde change de sens, et pendant l'alerte aucun astéroïde n'arrive."},
+  {id:'record', info:true, ev:['Nouveau record', 'record', 1, 1.2], text:"Et voici ce qui s'affichera quand vous battrez votre record : tout passe à l'or."},
+  {id:'ready',  info:true, last:true, text:"Vous êtes prêt ! Retenez les couleurs : chaque palier affiche son nom en haut de l'écran. Bonne chance !"},
+];
+function playPressed(){ if (!tutoDone) startTutorial('play'); else start(); }
+function startTutorial(from){
+  tutoFrom = from; fx = null; testRun = null; audio();
+  S = fresh(); S.tuto = {step: 0}; mode = 'play';
+  ui.show(null); ui.hud(true); ui.score(); $('clock').textContent = ''; $('testTag').hidden = true;
+  $('hint').hidden = true; $('tuto').hidden = false;
+  tutoEnter(0);
+}
+function clearEvent(){ fx = null; clearTimeout(bannerTimer2); $('banner').hidden = true; $('banner').classList.remove('hold'); }
+function tutoEnter(i){
+  const st = TUTO[i];
+  clearEvent();
+  S.tuto = {step: i, count: 0, wait: .6, advance: 0, rock: null, gem: null, lapStart: S.laps};
+  S.rocks = []; S.gems = [];
+  $('tutoStep').textContent = `Didacticiel · ${i + 1}/${TUTO.length}`;
+  $('tutoText').textContent = st.text;
+  $('tutoNext').hidden = !st.info; $('tutoNext').textContent = st.last ? 'JOUER' : 'Suivant';
+  $('tutoSkip').hidden = !!st.last;
+  $('sc').classList.toggle('glow', st.id === 'lap');
+  tutoProg();
+  resize();                                     // re-fit the orbits above the card (its height follows the text)
+  if (st.ev){ const [title, col, pulses, dur] = st.ev; banner(title, EVENT_COL[col], pulses, dur, true); }
+  if (st.id === 'flip') S.revWarn = 1.6;
+}
+function tutoProg(msg){
+  const st = TUTO[S.tuto.step];
+  $('tutoProg').textContent = msg || (st.goal ? `${st.prog} : ${S.tuto.count}/${st.goal}` : '');
+}
+function tutoStepDone(){ const T = S.tuto; if (T.advance) return; T.advance = .7; tutoProg('Bravo !'); sfx.go(); }
+function tutoHop(){
+  const T = S.tuto; if (TUTO[T.step].id !== 'tap' || T.advance) return;
+  T.count++; tutoProg(); if (T.count >= TUTO[T.step].goal) tutoStepDone();
+}
+function tutoHit(){                              // no game over in the tutorial: the step starts again
+  const T = S.tuto, p = pos();
+  burst(p.x, p.y, COL.rock, 16, 140); noise(.25, .15); buzz(40); S.shake = .5;
+  S.rocks = []; S.gems = []; T.rock = T.gem = null; T.wait = 1;
+  tutoProg('Touché ! On recommence.');
+}
+function tutoSpawn(){
+  const T = S.tuto, id = TUTO[T.step].id, other = 1 - S.lane;
+  if (id === 'dodge'){ T.rock = makeRock(S.lane, S.a + S.dir*2.4); S.rocks.push(T.rock); }
+  if (id === 'gem'){ addGem(other, S.a + S.dir*2.6, false, 0); T.gem = S.gems[S.gems.length - 1]; }
+  if (id === 'rare'){
+    const ra = S.a + S.dir*3.4;
+    T.rock = makeRock(other, ra); S.rocks.push(T.rock);
+    addGem(other, ra - S.dir*.75, true, 0); T.gem = S.gems[S.gems.length - 1];
+  }
+}
+// Event steps: a live, harmless demo keeps running until the player taps "Suivant".
+function tutoDemo(dt){
+  const T = S.tuto, id = TUTO[T.step].id, lane = Math.random() < .5 ? 0 : 1;
+  if (id === 'flip' && S.revWarn <= 0){            // flip again every few seconds
+    T.flipT = (T.flipT ?? 2.6) - dt;
+    if (T.flipT <= 0){ T.flipT = 2.6; S.revWarn = 1.6; }
+  }
+  T.demoT = (T.demoT || 0) - dt; if (T.demoT > 0) return;
+  if (id === 'rain'){ const r = makeRock(lane, S.a + S.dir*(1.8 + Math.random()*2.6)); r.ghost = true; S.rocks.push(r); T.demoT = .28; }
+  if (id === 'fast'){
+    const w = .9 + Math.random()*.4, m = 1.8 + Math.random(), r = makeRock(lane, S.a + S.dir*m*(S.omega + w)/S.omega, w, S.a + S.dir*m);
+    r.ghost = true; S.rocks.push(r); T.demoT = .9;
+  }
+  if (id === 'flip' && S.revWarn <= 0){ const r = makeRock(lane, S.a + S.dir*(2 + Math.random()*1.5)); r.ghost = true; S.rocks.push(r); T.demoT = .7; }
+}
+function tutoUpdate(dt){
+  const T = S.tuto, st = TUTO[T.step];
+  if (T.advance){ T.advance -= dt; if (T.advance <= 0){ T.advance = 0; tutoNext(); } return; }
+  if (T.wait > 0){ T.wait -= dt; if (T.wait <= 0){ T.wait = 0; tutoProg(); tutoSpawn(); } return; }
+  if (st.info){ tutoDemo(dt); return; }
+  if (st.id === 'dodge' && T.rock && T.rock.passed){
+    T.count++; tutoProg(); T.rock = null;
+    if (T.count >= st.goal) tutoStepDone(); else T.wait = .5;
+  }
+  if (st.id === 'gem' && T.gem){
+    if (T.gem.got) tutoStepDone();
+    else if (T.gem.passed){ T.gem = null; T.wait = .3; tutoProg('Raté, il en revient un.'); }
+  }
+  if (st.id === 'rare' && T.gem){
+    if (T.gem.got && T.rock.passed) tutoStepDone();
+    else if (T.gem.passed && !T.gem.got){ S.rocks = []; T.gem = T.rock = null; T.wait = .6; tutoProg('Raté, on recommence.'); }
+  }
+  if (st.id === 'lap' && S.laps > T.lapStart) tutoStepDone();
+}
+function tutoNext(){ const i = S.tuto.step + 1; if (i < TUTO.length) tutoEnter(i); else tutoFinish(true); }
+function tutoFinish(play){
+  tutoDone = true; store.set('tutoDone', true);
+  clearEvent(); $('tuto').hidden = true; $('sc').classList.remove('glow'); resize();
+  if (play) start(); else goHome();
+}
+$('tutoNext').addEventListener('click', () => { if (TUTO[S.tuto.step].last) tutoFinish(true); else tutoNext(); });
+$('tutoSkip').addEventListener('click', () => tutoFinish(tutoFrom === 'play'));
+$('howBtn').addEventListener('click', () => ui.show('howto'));
+$('howClose').addEventListener('click', () => ui.show('menu'));
+$('tutoAgain').addEventListener('click', () => startTutorial('howto'));
+
+// ---------- versions & news ----------
+// Newest first. Texts are written for players (no tech talk) and are proofread before each release.
+const CHANGELOG = [
+  {v:'2.0', date:'25/11/2026', notes:[
+    "Nouveau : le classement en ligne ! Comparez vos meilleures parties en tours, en éclats et en série de frôlements, cette semaine ou depuis toujours.",
+    "Choisissez votre pseudo : vos parties sont envoyées automatiquement, même jouées sans connexion (elles partent dès que vous êtes en ligne).",
+    "Votre rang de la semaine s'affiche en fin de partie.",
+    "Protection renforcée contre la triche.",
+  ]},
+  {v:'1.9', date:'23/11/2026', notes:[
+    "À chaque palier, son nom s'affiche en haut de l'écran et les orbites et les bords de l'écran s'illuminent de sa couleur : rouge pour la pluie d'astéroïdes, turquoise pour les astéroïdes rapides, violet pour l'inversion, or pour un nouveau record.",
+    "Les annonces ne s'affichent plus en bas de l'écran.",
+    "Nouveau : un didacticiel guide votre première partie, pas à pas.",
+    "Nouvel écran « Comment jouer » sur l'accueil, avec toutes les règles et un bouton pour refaire le didacticiel.",
+    "Le centre de la planète affiche seulement le nombre de tours.",
+    "Nouveau : esquivez un astéroïde au tout dernier moment pour un frôlement, signalé par un anneau lumineux et un son. Enchaînez-les pour voir s'afficher x2, x3… et retrouvez vos frôlements en fin de partie.",
+    "Un petit son quand vous équipez un skin dans la boutique.",
+  ]},
+  {v:'1.8', date:'22/11/2026', notes:[
+    "Nouveautés : à chaque mise à jour, cette fenêtre vous montre ce qui a changé.",
+    "Le jeu vous prévient quand une nouvelle version est disponible : un toucher suffit pour l'installer.",
+    "Le numéro de version est affiché en bas de l'écran d'accueil.",
+  ]},
+  {v:'1.7', date:'22/11/2026', notes:[
+    "Chaque annonce en jeu a sa couleur : rouge pour la pluie d'astéroïdes, orange pour les astéroïdes rapides, violet pour l'inversion, or pour un nouveau record.",
+  ]},
+  {v:'1.6', date:'22/11/2026', notes:[
+    "Le son revient correctement quand vous revenez dans le jeu après l'avoir quitté.",
+    "L'application est plus légère à télécharger.",
+  ]},
+  {v:'1.5', date:'22/11/2026', notes:[
+    "Corrigé : le jeu ne se réduit plus en haut à gauche de l'écran quand vous revenez dans l'application.",
+    "Les annonces en jeu sont plus petites et s'affichent sous la zone de jeu.",
+    "Les écrans s'adaptent mieux à tous les téléphones (encoche, petits écrans).",
+    "Nouveaux sons sur les boutons, et un bruit de tirelire quand vous achetez un skin.",
+  ]},
+  {v:'1.4', date:'19/11/2026', notes:[
+    "Nouveau skin bonus : Mezen, à débloquer en cumulant 92 390 tours.",
+    "Nouveaux prix des skins.",
+  ]},
+  {v:'1.3', date:'19/11/2026', notes:[
+    "Les éclats rares apparaissent plus souvent.",
+    "La boutique est simplifiée.",
+  ]},
+  {v:'1.2', date:'19/11/2026', notes:[
+    "Nouvelle boutique : 5 skins pour votre sonde, à acheter avec vos éclats.",
+    "Un éclat apparaît tous les 5 tours.",
+    "L'écart de vitesse entre les deux orbites est réduit.",
+  ]},
+  {v:'1.1', date:'16/11/2026', notes:[
+    "Le jeu prend tout l'écran du téléphone, avec des textes plus grands.",
+    "Votre score et votre record se comptent en tours.",
+    "Le jeu est plus difficile.",
+    "Nouvelles statistiques sur l'accueil : record, moyenne, parties et éclats.",
+  ]},
+  {v:'1.0', date:'16/11/2026', notes:[
+    "Première version installable sur téléphone.",
+  ]},
+];
+const APP_VERSION = CHANGELOG[0].v;
+$('verLabel').textContent = APP_VERSION;
+const noteList = notes => notes.map(n => { const li = document.createElement('li'); li.textContent = n; return li; });
+function openNews(){
+  const c = CHANGELOG[0];
+  $('newsTitle').textContent = 'Version ' + c.v; $('newsDate').textContent = c.date;
+  $('newsList').replaceChildren(...noteList(c.notes));
+  const h = $('newsHistory'); h.hidden = true; h.replaceChildren();
+  for (const old of CHANGELOG.slice(1)){
+    const t = document.createElement('h3'); t.textContent = 'Version ' + old.v;
+    const d = document.createElement('span'); d.textContent = old.date; t.append(d);
+    const ul = document.createElement('ul'); ul.className = 'notes'; ul.append(...noteList(old.notes));
+    const box = document.createElement('div'); box.append(t, ul); h.append(box);
+  }
+  $('newsHistoryBtn').hidden = false;
+  ui.show('news');
+}
+$('newsBtn').addEventListener('click', openNews);
+$('newsOk').addEventListener('click', () => { store.set('seenVersion', APP_VERSION); ui.show('menu'); ui.stats(); });
+$('newsHistoryBtn').addEventListener('click', () => { $('newsHistory').hidden = false; $('newsHistoryBtn').hidden = true; });
+// Show the news once after an update (players who never played start on the home screen).
+(() => {
+  const seen = store.get('seenVersion', null);
+  if (seen === APP_VERSION) return;
+  if (seen === null && games === 0){ store.set('seenVersion', APP_VERSION); return; }
+  openNews();
+})();
+
+// A newer version is online? (version.json is published with each release.) Offer it outside of a run.
+let updateReady = false;
+function newerThan(a, b){
+  const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number);
+  for (let i = 0; i < Math.max(x.length, y.length); i++){ const d = (x[i] || 0) - (y[i] || 0); if (d) return d > 0; }
+  return false;
+}
+let remoteVersion = null;
+async function checkUpdate(){
+  try {
+    const r = await fetch('version.json?t=' + Date.now(), {cache: 'no-store'});
+    if (!r.ok) return;
+    const j = await r.json();
+    if (newerThan(j.version, APP_VERSION)){ updateReady = true; remoteVersion = j.version; }
+  } catch(e){}
+}
+// The bar sits at the top of whichever screen is open (home, pause, end of run), never over the game.
+setInterval(() => {
+  const bar = $('updateBar'), host = ['menu', 'paused', 'over'].map(id => $(id)).find(o => !o.hidden);
+  if (!updateReady || !host){ bar.hidden = true; return; }
+  const card = host.querySelector('.card');
+  if (bar.parentElement !== card) card.prepend(bar);
+  bar.hidden = false;
+}, 500);
+checkUpdate(); setInterval(checkUpdate, 5*60*1000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkUpdate(); });
+$('updateBar').addEventListener('click', async () => {
+  sfx.go();
+  try { const reg = await navigator.serviceWorker?.getRegistration(); await reg?.update(); } catch(e){}
+  location.replace('./?v=' + encodeURIComponent(remoteVersion || Date.now()));   // new address: skips any stale copy
+});
+
+// ---------- online leaderboard (Supabase) ----------
+// The game only calls 3 server functions; every check is done on the server (see supabase/schema.sql).
+// The publishable key is public by design: the tables themselves are closed to it.
+const SUPA_URL = 'https://gnltdkmweifqfceapwws.supabase.co', SUPA_KEY = 'sb_publishable_EUpYNzgX8BLXItnegCevXw_oPxFBuIz';
+async function rpc(fn, args){
+  let r;
+  try { r = await fetch(`${SUPA_URL}/rest/v1/rpc/${fn}`, {method: 'POST', headers: {apikey: SUPA_KEY, 'Content-Type': 'application/json'}, body: JSON.stringify(args)}); }
+  catch(e){ const err = new Error('reseau'); err.code = 'reseau'; throw err; }
+  const j = await r.json().catch(() => null);
+  if (!r.ok){ const err = new Error('erreur'); err.code = (j && j.message) || 'reseau'; throw err; }
+  return j;
+}
+function newId(){
+  try { return crypto.randomUUID(); } catch(e){}
+  const b = crypto.getRandomValues(new Uint8Array(16)); b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+  const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+  return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;
+}
+let playerId = store.get('v2.pid', null); if (!playerId){ playerId = newId(); store.set('v2.pid', playerId); }
+let pseudo = store.get('v2.pseudo', null);
+let pending = store.get('v2.pending', []);      // runs not sent yet (no pseudo yet, or no connection)
+let flushing = null;
+
+function queueScore(){
+  pending.push({l: S.laps, d: Math.round(S.t*10)/10, g: S.shards, c: S.bestChain || 0});
+  pending = pending.slice(-20); store.set('v2.pending', pending);
+  flushScores();
+}
+// Send waiting runs one by one (the server accepts one run every 3 s per player).
+function flushScores(){
+  if (flushing) return flushing;
+  if (!pseudo || !pending.length) return Promise.resolve();
+  flushing = (async () => {
+    while (pending.length){
+      const s = pending[0];
+      try { await rpc('submit_score', {p_id: playerId, p_laps: s.l, p_duration: s.d, p_gems: s.g, p_best_chain: s.c, p_version: APP_VERSION}); }
+      catch(e){
+        if (e.code === 'reseau'){ break; }                                   // offline: retry later
+        if (e.code === 'trop_rapide'){ await new Promise(r => setTimeout(r, 3300)); continue; }
+        if (e.code === 'joueur_inconnu'){ pseudo = null; store.set('v2.pseudo', null); break; }
+        // score_impossible or anything else: this run is dropped
+      }
+      pending.shift(); store.set('v2.pending', pending);
+      if (pending.length) await new Promise(r => setTimeout(r, 3300));
+    }
+  })().finally(() => { flushing = null; });
+  return flushing;
+}
+addEventListener('online', () => flushScores());
+document.addEventListener('visibilitychange', () => { if (!document.hidden) flushScores(); });
+setTimeout(flushScores, 1500);
+
+// End of a run: rank of the week, or an invitation to pick a pseudo.
+async function showOverRank(){
+  const out = $('overRank'), ask = $('overPseudo');
+  out.hidden = true; ask.hidden = true;
+  if (testRun) return;
+  if (!pseudo){ ask.hidden = false; return; }
+  await flushScores();
+  if (pending.length){ out.textContent = 'Partie enregistrée : elle sera envoyée au classement dès que vous serez en ligne.'; out.hidden = false; return; }
+  try {
+    const rows = await rpc('get_leaderboard', {p_sort: 'laps', p_period: 'week', p_me: playerId, p_limit: 1});
+    const me = rows.find(r => r.is_me);
+    if (me && mode === 'over'){ out.textContent = `${me.rank}${me.rank == 1 ? 'er' : 'e'} du classement cette semaine`; out.hidden = false; }
+  } catch(e){}
+}
+
+// ----- pseudo -----
+let pseudoBack = 'menu';
+const PSEUDO_ERR = {
+  pseudo_invalide: "De 3 à 16 caractères : lettres, chiffres, espace, point, tiret ou _.",
+  pseudo_interdit: "Ce pseudo n'est pas autorisé. Choisissez-en un autre.",
+  pseudo_pris: "Ce pseudo est déjà pris. Choisissez-en un autre.",
+  reseau: "Pas de connexion. Réessayez quand vous serez en ligne.",
+};
+function openPseudo(back){
+  pseudoBack = back; $('pseudoInput').value = pseudo || ''; $('pseudoErr').textContent = '';
+  ui.show('pseudoBox'); setTimeout(() => { try { $('pseudoInput').focus(); } catch(e){} }, 50);
+}
+async function submitPseudo(){
+  const v = $('pseudoInput').value.replace(/\s+/g, ' ').trim();
+  if (!/^[A-Za-z0-9À-ÖØ-öø-ÿ _.\-]{3,16}$/.test(v)){ $('pseudoErr').textContent = PSEUDO_ERR.pseudo_invalide; return; }
+  $('pseudoOk').disabled = true; $('pseudoErr').textContent = '';
+  try {
+    pseudo = await rpc('set_pseudo', {p_id: playerId, p_pseudo: v}); store.set('v2.pseudo', pseudo);
+    sfx.go(); flushScores();
+    if (pseudoBack === 'board') openBoard(); else if (pseudoBack === 'over'){ ui.show('over'); showOverRank(); } else ui.show('menu');
+  } catch(e){ $('pseudoErr').textContent = PSEUDO_ERR[e.code] || "Une erreur est survenue. Réessayez."; }
+  $('pseudoOk').disabled = false;
+}
+$('pseudoOk').addEventListener('click', submitPseudo);
+$('pseudoInput').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') submitPseudo(); });
+$('pseudoLater').addEventListener('click', () => { if (pseudoBack === 'board') openBoard(); else ui.show(pseudoBack === 'over' ? 'over' : 'menu'); });
+$('overPseudo').addEventListener('click', () => openPseudo('over'));
+
+// ----- leaderboard screen -----
+let boardSort = store.get('boardSort', 'laps'), boardPeriod = store.get('boardPeriod', 'week'), boardReq = 0;
+function boardTabs(){
+  for (const b of document.querySelectorAll('#boardPeriod button')) b.setAttribute('aria-pressed', String(b.dataset.p === boardPeriod));
+  for (const b of document.querySelectorAll('#boardSort .chip')) b.setAttribute('aria-pressed', String(b.dataset.s === boardSort));
+  $('boardNote').textContent = boardPeriod === 'week' ? 'Remis à zéro chaque lundi' : 'Depuis le lancement du classement';
+}
+function boardMe(){
+  const box = $('boardMe'); box.replaceChildren();
+  if (pseudo){
+    const t = document.createElement('span'); t.append('Vous jouez en tant que '); const b = document.createElement('b'); b.textContent = pseudo; t.append(b);
+    const c = document.createElement('button'); c.className = 'link'; c.textContent = 'Changer'; c.addEventListener('click', () => openPseudo('board'));
+    box.append(t, c);
+  } else {
+    const c = document.createElement('button'); c.className = 'pill buy'; c.textContent = 'Choisir un pseudo pour apparaître';
+    c.addEventListener('click', () => openPseudo('board')); box.append(c);
+  }
+}
+async function loadBoard(){
+  const id = ++boardReq, list = $('boardList'), msg = $('boardMsg');
+  boardTabs(); list.replaceChildren(); msg.textContent = 'Chargement…';
+  try {
+    await flushScores();
+    const rows = await rpc('get_leaderboard', {p_sort: boardSort, p_period: boardPeriod, p_me: playerId, p_limit: 50});
+    if (id !== boardReq) return;
+    msg.textContent = rows.length ? '' : (boardPeriod === 'week' ? 'Aucune partie cette semaine. Soyez le premier !' : 'Aucune partie pour l\'instant. Soyez le premier !');
+    let prev = 0;
+    for (const r of rows){
+      const li = document.createElement('li');
+      li.className = (r.is_me ? 'me ' : '') + (r.rank <= 3 ? 'r' + r.rank : '') + (r.rank > prev + 1 && prev ? ' sep' : '');
+      prev = r.rank;
+      const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = r.rank;
+      const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = r.pseudo;           // text only: no HTML from players
+      const val = document.createElement('span'); val.className = 'val';
+      val.textContent = boardSort === 'gems' ? r.gems + ' ◆' : boardSort === 'chain' ? 'x' + r.best_chain : r.laps;
+      const sm = document.createElement('small');
+      const parts = [];
+      if (boardSort !== 'laps') parts.push(r.laps + ' tours');
+      parts.push(fmtTime(r.duration));
+      if (boardSort !== 'gems') parts.push(r.gems + ' ◆');
+      if (boardSort !== 'chain' && r.best_chain) parts.push('série x' + r.best_chain);
+      sm.textContent = parts.join(' · ');
+      li.append(rk, nm, val, sm); list.append(li);
+    }
+  } catch(e){ if (id === boardReq) msg.textContent = 'Impossible de charger le classement. Vérifiez votre connexion.'; }
+}
+function openBoard(){ boardMe(); ui.show('board'); loadBoard(); }
+$('boardBtn').addEventListener('click', openBoard);
+$('boardClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
+$('boardPeriod').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ boardPeriod = b.dataset.p; store.set('boardPeriod', boardPeriod); loadBoard(); } });
+$('boardSort').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b){ boardSort = b.dataset.s; store.set('boardSort', boardSort); loadBoard(); } });
+
+// ---------- hidden test mode ----------
+let testRun = null;                              // {lap, kind} while a test run is active
+let testCfg = store.get('test', {lap: 29, kind: 'random'});
+// Put the run in the state it would normally have on reaching lap n: same clock, speed, phases, direction.
+function jumpToLap(n){
+  let t = 0, ang = 0; const target = n*TAU;
+  const w = tt => omegaAt(tt);
+  while (ang < target){ ang += w(t)*0.01; t += 0.01; }
+  S.t = t; S.omega = w(t); S.laps = n; S.storm = n >= 30;
+  const flips = n >= 50 ? Math.floor((n - 50)/8) + 1 : 0;
+  S.dir = flips % 2 ? -1 : 1;
+  S.spawnT = 1; S.gemCount = Math.floor(n/5); ui.score();
+}
+function testUI(){
+  $('lapInput').value = testCfg.lap;
+  for (const b of document.querySelectorAll('#lapChips .chip')) b.setAttribute('aria-pressed', String(+b.dataset.lap === testCfg.lap));
+  for (const b of document.querySelectorAll('#kindChips .chip')) b.setAttribute('aria-pressed', String(b.dataset.kind === testCfg.kind));
+}
+function setLap(n){ testCfg.lap = Math.max(0, Math.min(200, Math.round(+n) || 0)); store.set('test', testCfg); testUI(); }
+function openTest(){ testUI(); ui.show('test'); }
+let titleTaps = 0, titleTimer = 0;
+$('title').addEventListener('click', () => {
+  titleTaps++; clearTimeout(titleTimer); titleTimer = setTimeout(() => { titleTaps = 0; }, 1500);
+  if (titleTaps >= 5){ titleTaps = 0; openTest(); }
+});
+$('lapMinus').addEventListener('click', () => setLap(testCfg.lap - 1));
+$('lapPlus').addEventListener('click', () => setLap(testCfg.lap + 1));
+$('lapInput').addEventListener('change', e => setLap(e.target.value));
+$('lapChips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b) setLap(b.dataset.lap); });
+$('kindChips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b){ testCfg.kind = b.dataset.kind; store.set('test', testCfg); testUI(); } });
+$('testGo').addEventListener('click', () => { setLap($('lapInput').value); testRun = {...testCfg}; start(); });
+$('testClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
+// test helpers for the shop (hidden mode only)
+$('addGems').addEventListener('click', () => { wallet += 1000; store.set('v2.wallet', wallet); $('addGems').textContent = '+1 000 ◆ (solde ' + fmtN(wallet) + ')'; });
+$('unlockMezen').addEventListener('click', () => {
+  if (!owned.includes('mezen')){ owned.push('mezen'); store.set('v2.owned', owned); }
+  $('unlockMezen').textContent = 'Mezen débloqué';
+});
+$('resetSkins').addEventListener('click', () => {
+  wallet = 0; owned = ['sonde']; equipped = 'sonde';
+  store.set('v2.wallet', 0); store.set('v2.owned', owned); store.set('v2.skin', equipped);
+  $('addGems').textContent = '+1 000 ◆'; $('resetSkins').textContent = 'Boutique remise à zéro';
+});
+// Back to the home screen from the pause or game-over screen.
+// A run abandoned from the pause screen still counts (record + number of games), except in test mode.
+function goHome(){
+  $('tuto').hidden = true; $('sc').classList.remove('glow'); clearEvent(); resize();
+  if ((mode === 'paused' || mode === 'play') && !testRun && !S.tuto){
+    recordRun();
+  }
+  testRun = null; mode = 'menu'; S = fresh();
+  ui.hud(false); $('hint').hidden = true; $('banner').hidden = true;
+  ui.show('menu'); ui.stats();
+}
+$('homeFromPause').addEventListener('click', goHome);
+$('homeFromOver').addEventListener('click', goHome);
+
+function gameOver(){
+  mode = 'dying'; S.dead = true; S.deadT = 0; S.shake = 1;
+  const p = pos(); burst(p.x, p.y, skin().glow, 40, 260); burst(p.x, p.y, COL.rock, 24, 180);
+  sfx.crash(); buzz([60, 40, 120]);
+  const isBest = recordRun();                   // test runs never touch the stats
+  setTimeout(() => {
+    mode = 'over'; ui.hud(false);
+    $('finalScore').textContent = S.laps; $('overBest').textContent = best;
+    $('overShards').textContent = S.shards; $('overNear').textContent = S.near || 0;
+    $('overTime').textContent = fmtTime(S.t);
+    $('overTitle').textContent = testRun ? 'Fin du test' : 'Collision';
+    $('newBest').hidden = !isBest; ui.show('over'); ui.stats();
+    showOverRank();
+  }, 900);
+}
+function hop(){
+  if (mode !== 'play') return;
+  // last-moment dodge: a rock on the orbit we leave would have hit within NEAR_TIME
+  for (const o of S.rocks){
+    if (o.passed || o.ghost || o.lane !== S.lane) continue;
+    const R = lanes[o.lane], half = (o.size*.8 + 6*unit)/R, ttc = (ahead(o.a) - half) / (S.omega + (o.w || 0));
+    if (ttc < NEAR_TIME && ahead(o.a) < Math.PI) o.nearArmed = true;
+  }
+  S.lane = 1 - S.lane; S.campT = 0;
+  if (S.tuto) tutoHop();
+  S.r += (lanes[S.lane] - S.r) * 0.4; // first part of the jump happens on the tap itself, not on the next frame
+  sfx.hop(S.lane === 1); buzz(8);
+  const p = pos(); burst(p.x, p.y, COL.ion, 6, 60);
+}
+
+// ---------- input ----------
+cv.addEventListener('pointerdown', e => { e.preventDefault(); if (mode === 'play') hop(); });
+addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowDown'){
+    e.preventDefault();
+    if (mode === 'play') hop(); else if (mode === 'menu') playPressed(); else if (mode === 'over') start(); else if (mode === 'paused') resume();
+  } else if (e.code === 'KeyP' || e.code === 'Escape'){ mode === 'play' ? pause() : resume(); }
+});
+$('play').addEventListener('click', playPressed);
+$('again').addEventListener('click', start);
+$('resume').addEventListener('click', resume);
+$('pauseBtn').addEventListener('click', pause);
+$('mute').addEventListener('click', () => { muted = !muted; store.set('muted', muted); ui.muteIcon(); if (!muted) sfx.lap(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+
+// ---------- update ----------
+function pos(a = S.a, r = S.r){ return {x: cx + Math.cos(a)*r, y: cy + Math.sin(a)*r}; }
+
+function update(dt){
+  if (mode === 'play'){
+    S.t += dt; S.campT += dt;
+    S.omega = S.tuto ? 1.3 : omegaAt(S.t);           // the tutorial runs slowly
+    if (!S.tuto){ const ct = fmtTime(S.t); if (ct !== S.clockShown){ S.clockShown = ct; $('clock').textContent = ct; } }
+    const da = S.omega*dt; S.a += S.dir*da; S.lapAcc += da;
+    if (S.lapAcc >= TAU){ S.lapAcc -= TAU; S.laps++; S.pulse = 1; sfx.lap(); ui.score();
+      if (S.laps % 5 === 0) S.gemDue++;
+      if (!testRun && !S.tuto && best > 0 && S.laps === best + 1) banner('Nouveau record', EVENT_COL.record, 1, 1.2);
+      if (S.laps % 7 === 0 || (S.hard && S.laps === 15)) shootingStars(); // lap 15: only in a hard run
+      if (S.laps === 40) banner('Astéroïdes rapides', EVENT_COL.fast, 2, 1.2);
+      if (S.laps >= 50 && (S.laps - 50) % 8 === 0){ S.revWarn = 1.6; banner('Inversion', EVENT_COL.flip, 2, 1.6); buzz([20,40,20]); }
+      if (S.laps === 30){ S.storm = true; banner('Pluie d’astéroïdes', EVENT_COL.rain, 1, 1.2); buzz([30,50,30]); }
+    }
+    S.r += (lanes[S.lane] - S.r) * Math.min(1, dt*40);
+
+    // reversal warning: nothing new spawns, then the field is cleared and the direction flips
+    if (S.revWarn > 0){
+      S.revWarn -= dt; S.spawnT = Math.max(S.spawnT, .1); S.gemTry = 0;
+      if (S.revWarn <= 0) reverse();
+    }
+    if (S.tuto) tutoUpdate(dt); else {
+    S.spawnT -= dt;
+    if (S.spawnT <= 0){ const lane = pickLane(); // if a spot is refused (it would block both orbits), try other spots on the same orbit
+      const ok = spawnRocks(lane) || spawnRocks(lane) || spawnRocks(lane) || spawnRocks(lane); S.spawnT = ok ? Math.max(.38, 1.15 - S.t*0.017) * (S.hard ? .82 : 1) * (S.storm ? .65 : 1) * (0.75 + Math.random()*.5) : .1; }
+    // Crystals: one every 5 laps. Rare ones (worth 3): 2 in 4 in a normal run, 3 in 4 in a hard run.
+    if (S.gemDue > 0 && S.revWarn <= 0){
+      S.gemTry += dt;
+      if (S.gemTry >= .15){
+        S.gemTry = 0; S.gemWait += .15;
+        const n = S.gemCount + 1;
+        const rare = (S.hard ? n % 4 !== 1 : n % 2 === 0) && S.gemWait < 4;  // a rare one waits up to 4 s for a rock to tuck against
+        if (rare ? spawnHardGem() : spawnGem()){ S.gemDue--; S.gemCount++; S.gemWait = 0; }
+      }
+    }
+    }
+
+    const p = pos();
+    S.trail.push({x:p.x, y:p.y}); if (S.trail.length > 22) S.trail.shift();
+
+    for (const o of S.rocks){
+      o.rot += o.vr*dt;
+      if (o.w){
+        o.a -= S.dir*o.w*dt;
+        o.meet = o.passed ? o.a : S.a + S.dir*ahead(o.a)*S.omega/(S.omega + o.w);
+      }
+      const op = pos(o.a, lanes[o.lane]);
+      const fade = Math.min(1, (S.t - o.born)/.35);
+      const d = hypot(op.x-p.x, op.y-p.y), hitR = o.size*.8 + 6*unit;
+      if (!o.passed && !o.ghost && fade > .6 && d < hitR){ if (S.tuto) tutoHit(); else gameOver(); break; }
+      if (!o.passed && !o.ghost && fade > .6) o.minD = Math.min(o.minD ?? 1e9, d - hitR);   // closest it came, edge to edge
+      const ah = ahead(o.a);
+      if (!o.passed && ah > o.prev + Math.PI){ o.passed = true; if (o.nearArmed || (o.minD !== undefined && o.minD < NEAR_GAP*unit)) nearMiss(o); }
+      o.prev = ah;
+    }
+    S.rocks = S.rocks.filter(o => !(o.passed && ahead(o.a) < 5.4));
+    for (const g of S.gems){
+      const gp = pos(g.a, lanes[g.lane]);
+      if (!g.got && hypot(gp.x-p.x, gp.y-p.y) < 18*unit){
+        g.got = true; S.shards += g.val; ui.score(); sfx.shard(); buzz(g.hard ? [12,30,12] : 12);
+        burst(gp.x, gp.y, COL.shard, g.hard ? 28 : 16, g.hard ? 200 : 140); popup('+' + g.val, gp.x, gp.y, COL.shard);
+      }
+      const ah = ahead(g.a); if (ah > g.prev + Math.PI) g.passed = true; g.prev = ah;
+    }
+    S.gems = S.gems.filter(g => !g.got && !g.passed);
+  } else if (mode === 'dying' || mode === 'over'){
+    S.deadT += dt;
+  } else if (mode === 'menu'){
+    // idle demo orbit behind the menu
+    S.t += dt; S.a += 1.1*dt; S.r += (lanes[S.lane] - S.r)*Math.min(1, dt*10);
+    if (Math.sin(S.t*0.9) > 0 !== (S.lane === 1)) S.lane = 1 - S.lane;
+    const p = pos(); S.trail.push({x:p.x, y:p.y}); if (S.trail.length > 22) S.trail.shift();
+  }
+  if (mode !== 'paused'){
+    for (const m of S.meteors){ m.age += dt; if (m.age > 0){ m.x += m.vx*dt; m.y += m.vy*dt; } }
+    S.meteors = S.meteors.filter(m => m.age < m.life);
+    for (const q of S.parts){ q.x += q.vx*dt; q.y += q.vy*dt; q.vx *= .96; q.vy *= .96; q.life -= q.decay*dt; }
+    S.parts = S.parts.filter(q => q.life > 0);
+    for (const u of S.popups){ u.y -= 40*dt*unit; u.life -= dt*1.4; }
+    S.popups = S.popups.filter(u => u.life > 0);
+    S.shake = Math.max(0, S.shake - dt*2.2);
+    S.pulse = Math.max(0, S.pulse - dt*2);
+    S.nearFlash = Math.max(0, (S.nearFlash || 0) - dt*2.5);
+    if (fx){ fx.t += dt; if (fx.t >= fx.dur && !fx.hold) fx = null; }
+  }
+}
+
+// ---------- draw ----------
+let starRot = 0;
+function draw(now){
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);          // re-applied every frame (lost if the canvas is reset)
+  ctx.save();
+  const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W,H)*.75);
+  bg.addColorStop(0, COL.void2); bg.addColorStop(1, COL.void);
+  ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+  if (S.shake > 0 && !reduceMotion){ const k = S.shake*S.shake*10*unit; ctx.translate((Math.random()-.5)*k, (Math.random()-.5)*k); }
+
+  // stars
+  starRot += reduceMotion ? 0 : 0.0006;
+  const sr = Math.hypot(W, H)*.6;
+  for (const s of stars){
+    const a = s.a + starRot, x = cx + Math.cos(a)*s.d*sr, y = cy + Math.sin(a)*s.d*sr;
+    if (x < -2 || x > W+2 || y < -2 || y > H+2) continue;
+    ctx.globalAlpha = .35 + .35*Math.sin(now/900 + s.tw);
+    ctx.fillStyle = COL.ion; ctx.fillRect(x, y, s.s, s.s);
+  }
+  ctx.globalAlpha = 1;
+
+  // shooting stars (behind everything else)
+  for (const m of S.meteors){
+    if (m.age <= 0) continue;
+    const k = m.age / m.life, alpha = Math.sin(Math.PI*k)*0.55;
+    const sp = Math.hypot(m.vx, m.vy), tl = m.len*Math.min(1, m.age/0.15);
+    const tx = m.x - m.vx/sp*tl, ty = m.y - m.vy/sp*tl;
+    const gr = ctx.createLinearGradient(tx, ty, m.x, m.y);
+    gr.addColorStop(0, 'rgba(191,243,255,0)'); gr.addColorStop(1, `rgba(191,243,255,${alpha})`);
+    ctx.strokeStyle = gr; ctx.lineWidth = 1.4*unit; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(m.x, m.y); ctx.stroke();
+    ctx.globalAlpha = alpha; ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath(); ctx.arc(m.x, m.y, 1.3*unit, 0, TAU); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  ctx.lineCap = 'butt';
+
+  // lanes
+  const lit = fxLevel();
+  ctx.lineWidth = 1.2 + 2.6*lit*unit;
+  for (let i=0;i<2;i++){
+    ctx.strokeStyle = lit > 0 ? hexA(fx.color, .3 + .65*lit)
+      : i === S.lane && mode === 'play' ? 'rgba(191,243,255,.32)' : 'rgba(154,163,217,.16)';
+    ctx.setLineDash([3*unit, 7*unit]);
+    ctx.beginPath(); ctx.arc(cx, cy, lanes[i], 0, TAU); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // planet
+  const pr = R0*(1 + S.pulse*.06);
+  const halo = ctx.createRadialGradient(cx, cy, pr*.8, cx, cy, pr*2.2);
+  halo.addColorStop(0, 'rgba(242,165,65,.28)'); halo.addColorStop(1, 'rgba(242,165,65,0)');
+  ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(cx, cy, pr*2.2, 0, TAU); ctx.fill();
+  const pg = ctx.createRadialGradient(cx - pr*.35, cy - pr*.4, pr*.1, cx, cy, pr);
+  pg.addColorStop(0, '#FFE2A8'); pg.addColorStop(.45, COL.sun); pg.addColorStop(1, '#B4482A');
+  ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(cx, cy, pr, 0, TAU); ctx.fill();
+  ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, pr, 0, TAU); ctx.clip();
+  ctx.strokeStyle = 'rgba(120,40,20,.25)'; ctx.lineWidth = pr*.12;
+  for (let k=-2;k<=2;k++){ ctx.beginPath(); ctx.ellipse(cx, cy + k*pr*.33, pr*1.2, pr*.12, -.18, 0, TAU); ctx.stroke(); }
+  ctx.restore();
+  // lap counter on the planet
+  if (mode === 'play' || mode === 'dying'){
+    ctx.fillStyle = 'rgba(10,12,34,.75)'; ctx.font = `700 ${Math.round(13*unit)}px "JetBrains Mono", monospace`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(S.laps), cx, cy);
+  }
+
+  // gems
+  for (const g of S.gems){
+    const p = pos(g.a, lanes[g.lane]), f = Math.min(1, (S.t - g.born)/.4), s = 8*unit*f, sp = g.spin + now/400;
+    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(sp);
+    ctx.shadowColor = COL.shard; ctx.shadowBlur = 14*unit;
+    ctx.fillStyle = COL.shard; ctx.beginPath();
+    ctx.moveTo(0, -s*1.3); ctx.lineTo(s*.8, 0); ctx.lineTo(0, s*1.3); ctx.lineTo(-s*.8, 0); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    if (g.hard){ // rare crystal: pulsing double ring
+      ctx.strokeStyle = COL.shard; ctx.lineWidth = 1.5*unit;
+      ctx.globalAlpha = .5 + .4*Math.sin(now/150);
+      ctx.beginPath(); ctx.arc(p.x, p.y, (15 + 2*Math.sin(now/150))*unit*f, 0, TAU); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // rocks
+  for (const o of S.rocks){
+    const p = pos(o.a, lanes[o.lane]), f = Math.min(1, (S.t - o.born)/.35), s = o.size*f;
+    if (o.w && !o.passed){ // rushing rock: fading red streak behind it, along its orbit
+      ctx.lineCap = 'round'; ctx.lineWidth = o.size*.9*f;
+      for (let i = 1; i <= 5; i++){
+        const a0 = o.a + S.dir*(i-1)*.07, a1 = o.a + S.dir*i*.07;
+        ctx.strokeStyle = `rgba(255,77,109,${.24*(1 - i/6)})`;
+        ctx.beginPath(); ctx.arc(cx, cy, lanes[o.lane], Math.min(a0,a1), Math.max(a0,a1)); ctx.stroke();
+      }
+      ctx.lineCap = 'butt';
+    }
+    const fadeOut = o.passed ? .45 : 1;
+    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(o.rot); ctx.globalAlpha = fadeOut;
+    ctx.shadowColor = COL.rock; ctx.shadowBlur = 16*unit;
+    ctx.fillStyle = '#3A1630'; ctx.strokeStyle = COL.rock; ctx.lineWidth = 2*unit;
+    ctx.beginPath();
+    o.shape.forEach((v,i) => { const x = Math.cos(v.a)*v.r*s, y = Math.sin(v.a)*v.r*s; i ? ctx.lineTo(x,y) : ctx.moveTo(x,y); });
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
+
+  // trail + probe
+  if (!S.dead){
+    const p = pos();
+    drawProbe(ctx, p.x, p.y, S.trail, skin(), now, unit);
+    if (S.nearFlash > 0){                          // near miss: a white ring bursting out of the probe
+      ctx.strokeStyle = `rgba(255,255,255,${S.nearFlash})`; ctx.lineWidth = 2.5*unit*S.nearFlash;
+      ctx.beginPath(); ctx.arc(p.x, p.y, (12 + (1 - S.nearFlash)*26)*unit, 0, TAU); ctx.stroke();
+    }
+  }
+
+  // particles
+  for (const q of S.parts){ ctx.globalAlpha = Math.max(0, q.life); ctx.fillStyle = q.color; ctx.beginPath(); ctx.arc(q.x, q.y, q.s, 0, TAU); ctx.fill(); }
+  ctx.globalAlpha = 1;
+  // popups
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const u of S.popups){ ctx.globalAlpha = Math.max(0, u.life); ctx.fillStyle = u.color; ctx.font = `800 ${Math.round(18*unit)}px Unbounded, sans-serif`; ctx.fillText(u.text, u.x, u.y - 16*unit); }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+  // event light on the screen edges
+  const glow = fxLevel();
+  if (glow > 0){
+    const e = Math.min(W, H) * .16, c0 = hexA(fx.color, .5*glow), c1 = hexA(fx.color, 0);
+    for (const [x0, y0, x1, y1, rx, ry, rw, rh] of [[0,0,0,e, 0,0,W,e], [0,H,0,H-e, 0,H-e,W,e], [0,0,e,0, 0,0,e,H], [W,0,W-e,0, W-e,0,e,H]]){
+      const g = ctx.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, c0); g.addColorStop(1, c1);
+      ctx.fillStyle = g; ctx.fillRect(rx, ry, rw, rh);
+    }
+  }
+}
+
+// ---------- loop ----------
+let last = performance.now();
+function frame(now){
+  const dt = Math.min(.05, (now - last)/1000); last = now;
+  update(dt); draw(now);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+try { navigator.wakeLock && navigator.wakeLock.request('screen').catch(()=>{}); } catch(e){}
+})();
+</script>
+
+<!-- version de test : pas de mode hors ligne ni d'installation -->
+</body>
+</html>

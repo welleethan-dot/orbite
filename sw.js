@@ -19,6 +19,9 @@ self.addEventListener('fetch', e => {
   if (new URL(req.url).pathname.endsWith('/version.json')) return;
   // The page itself: network first, so an update shows up as soon as you are online.
   if (req.mode === 'navigate') {
+    // Only the app's own page (not /beta/ or any other sub-page) is handled and cached as the offline page.
+    const scope = new URL(self.registration.scope).pathname, path = new URL(req.url).pathname;
+    if (path !== scope && path !== scope + 'index.html') return;
     e.respondWith(fetch(req.url, {cache: 'no-cache'})   // check with the server, so an update is never served stale
       .then(res => { const copy = res.clone(); caches.open(CACHE).then(c => c.put('./index.html', copy)); return res; })
       .catch(() => caches.match('./index.html')));
