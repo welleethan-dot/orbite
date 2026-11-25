@@ -90,8 +90,11 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 .lbmsg{font-size:.9rem;color:var(--mist);min-height:1em;}
 .lbme{font-size:.85rem;color:var(--mist);display:flex;flex-wrap:wrap;gap:6px 10px;justify-content:center;align-items:center;}
 .lbme b{color:var(--ion);}
+.lbme .lbn{flex-basis:100%;font-size:.75rem;}
 .field{width:100%;font-family:var(--mono);font-size:1.1rem;color:var(--ion);background:rgba(21,26,68,.7);border:1.5px solid rgba(191,243,255,.3);border-radius:12px;padding:12px 14px;text-align:center;}
 .field:focus{outline:none;border-color:var(--shard);}
+.pinfo{color:var(--sun);font-size:.88rem;min-height:1em;}
+.lb .was{color:var(--sun);display:block;}
 .err{color:var(--rock);font-size:.88rem;min-height:1.2em;}
 .overrank{font-family:var(--mono);font-size:.95rem;color:var(--sun);}
 .duo{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;}
@@ -231,6 +234,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
     <h2>Votre pseudo</h2>
     <p>Il s'affichera dans le classement. De 3 à 16 caractères : lettres, chiffres, espace, point, tiret ou _.</p>
     <input class="field" id="pseudoInput" maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ex. : Comète_42" aria-label="Pseudo">
+    <div class="pinfo" id="pseudoInfo"></div>
     <div class="err" id="pseudoErr" role="alert"></div>
     <button class="cta" id="pseudoOk">VALIDER</button>
     <button class="link" id="pseudoLater">Plus tard</button>
@@ -952,6 +956,7 @@ const CHANGELOG = [
   {v:'2.0', date:'25/11/2026', notes:[
     "Nouveau : le classement en ligne ! Comparez vos meilleures parties en tours, en éclats et en série de frôlements, cette semaine ou depuis toujours.",
     "Choisissez votre pseudo : vos parties sont envoyées automatiquement, même jouées sans connexion (elles partent dès que vous êtes en ligne).",
+    "Vous pouvez changer de pseudo 3 fois par mois. Votre ancien pseudo s'affiche à côté du nouveau pendant 30 jours.",
     "Votre rang de la semaine s'affiche en fin de partie.",
     "Protection renforcée contre la triche.",
   ]},
@@ -1133,30 +1138,50 @@ async function showOverRank(){
 }
 
 // ----- pseudo -----
-let pseudoBack = 'menu';
+let pseudoBack = 'menu', pinfo = null, pseudoConfirm = false;   // pinfo: {pseudo, changes_left, next_reset}
+const MONTHS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const fmtReset = iso => { const [y, m, d] = iso.split('-').map(Number); return (d === 1 ? '1er' : d) + ' ' + MONTHS[m - 1]; };
+const changesText = n => n === 0 ? 'Plus de changement possible ce mois-ci' : `${n} changement${n > 1 ? 's' : ''} restant${n > 1 ? 's' : ''} ce mois-ci`;
+async function loadPlayerInfo(){ if (!pseudo) return null; try { pinfo = await rpc('player_info', {p_id: playerId}); } catch(e){} return pinfo; }
 const PSEUDO_ERR = {
   pseudo_invalide: "De 3 à 16 caractères : lettres, chiffres, espace, point, tiret ou _.",
   pseudo_interdit: "Ce pseudo n'est pas autorisé. Choisissez-en un autre.",
   pseudo_pris: "Ce pseudo est déjà pris. Choisissez-en un autre.",
+  pseudo_limite: "Vous avez déjà changé 3 fois de pseudo ce mois-ci.",
   reseau: "Pas de connexion. Réessayez quand vous serez en ligne.",
 };
 function openPseudo(back){
   pseudoBack = back; $('pseudoInput').value = pseudo || ''; $('pseudoErr').textContent = '';
+  pseudoConfirm = false; $('pseudoOk').textContent = 'VALIDER';
+  $('pseudoInfo').textContent = pseudo && pinfo ? changesText(pinfo.changes_left) + ' (le premier pseudo ne compte pas).' : '';
   ui.show('pseudoBox'); setTimeout(() => { try { $('pseudoInput').focus(); } catch(e){} }, 50);
 }
 async function submitPseudo(){
   const v = $('pseudoInput').value.replace(/\s+/g, ' ').trim();
   if (!/^[A-Za-z0-9À-ÖØ-öø-ÿ _.\-]{3,16}$/.test(v)){ $('pseudoErr').textContent = PSEUDO_ERR.pseudo_invalide; return; }
+  // Changing an existing pseudo: ask for confirmation first (3 changes a month).
+  if (pseudo && v !== pseudo && !pseudoConfirm){
+    const left = pinfo ? pinfo.changes_left : null;
+    if (left === 0){ $('pseudoErr').textContent = PSEUDO_ERR.pseudo_limite + (pinfo ? ` Prochain changement possible le ${fmtReset(pinfo.next_reset)}.` : ''); return; }
+    pseudoConfirm = true; $('pseudoOk').textContent = 'CONFIRMER';
+    $('pseudoInfo').textContent = `Changer de pseudo ? « ${pseudo} » s'affichera comme ancien pseudo pendant 30 jours.` + (left != null ? ` Il vous restera ${left - 1} changement${left - 1 > 1 ? 's' : ''} ce mois-ci.` : '');
+    return;
+  }
   $('pseudoOk').disabled = true; $('pseudoErr').textContent = '';
   try {
-    pseudo = await rpc('set_pseudo', {p_id: playerId, p_pseudo: v}); store.set('v2.pseudo', pseudo);
+    pseudo = await rpc('set_pseudo', {p_id: playerId, p_pseudo: v}); store.set('v2.pseudo', pseudo); await loadPlayerInfo();
     sfx.go(); flushScores();
     if (pseudoBack === 'board') openBoard(); else if (pseudoBack === 'over'){ ui.show('over'); showOverRank(); } else ui.show('menu');
-  } catch(e){ $('pseudoErr').textContent = PSEUDO_ERR[e.code] || "Une erreur est survenue. Réessayez."; }
+  } catch(e){
+    let m = PSEUDO_ERR[e.code] || "Une erreur est survenue. Réessayez.";
+    if (e.code === 'pseudo_limite'){ await loadPlayerInfo(); if (pinfo) m += ` Prochain changement possible le ${fmtReset(pinfo.next_reset)}.`; }
+    $('pseudoErr').textContent = m; pseudoConfirm = false; $('pseudoOk').textContent = 'VALIDER';
+  }
   $('pseudoOk').disabled = false;
 }
 $('pseudoOk').addEventListener('click', submitPseudo);
 $('pseudoInput').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') submitPseudo(); });
+$('pseudoInput').addEventListener('input', () => { pseudoConfirm = false; $('pseudoOk').textContent = 'VALIDER'; $('pseudoErr').textContent = ''; });
 $('pseudoLater').addEventListener('click', () => { if (pseudoBack === 'board') openBoard(); else ui.show(pseudoBack === 'over' ? 'over' : 'menu'); });
 $('overPseudo').addEventListener('click', () => openPseudo('over'));
 
@@ -1172,7 +1197,9 @@ function boardMe(){
   if (pseudo){
     const t = document.createElement('span'); t.append('Vous jouez en tant que '); const b = document.createElement('b'); b.textContent = pseudo; t.append(b);
     const c = document.createElement('button'); c.className = 'link'; c.textContent = 'Changer'; c.addEventListener('click', () => openPseudo('board'));
-    box.append(t, c);
+    const n = document.createElement('small'); n.className = 'lbn';
+    if (pinfo){ n.textContent = pinfo.changes_left === 0 ? `Prochain changement le ${fmtReset(pinfo.next_reset)}` : changesText(pinfo.changes_left); }
+    box.append(t, c, n);
   } else {
     const c = document.createElement('button'); c.className = 'pill buy'; c.textContent = 'Choisir un pseudo pour apparaître';
     c.addEventListener('click', () => openPseudo('board')); box.append(c);
@@ -1197,16 +1224,17 @@ async function loadBoard(){
       val.textContent = boardSort === 'gems' ? r.gems + ' ◆' : boardSort === 'chain' ? 'x' + r.best_chain : r.laps;
       const sm = document.createElement('small');
       const parts = [];
+      if (r.old_pseudo){ const w = document.createElement('span'); w.className = 'was'; w.textContent = 'anciennement ' + r.old_pseudo; sm.append(w); }
       if (boardSort !== 'laps') parts.push(r.laps + ' tours');
       parts.push(fmtTime(r.duration));
       if (boardSort !== 'gems') parts.push(r.gems + ' ◆');
       if (boardSort !== 'chain' && r.best_chain) parts.push('série x' + r.best_chain);
-      sm.textContent = parts.join(' · ');
+      sm.append(parts.join(' · '));
       li.append(rk, nm, val, sm); list.append(li);
     }
   } catch(e){ if (id === boardReq) msg.textContent = 'Impossible de charger le classement. Vérifiez votre connexion.'; }
 }
-function openBoard(){ boardMe(); ui.show('board'); loadBoard(); }
+function openBoard(){ boardMe(); ui.show('board'); loadBoard(); loadPlayerInfo().then(() => { if (!$('board').hidden) boardMe(); }); }
 $('boardBtn').addEventListener('click', openBoard);
 $('boardClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
 $('boardPeriod').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ boardPeriod = b.dataset.p; store.set('boardPeriod', boardPeriod); loadBoard(); } });
