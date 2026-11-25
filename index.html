@@ -72,6 +72,28 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 .dot{width:12px;height:12px;border-radius:50%;margin-top:3px;}
 .cta{font-family:var(--display);font-weight:800;font-size:1.2rem;letter-spacing:.08em;color:var(--void);background:var(--sun);border:0;border-radius:999px;padding:18px 46px;cursor:pointer;margin-top:6px;box-shadow:0 0 32px rgba(242,165,65,.35);}
 .cta:active{transform:scale(.97);}
+.boardcard{max-width:440px;}
+.seg{display:flex;width:100%;border:1px solid rgba(191,243,255,.25);border-radius:999px;padding:3px;gap:3px;}
+.seg button{flex:1;font-family:var(--mono);font-size:.88rem;color:var(--mist);background:transparent;border:0;border-radius:999px;padding:9px 6px;cursor:pointer;}
+.seg button[aria-pressed="true"]{background:var(--ion);color:var(--void);font-weight:700;}
+.seg button:focus-visible{outline:2px solid var(--shard);outline-offset:2px;}
+.lbnote{font-size:.75rem;color:var(--mist);letter-spacing:.06em;margin-top:-4px;}
+.lb{list-style:none;margin:0;padding:0;width:100%;display:flex;flex-direction:column;gap:6px;text-align:left;}
+.lb li{display:grid;grid-template-columns:2.2em minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:10px;align-items:center;padding:9px 12px;border-radius:12px;background:rgba(21,26,68,.55);border:1px solid transparent;}
+.lb li.me{border-color:var(--sun);background:rgba(242,165,65,.1);}
+.lb li.sep{margin-top:6px;}
+.lb .rk{grid-column:1;grid-row:1 / span 2;font-family:var(--display);font-weight:800;font-size:1.05rem;color:var(--mist);text-align:center;font-variant-numeric:tabular-nums;}
+.lb li.r1 .rk{color:#FFD66B;} .lb li.r2 .rk{color:#D9DEF2;} .lb li.r3 .rk{color:#E0A068;}
+.lb .nm{grid-column:2;grid-row:1;font-weight:700;color:var(--ion);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lb .val{grid-column:3;grid-row:1 / span 2;text-align:right;font-family:var(--display);font-weight:800;font-size:1.15rem;color:var(--ion);font-variant-numeric:tabular-nums;}
+.lb small{grid-column:2;grid-row:2;font-size:.72rem;color:var(--mist);font-variant-numeric:tabular-nums;}
+.lbmsg{font-size:.9rem;color:var(--mist);min-height:1em;}
+.lbme{font-size:.85rem;color:var(--mist);display:flex;flex-wrap:wrap;gap:6px 10px;justify-content:center;align-items:center;}
+.lbme b{color:var(--ion);}
+.field{width:100%;font-family:var(--mono);font-size:1.1rem;color:var(--ion);background:rgba(21,26,68,.7);border:1.5px solid rgba(191,243,255,.3);border-radius:12px;padding:12px 14px;text-align:center;}
+.field:focus{outline:none;border-color:var(--shard);}
+.err{color:var(--rock);font-size:.88rem;min-height:1.2em;}
+.overrank{font-family:var(--mono);font-size:.95rem;color:var(--sun);}
 .duo{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;}
 .duo .cta.ghost{padding:12px 20px;font-size:.88rem;}
 .tuto{position:fixed;left:max(16px, env(safe-area-inset-left,0px));right:max(16px, env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 16px);margin-inline:auto;max-width:440px;
@@ -160,7 +182,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
     <h1 id="title">ORBITE</h1>
     <p>Touchez l'écran pour changer d'orbite.</p>
     <button class="cta" id="play">JOUER</button>
-    <div class="duo"><button class="cta ghost" id="shopBtn">SKINS</button><button class="cta ghost" id="howBtn">COMMENT JOUER</button></div>
+    <div class="duo"><button class="cta ghost" id="boardBtn">CLASSEMENT</button><button class="cta ghost" id="shopBtn">SKINS</button><button class="cta ghost" id="howBtn">COMMENT JOUER</button></div>
     <div class="stats"><div>Record<b id="menuBest">0</b></div><div>Moyenne<b id="menuAvg">0</b></div><div>Parties<b id="menuGames">0</b></div><div>Éclats<b id="menuGems">0</b></div></div>
     <button class="link version" id="newsBtn">Version <span id="verLabel"></span> · Nouveautés</button>
   </div>
@@ -174,6 +196,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
       <span class="dot" style="background:var(--ion)"></span><span>Touchez l'écran pour faire sauter la sonde d'une orbite à l'autre</span>
       <span class="dot" style="background:var(--rock)"></span><span>Évitez les astéroïdes</span>
       <span class="dot" style="background:var(--ion)"></span><span>Votre score : le nombre de tours</span>
+      <span class="dot" style="background:var(--sun)"></span><span>Classement en ligne : choisissez un pseudo, vos parties y sont envoyées automatiquement</span>
       <span class="dot" style="background:#FFFFFF"></span><span>Esquivez un astéroïde au tout dernier moment : c'est un frôlement. Enchaînez-les pour faire monter le multiplicateur (x2, x3…)</span>
       <span class="dot" style="background:var(--shard)"></span><span>Un éclat ◆ apparaît tous les 5 tours, à dépenser en skins</span>
       <span class="dot" style="background:transparent;border:2px solid var(--shard)"></span><span>Les éclats rares, collés à un astéroïde, valent 3 ◆</span>
@@ -185,6 +208,33 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
     </div>
     <button class="cta" id="tutoAgain">REFAIRE LE DIDACTICIEL</button>
     <button class="link" id="howClose">Retour à l'accueil</button>
+  </div>
+</div>
+
+<div class="overlay" id="board" hidden>
+  <div class="card boardcard">
+    <div class="eyebrow">Classement en ligne</div>
+    <h2>Les meilleurs</h2>
+    <div class="seg" id="boardPeriod" role="group" aria-label="Période"><button data-p="week">Cette semaine</button><button data-p="all">Tous les temps</button></div>
+    <div class="chips" id="boardSort" role="group" aria-label="Classer par"><button class="chip" data-s="laps">Tours</button><button class="chip" data-s="gems">Éclats ◆</button><button class="chip" data-s="chain">Série de frôlés</button></div>
+    <div class="lbnote" id="boardNote"></div>
+    <ol class="lb" id="boardList"></ol>
+    <div class="lbmsg" id="boardMsg"></div>
+    <div class="lbme" id="boardMe"></div>
+    <button class="link" id="boardClose">Retour à l'accueil</button>
+  </div>
+</div>
+
+<div class="overlay" id="pseudoBox" hidden>
+  <div class="card">
+    <div class="eyebrow">Classement en ligne</div>
+    <h2>Votre pseudo</h2>
+    <p>Il s'affichera dans le classement. De 3 à 16 caractères : lettres, chiffres, espace, point, tiret ou _.</p>
+    <input class="field" id="pseudoInput" maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ex. : Comète_42" aria-label="Pseudo">
+    <div class="err" id="pseudoErr" role="alert"></div>
+    <button class="cta" id="pseudoOk">VALIDER</button>
+    <button class="link" id="pseudoLater">Plus tard</button>
+    <p class="note">Seuls votre pseudo et vos scores sont envoyés. Aucune donnée personnelle.</p>
   </div>
 </div>
 
@@ -255,6 +305,8 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
     <div class="eyebrow" style="color:var(--mist)">tours</div>
     <div class="new" id="newBest" hidden>Nouveau record</div>
     <div class="stats"><div>Record<b id="overBest">0</b></div><div>Temps<b id="overTime">0:00.0</b></div><div>Éclats<b id="overShards">0</b></div><div>Frôlés<b id="overNear">0</b></div></div>
+    <div class="overrank" id="overRank" hidden></div>
+    <button class="pill buy" id="overPseudo" hidden>Choisir un pseudo pour le classement</button>
     <button class="cta" id="again">REJOUER</button>
     <button class="link" id="homeFromOver">Retour à l'accueil</button>
   </div>
@@ -269,10 +321,29 @@ const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const COL = {void:'#0A0C22', void2:'#151A44', sun:'#F2A541', ion:'#BFF3FF', rock:'#FF4D6D', shard:'#FFD66B', mist:'#9AA3D9'};
 
 // ---------- storage (best-effort) ----------
+const STORE_PREFIX = 'orbite.';                  // the beta build uses its own prefix (separate save)
+const hypot = Math.hypot;                        // private copy: cannot be replaced from the console
 const store = {
-  get(k, d){ try { const v = localStorage.getItem('orbite.'+k); return v == null ? d : JSON.parse(v); } catch(e){ return d; } },
-  set(k, v){ try { localStorage.setItem('orbite.'+k, JSON.stringify(v)); } catch(e){} }
+  get(k, d){ try { const v = localStorage.getItem(STORE_PREFIX+k); return v == null ? d : JSON.parse(v); } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem(STORE_PREFIX+k, JSON.stringify(v)); } catch(e){} if (SEALED.includes(k)) seal(); }
 };
+// Progress is sealed: editing these values by hand (browser console) breaks the seal and the progress is reset.
+// It stops casual cheating only; the online leaderboard is protected on the server.
+const SEALED = ['v2.best', 'v2.games', 'v2.laps', 'v2.gems', 'v2.wallet', 'v2.owned', 'v2.near'];
+function sealOf(){
+  let h = 0x811c9dc5, txt = 'orbite·' + SEALED.map(k => { try { return localStorage.getItem(STORE_PREFIX + k); } catch(e){ return ''; } }).join('|');
+  for (let i = 0; i < txt.length; i++){ h ^= txt.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h.toString(36);
+}
+function seal(){ try { localStorage.setItem(STORE_PREFIX + 'v2.seal', sealOf()); } catch(e){} }
+(() => {
+  let saved = null; try { saved = localStorage.getItem(STORE_PREFIX + 'v2.seal'); } catch(e){}
+  if (saved === null){ seal(); return; }                       // first time with sealing: trust what is there
+  if (saved !== sealOf()){                                       // edited by hand: progress reset
+    try { for (const k of SEALED) localStorage.removeItem(STORE_PREFIX + k); localStorage.setItem(STORE_PREFIX + 'v2.skin', '"sonde"'); } catch(e){}
+    seal();
+  }
+})();
 // Stats v2: the record is the best number of laps. (v1 stored points, which are not comparable.)
 let best = store.get('v2.best', 0), games = store.get('v2.games', 0), lapsTotal = store.get('v2.laps', 0),
     gemsTotal = store.get('v2.gems', 0), muted = store.get('muted', false);
@@ -285,6 +356,7 @@ function recordRun(){
   nearTotal += S.near || 0; store.set('v2.near', nearTotal);
   const isBest = S.laps > best; if (isBest) best = S.laps;
   store.set('v2.games', games); store.set('v2.laps', lapsTotal); store.set('v2.gems', gemsTotal); store.set('v2.best', best);
+  queueScore();                                  // online leaderboard
   return isBest;
 }
 
@@ -526,6 +598,7 @@ const NEAR_GAP = 5, NEAR_TIME = .12;   // edge-to-edge gap (x unit) / last-momen
 function nearMiss(o){
   S.near = (S.near || 0) + 1;
   S.nearChain = S.t - (S.lastNear ?? -9) < 2.5 ? (S.nearChain || 0) + 1 : 1; S.lastNear = S.t;
+  S.bestChain = Math.max(S.bestChain || 0, S.nearChain);
   const p = pos(), op = pos(o.a, lanes[o.lane]);
   burst((p.x + op.x)/2, (p.y + op.y)/2, '#FFFFFF', 10 + 3*Math.min(S.nearChain, 4), 170);
   if (S.nearChain >= 2) popup('x' + S.nearChain, p.x, p.y - 14*unit, '#FFFFFF');   // only the chain multiplier, from x2
@@ -539,7 +612,7 @@ function popup(text, x, y, color){ S.popups.push({text, x, y, life:1, color}); }
 
 // ---------- UI ----------
 const ui = {
-  show(id){ for (const k of ['menu','paused','over','test','shop','news','howto']) $(k).hidden = k !== id; },
+  show(id){ for (const k of ['menu','paused','over','test','shop','news','howto','board','pseudoBox']) $(k).hidden = k !== id; },
   hud(on){ $('hud').hidden = !on; },
   score(){ $('sc').textContent = S.laps; $('hs').textContent = 'Record ' + Math.max(best, testRun || S.tuto ? 0 : S.laps); $('gm').textContent = '◆ ' + S.shards; },
   stats(){ $('menuBest').textContent = best; $('menuGames').textContent = games; $('menuGems').textContent = wallet;
@@ -876,6 +949,12 @@ $('tutoAgain').addEventListener('click', () => startTutorial('howto'));
 // ---------- versions & news ----------
 // Newest first. Texts are written for players (no tech talk) and are proofread before each release.
 const CHANGELOG = [
+  {v:'2.0', date:'25/11/2026', notes:[
+    "Nouveau : le classement en ligne ! Comparez vos meilleures parties en tours, en éclats et en série de frôlements, cette semaine ou depuis toujours.",
+    "Choisissez votre pseudo : vos parties sont envoyées automatiquement, même jouées sans connexion (elles partent dès que vous êtes en ligne).",
+    "Votre rang de la semaine s'affiche en fin de partie.",
+    "Protection renforcée contre la triche.",
+  ]},
   {v:'1.9', date:'23/11/2026', notes:[
     "À chaque palier, son nom s'affiche en haut de l'écran et les orbites et les bords de l'écran s'illuminent de sa couleur : rouge pour la pluie d'astéroïdes, turquoise pour les astéroïdes rapides, violet pour l'inversion, or pour un nouveau record.",
     "Les annonces ne s'affichent plus en bas de l'écran.",
@@ -986,6 +1065,153 @@ $('updateBar').addEventListener('click', async () => {
   location.replace('./?v=' + encodeURIComponent(remoteVersion || Date.now()));   // new address: skips any stale copy
 });
 
+// ---------- online leaderboard (Supabase) ----------
+// The game only calls 3 server functions; every check is done on the server (see supabase/schema.sql).
+// The publishable key is public by design: the tables themselves are closed to it.
+const SUPA_URL = 'https://gnltdkmweifqfceapwws.supabase.co', SUPA_KEY = 'sb_publishable_EUpYNzgX8BLXItnegCevXw_oPxFBuIz';
+async function rpc(fn, args){
+  let r;
+  try { r = await fetch(`${SUPA_URL}/rest/v1/rpc/${fn}`, {method: 'POST', headers: {apikey: SUPA_KEY, 'Content-Type': 'application/json'}, body: JSON.stringify(args)}); }
+  catch(e){ const err = new Error('reseau'); err.code = 'reseau'; throw err; }
+  const j = await r.json().catch(() => null);
+  if (!r.ok){ const err = new Error('erreur'); err.code = (j && j.message) || 'reseau'; throw err; }
+  return j;
+}
+function newId(){
+  try { return crypto.randomUUID(); } catch(e){}
+  const b = crypto.getRandomValues(new Uint8Array(16)); b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+  const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+  return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;
+}
+let playerId = store.get('v2.pid', null); if (!playerId){ playerId = newId(); store.set('v2.pid', playerId); }
+let pseudo = store.get('v2.pseudo', null);
+let pending = store.get('v2.pending', []);      // runs not sent yet (no pseudo yet, or no connection)
+let flushing = null;
+
+function queueScore(){
+  pending.push({l: S.laps, d: Math.round(S.t*10)/10, g: S.shards, c: S.bestChain || 0});
+  pending = pending.slice(-20); store.set('v2.pending', pending);
+  flushScores();
+}
+// Send waiting runs one by one (the server accepts one run every 3 s per player).
+function flushScores(){
+  if (flushing) return flushing;
+  if (!pseudo || !pending.length) return Promise.resolve();
+  flushing = (async () => {
+    while (pending.length){
+      const s = pending[0];
+      try { await rpc('submit_score', {p_id: playerId, p_laps: s.l, p_duration: s.d, p_gems: s.g, p_best_chain: s.c, p_version: APP_VERSION}); }
+      catch(e){
+        if (e.code === 'reseau'){ break; }                                   // offline: retry later
+        if (e.code === 'trop_rapide'){ await new Promise(r => setTimeout(r, 3300)); continue; }
+        if (e.code === 'joueur_inconnu'){ pseudo = null; store.set('v2.pseudo', null); break; }
+        // score_impossible or anything else: this run is dropped
+      }
+      pending.shift(); store.set('v2.pending', pending);
+      if (pending.length) await new Promise(r => setTimeout(r, 3300));
+    }
+  })().finally(() => { flushing = null; });
+  return flushing;
+}
+addEventListener('online', () => flushScores());
+document.addEventListener('visibilitychange', () => { if (!document.hidden) flushScores(); });
+setTimeout(flushScores, 1500);
+
+// End of a run: rank of the week, or an invitation to pick a pseudo.
+async function showOverRank(){
+  const out = $('overRank'), ask = $('overPseudo');
+  out.hidden = true; ask.hidden = true;
+  if (testRun) return;
+  if (!pseudo){ ask.hidden = false; return; }
+  await flushScores();
+  if (pending.length){ out.textContent = 'Partie enregistrée : elle sera envoyée au classement dès que vous serez en ligne.'; out.hidden = false; return; }
+  try {
+    const rows = await rpc('get_leaderboard', {p_sort: 'laps', p_period: 'week', p_me: playerId, p_limit: 1});
+    const me = rows.find(r => r.is_me);
+    if (me && mode === 'over'){ out.textContent = `${me.rank}${me.rank == 1 ? 'er' : 'e'} du classement cette semaine`; out.hidden = false; }
+  } catch(e){}
+}
+
+// ----- pseudo -----
+let pseudoBack = 'menu';
+const PSEUDO_ERR = {
+  pseudo_invalide: "De 3 à 16 caractères : lettres, chiffres, espace, point, tiret ou _.",
+  pseudo_interdit: "Ce pseudo n'est pas autorisé. Choisissez-en un autre.",
+  pseudo_pris: "Ce pseudo est déjà pris. Choisissez-en un autre.",
+  reseau: "Pas de connexion. Réessayez quand vous serez en ligne.",
+};
+function openPseudo(back){
+  pseudoBack = back; $('pseudoInput').value = pseudo || ''; $('pseudoErr').textContent = '';
+  ui.show('pseudoBox'); setTimeout(() => { try { $('pseudoInput').focus(); } catch(e){} }, 50);
+}
+async function submitPseudo(){
+  const v = $('pseudoInput').value.replace(/\s+/g, ' ').trim();
+  if (!/^[A-Za-z0-9À-ÖØ-öø-ÿ _.\-]{3,16}$/.test(v)){ $('pseudoErr').textContent = PSEUDO_ERR.pseudo_invalide; return; }
+  $('pseudoOk').disabled = true; $('pseudoErr').textContent = '';
+  try {
+    pseudo = await rpc('set_pseudo', {p_id: playerId, p_pseudo: v}); store.set('v2.pseudo', pseudo);
+    sfx.go(); flushScores();
+    if (pseudoBack === 'board') openBoard(); else if (pseudoBack === 'over'){ ui.show('over'); showOverRank(); } else ui.show('menu');
+  } catch(e){ $('pseudoErr').textContent = PSEUDO_ERR[e.code] || "Une erreur est survenue. Réessayez."; }
+  $('pseudoOk').disabled = false;
+}
+$('pseudoOk').addEventListener('click', submitPseudo);
+$('pseudoInput').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') submitPseudo(); });
+$('pseudoLater').addEventListener('click', () => { if (pseudoBack === 'board') openBoard(); else ui.show(pseudoBack === 'over' ? 'over' : 'menu'); });
+$('overPseudo').addEventListener('click', () => openPseudo('over'));
+
+// ----- leaderboard screen -----
+let boardSort = store.get('boardSort', 'laps'), boardPeriod = store.get('boardPeriod', 'week'), boardReq = 0;
+function boardTabs(){
+  for (const b of document.querySelectorAll('#boardPeriod button')) b.setAttribute('aria-pressed', String(b.dataset.p === boardPeriod));
+  for (const b of document.querySelectorAll('#boardSort .chip')) b.setAttribute('aria-pressed', String(b.dataset.s === boardSort));
+  $('boardNote').textContent = boardPeriod === 'week' ? 'Remis à zéro chaque lundi' : 'Depuis le lancement du classement';
+}
+function boardMe(){
+  const box = $('boardMe'); box.replaceChildren();
+  if (pseudo){
+    const t = document.createElement('span'); t.append('Vous jouez en tant que '); const b = document.createElement('b'); b.textContent = pseudo; t.append(b);
+    const c = document.createElement('button'); c.className = 'link'; c.textContent = 'Changer'; c.addEventListener('click', () => openPseudo('board'));
+    box.append(t, c);
+  } else {
+    const c = document.createElement('button'); c.className = 'pill buy'; c.textContent = 'Choisir un pseudo pour apparaître';
+    c.addEventListener('click', () => openPseudo('board')); box.append(c);
+  }
+}
+async function loadBoard(){
+  const id = ++boardReq, list = $('boardList'), msg = $('boardMsg');
+  boardTabs(); list.replaceChildren(); msg.textContent = 'Chargement…';
+  try {
+    await flushScores();
+    const rows = await rpc('get_leaderboard', {p_sort: boardSort, p_period: boardPeriod, p_me: playerId, p_limit: 50});
+    if (id !== boardReq) return;
+    msg.textContent = rows.length ? '' : (boardPeriod === 'week' ? 'Aucune partie cette semaine. Soyez le premier !' : 'Aucune partie pour l\'instant. Soyez le premier !');
+    let prev = 0;
+    for (const r of rows){
+      const li = document.createElement('li');
+      li.className = (r.is_me ? 'me ' : '') + (r.rank <= 3 ? 'r' + r.rank : '') + (r.rank > prev + 1 && prev ? ' sep' : '');
+      prev = r.rank;
+      const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = r.rank;
+      const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = r.pseudo;           // text only: no HTML from players
+      const val = document.createElement('span'); val.className = 'val';
+      val.textContent = boardSort === 'gems' ? r.gems + ' ◆' : boardSort === 'chain' ? 'x' + r.best_chain : r.laps;
+      const sm = document.createElement('small');
+      const parts = [];
+      if (boardSort !== 'laps') parts.push(r.laps + ' tours');
+      parts.push(fmtTime(r.duration));
+      if (boardSort !== 'gems') parts.push(r.gems + ' ◆');
+      if (boardSort !== 'chain' && r.best_chain) parts.push('série x' + r.best_chain);
+      sm.textContent = parts.join(' · ');
+      li.append(rk, nm, val, sm); list.append(li);
+    }
+  } catch(e){ if (id === boardReq) msg.textContent = 'Impossible de charger le classement. Vérifiez votre connexion.'; }
+}
+function openBoard(){ boardMe(); ui.show('board'); loadBoard(); }
+$('boardBtn').addEventListener('click', openBoard);
+$('boardClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
+$('boardPeriod').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ boardPeriod = b.dataset.p; store.set('boardPeriod', boardPeriod); loadBoard(); } });
+$('boardSort').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b){ boardSort = b.dataset.s; store.set('boardSort', boardSort); loadBoard(); } });
+
 // ---------- hidden test mode ----------
 let testRun = null;                              // {lap, kind} while a test run is active
 let testCfg = store.get('test', {lap: 29, kind: 'random'});
@@ -1055,6 +1281,7 @@ function gameOver(){
     $('overTime').textContent = fmtTime(S.t);
     $('overTitle').textContent = testRun ? 'Fin du test' : 'Collision';
     $('newBest').hidden = !isBest; ui.show('over'); ui.stats();
+    showOverRank();
   }, 900);
 }
 function hop(){
@@ -1138,7 +1365,7 @@ function update(dt){
       }
       const op = pos(o.a, lanes[o.lane]);
       const fade = Math.min(1, (S.t - o.born)/.35);
-      const d = Math.hypot(op.x-p.x, op.y-p.y), hitR = o.size*.8 + 6*unit;
+      const d = hypot(op.x-p.x, op.y-p.y), hitR = o.size*.8 + 6*unit;
       if (!o.passed && !o.ghost && fade > .6 && d < hitR){ if (S.tuto) tutoHit(); else gameOver(); break; }
       if (!o.passed && !o.ghost && fade > .6) o.minD = Math.min(o.minD ?? 1e9, d - hitR);   // closest it came, edge to edge
       const ah = ahead(o.a);
@@ -1148,7 +1375,7 @@ function update(dt){
     S.rocks = S.rocks.filter(o => !(o.passed && ahead(o.a) < 5.4));
     for (const g of S.gems){
       const gp = pos(g.a, lanes[g.lane]);
-      if (!g.got && Math.hypot(gp.x-p.x, gp.y-p.y) < 18*unit){
+      if (!g.got && hypot(gp.x-p.x, gp.y-p.y) < 18*unit){
         g.got = true; S.shards += g.val; ui.score(); sfx.shard(); buzz(g.hard ? [12,30,12] : 12);
         burst(gp.x, gp.y, COL.shard, g.hard ? 28 : 16, g.hard ? 200 : 140); popup('+' + g.val, gp.x, gp.y, COL.shard);
       }
