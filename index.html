@@ -335,6 +335,15 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
   </div>
 </div>
 
+<div class="overlay" id="notice" hidden>
+  <div class="card">
+    <div class="eyebrow" style="color:var(--rock)">Progression corrigée</div>
+    <h2>Pris la main dans le sac</h2>
+    <p>Votre progression a été corrigée : des éclats et des skins avaient été obtenus en dehors du jeu, petit tricheur. Si vous avez des réclamations, veuillez vous plaindre au Boss !</p>
+    <button class="cta" id="noticeOk">COMPRIS</button>
+  </div>
+</div>
+
 <div class="overlay" id="shop" hidden>
   <div class="card shopcard">
     <div class="eyebrow">Boutique</div>
@@ -419,7 +428,8 @@ const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const COL = {void:'#0A0C22', void2:'#151A44', sun:'#F2A541', ion:'#BFF3FF', rock:'#FF4D6D', shard:'#FFD66B', mist:'#9AA3D9'};
 
 // ---------- storage (best-effort) ----------
-const STORE_PREFIX = 'orbite.';                  // the beta build uses its own prefix (separate save)
+const STORE_PREFIX = 'orbite.';
+const TEST_TOOLS = STORE_PREFIX !== 'orbite.';     // hidden test mode: test address (/beta/) only                  // the beta build uses its own prefix (separate save)
 const hypot = Math.hypot;                        // private copy: cannot be replaced from the console
 const store = {
   get(k, d){ try { const v = localStorage.getItem(STORE_PREFIX+k); return v == null ? d : JSON.parse(v); } catch(e){ return d; } },
@@ -726,7 +736,7 @@ function popup(text, x, y, color){ S.popups.push({text, x, y, life:1, color}); }
 
 // ---------- UI ----------
 const ui = {
-  show(id){ for (const k of ['menu','paused','over','test','shop','news','howto','board','pseudoBox','profile','unlock','sharebox']) $(k).hidden = k !== id; },
+  show(id){ for (const k of ['menu','paused','over','test','shop','news','howto','board','pseudoBox','profile','unlock','sharebox','notice']) $(k).hidden = k !== id; },
   hud(on){ $('hud').hidden = !on; },
   score(){ $('sc').textContent = S.laps; $('hs').textContent = 'Record ' + Math.max(best, testRun || S.tuto ? 0 : S.laps); $('gm').textContent = '◆ ' + S.shards; },
   stats(){ $('menuBest').textContent = best; $('menuGames').textContent = games; $('menuGems').textContent = wallet;
@@ -1067,6 +1077,9 @@ $('tutoAgain').addEventListener('click', () => startTutorial('howto'));
 // ---------- versions & news ----------
 // Newest first. Texts are written for players (no tech talk) and are proofread before each release.
 const CHANGELOG = [
+  {v:'2.1.1', date:'25/11/2026', notes:[
+    "Corrections et sécurité : le mode de test caché a été retiré du jeu.",
+  ]},
   {v:'2.1', date:'25/11/2026', notes:[
     "Nouveau : votre Profil, avec vos performances, votre progression, votre collection de skins et votre rang au classement.",
     "Partagez vos parties depuis l'écran de fin, avec une image spéciale quand vous battez votre record.",
@@ -1149,13 +1162,30 @@ function openNews(){
 $('newsBtn').addEventListener('click', openNews);
 $('newsOk').addEventListener('click', () => { store.set('seenVersion', APP_VERSION); ui.show('menu'); ui.stats(); });
 $('newsHistoryBtn').addEventListener('click', () => { $('newsHistory').hidden = false; $('newsHistoryBtn').hidden = true; });
-// Show the news once after an update (players who never played start on the home screen).
-(() => {
+// ---------- correction of the progress obtained with the old hidden test mode (2.1.1) ----------
+// An honest player always has: wallet + price of bought skins <= crystals earned in game (gemsTotal),
+// and owns Mezen only with 92 390 laps. The "+1 000" button broke the first rule, "Débloquer Mezen" the second.
+// Penalty: every skin is removed (the base probe is kept) and the wallet is set to half the crystals earned in game.
+let cheatFixed = false;
+if (!TEST_TOOLS){
+  const spent = SKINS.filter(k => k.price > 0 && owned.includes(k.id)).reduce((a, k) => a + k.price, 0);
+  const mz = SKINS.find(k => k.unlockLaps);
+  if (wallet + spent > gemsTotal || (owned.includes(mz.id) && lapsTotal < mz.unlockLaps)){
+    owned = ['sonde']; equipped = 'sonde'; wallet = Math.floor(gemsTotal / 2);
+    store.set('v2.owned', owned); store.set('v2.skin', equipped); store.set('v2.wallet', wallet);
+    cheatFixed = true;
+  }
+}
+function showNewsIfNeeded(){
   const seen = store.get('seenVersion', null);
-  if (seen === APP_VERSION) return;
-  if (seen === null && games === 0){ store.set('seenVersion', APP_VERSION); return; }
-  openNews();
-})();
+  if (seen === APP_VERSION) return false;
+  if (seen === null && games === 0){ store.set('seenVersion', APP_VERSION); return false; }
+  openNews(); return true;
+}
+// Show the news once after an update (players who never played start on the home screen); a correction notice comes first.
+if (cheatFixed){ ui.show('notice'); ui.stats(); }
+else showNewsIfNeeded();
+$('noticeOk').addEventListener('click', () => { if (!showNewsIfNeeded()) ui.show('menu'); ui.stats(); });
 
 // A newer version is online? (version.json is published with each release.) Offer it outside of a run.
 let updateReady = false;
@@ -1562,7 +1592,7 @@ function openTest(){ testUI(); ui.show('test'); }
 let titleTaps = 0, titleTimer = 0;
 $('title').addEventListener('click', () => {
   titleTaps++; clearTimeout(titleTimer); titleTimer = setTimeout(() => { titleTaps = 0; }, 1500);
-  if (titleTaps >= 5){ titleTaps = 0; openTest(); }
+  if (titleTaps >= 5 && TEST_TOOLS){ titleTaps = 0; openTest(); }   // test tools exist only on the test address
 });
 $('lapMinus').addEventListener('click', () => setLap(testCfg.lap - 1));
 $('lapPlus').addEventListener('click', () => setLap(testCfg.lap + 1));
