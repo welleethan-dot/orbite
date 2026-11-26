@@ -235,7 +235,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 <div class="overlay" id="menu">
   <div class="card">
     <button class="icon gear" id="setBtn" aria-label="Réglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
-    <div class="eyebrow">Version de test · 2.2</div>
+    <div class="eyebrow">Version de test · 2.2.1</div>
     <h1 id="title">ORBITE</h1>
     <p>Touchez l'écran pour changer d'orbite.</p>
     <button class="cta" id="play">JOUER</button>
@@ -463,7 +463,9 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 </div>
 
 <script>
-(() => {
+// Orbite · Bases : raccourcis, couleurs, sauvegarde scellée, statistiques
+// Fichiers chargés dans l'ordre de leur numéro ; ils partagent les mêmes variables.
+
 const $ = id => document.getElementById(id);
 const cv = $('c'), ctx = cv.getContext('2d');
 const TAU = Math.PI * 2;
@@ -529,6 +531,10 @@ function recordRun(){
   queueScore();                                  // online leaderboard
   return isBest;
 }
+</script>
+<script>
+// Orbite · Sons (tous générés par le code) et vibrations
+// Fichiers chargés dans l'ordre de leur numéro ; ils partagent les mêmes variables.
 
 // ---------- audio ----------
 let ac = null, audioCameBack = false;
@@ -598,6 +604,10 @@ const sfx = {
   crash(){ noise(.6, .35); tone(180, 40, .5, 'sawtooth', .12); }
 };
 function buzz(p){ if (!settings.vib) return; try { navigator.vibrate && navigator.vibrate(p); } catch(e){} }
+</script>
+<script>
+// Orbite · Monde : géométrie, état de la partie, astéroïdes, éclats, frôlements, paliers
+// Fichiers chargés dans l'ordre de leur numéro ; ils partagent les mêmes variables.
 
 // ---------- geometry ----------
 let W, H, cx, cy, R0, lanes = [0,0], unit;
@@ -779,6 +789,10 @@ function burst(x, y, color, n, spd){
     S.parts.push({x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v, life:1, decay:.8+Math.random()*1.2, color, s:(Math.random()*2+1)*unit}); }
 }
 function popup(text, x, y, color){ S.popups.push({text, x, y, life:1, color}); }
+</script>
+<script>
+// Orbite · Interface : écrans, début / pause / fin de partie, saut
+// Fichiers chargés dans l'ordre de leur numéro ; ils partagent les mêmes variables.
 
 // ---------- UI ----------
 const ui = {
@@ -842,6 +856,11 @@ function reverse(){
 }
 function pause(){ if (mode !== 'play') return; mode = 'paused'; ui.show('paused'); }
 function resume(){ if (mode !== 'paused') return; mode = 'play'; ui.show(null); last = performance.now(); }
+</script>
+<script>
+// Orbite · Skins et boutique
+// Fichiers chargés dans l'ordre de leur numéro ; ils partagent les mêmes variables.
+
 // ---------- skins ----------
 // Prices = "N runs of 50 laps" (10, 20, 50, 100, 1 000 runs) at ~14 crystals per 50-lap run.
 // Mezen is a bonus skin: no price, unlocked at 92 390 laps in total.
@@ -1008,6 +1027,10 @@ document.addEventListener('click', e => {
   if (b.dataset.equip) return;                   // equipping has its own sound
   if (['play', 'again', 'testGo', 'resume'].includes(b.id)) sfx.go(); else sfx.ui();
 });
+</script>
+<script>
+// Orbite · Didacticiel et « Comment jouer »
+// Fichiers chargés dans l'ordre de leur numéro ; ils partagent les mêmes variables.
 
 // ---------- tutorial ----------
 // A guided first run: slow, no game over, one thing learnt per step. Launched on a new player's first
@@ -1119,10 +1142,17 @@ $('tutoSkip').addEventListener('click', () => tutoFinish(tutoFrom === 'play'));
 $('howBtn').addEventListener('click', () => ui.show('howto'));
 $('howClose').addEventListener('click', () => openSettings());   // « Comment jouer » lives in the settings
 $('tutoAgain').addEventListener('click', () => startTutorial('howto'));
+</script>
+<script>
+// Orbite · Versions, nouveautés, bandeau de mise à jour, correction 2.1.1
+// Fichiers chargés dans l'ordre de leur numéro ; ils partagent les mêmes variables.
 
 // ---------- versions & news ----------
 // Newest first. Texts are written for players (no tech talk) and are proofread before each release.
 const CHANGELOG = [
+  {v:'2.2.1', date:'26/11/2026', notes:[
+    "Améliorations techniques en coulisses, pour un jeu plus fiable à chaque mise à jour.",
+  ]},
   {v:'2.2', date:'26/11/2026', notes:[
     "Nouveau : les Réglages, avec la roue dentée de l'accueil. Son, vibrations, chrono, pseudo, didacticiel et nouveautés, tout est au même endroit.",
     "Une option « Réduire les effets lumineux » adoucit les éclairs, les secousses de l'écran et les étoiles filantes.",
@@ -1271,6 +1301,10 @@ $('updateBar').addEventListener('click', async () => {
   try { const reg = await navigator.serviceWorker?.getRegistration(); await reg?.update(); } catch(e){}
   location.replace('./?v=' + encodeURIComponent(remoteVersion || Date.now()));   // new address: skips any stale copy
 });
+</script>
+<script>
+// Orbite · Classement en ligne (Supabase), pseudo
+// Fichiers chargés dans l'ordre de leur numéro ; ils partagent les mêmes variables.
 
 // ---------- online leaderboard (Supabase) ----------
 // The game only calls 3 server functions; every check is done on the server (see supabase/schema.sql).
@@ -1444,6 +1478,10 @@ $('boardBtn').addEventListener('click', openBoard);
 $('boardClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
 $('boardPeriod').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ boardPeriod = b.dataset.p; store.set('boardPeriod', boardPeriod); loadBoard(); } });
 $('boardSort').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b){ boardSort = b.dataset.s; store.set('boardSort', boardSort); loadBoard(); } });
+</script>
+<script>
+// Orbite · Profil, célébration des skins, partage
+// Fichiers chargés dans l'ordre de leur numéro ; ils partagent les mêmes variables.
 
 // ---------- profile ----------
 const fmtInt = n => Math.round(n || 0).toLocaleString('fr-FR');
@@ -1621,6 +1659,10 @@ $('shareCopy').addEventListener('click', async () => {
 });
 $('shareClose').addEventListener('click', () => { if (shareBack === 'unlock'){ ui.show('unlock'); startAnim(); } else ui.show(shareBack); });
 $('shareRun').addEventListener('click', () => openShare('run', {laps: S.laps, gems: S.shards, chain: S.bestChain || 0, record: !$('newBest').hidden, rank: lastRunRank}, 'over'));
+</script>
+<script>
+// Orbite · Réglages et mode de test (/beta/ seulement)
+// Fichiers chargés dans l'ordre de leur numéro ; ils partagent les mêmes variables.
 
 // ---------- settings ----------
 const canVibrate = typeof navigator.vibrate === 'function';
@@ -1731,6 +1773,10 @@ function hop(){
   sfx.hop(S.lane === 1); buzz(8);
   const p = pos(); burst(p.x, p.y, COL.ion, 6, 60);
 }
+</script>
+<script>
+// Orbite · Commandes, mise à jour, dessin, boucle du jeu
+// Fichiers chargés dans l'ordre de leur numéro ; ils partagent les mêmes variables.
 
 // ---------- input ----------
 cv.addEventListener('pointerdown', e => { e.preventDefault(); if (mode === 'play') hop(); });
@@ -1982,9 +2028,8 @@ function frame(now){
 }
 requestAnimationFrame(frame);
 try { navigator.wakeLock && navigator.wakeLock.request('screen').catch(()=>{}); } catch(e){}
-})();
 </script>
 
-<!-- version de test : pas de mode hors ligne ni d'installation -->
+<!-- pas de mode hors ligne ni d'installation dans cette variante -->
 </body>
 </html>
