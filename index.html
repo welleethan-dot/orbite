@@ -72,6 +72,25 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 .dot{width:12px;height:12px;border-radius:50%;margin-top:3px;}
 .cta{font-family:var(--display);font-weight:800;font-size:1.2rem;letter-spacing:.08em;color:var(--void);background:var(--sun);border:0;border-radius:999px;padding:18px 46px;cursor:pointer;margin-top:6px;box-shadow:0 0 32px rgba(242,165,65,.35);}
 .cta:active{transform:scale(.97);}
+#menu .card{position:relative;}
+.gear{position:absolute;top:-6px;right:0;width:44px;height:44px;}
+.setcard{max-width:440px;}
+.sgroup{width:100%;display:flex;flex-direction:column;background:rgba(21,26,68,.55);border-radius:16px;padding:4px 14px;text-align:left;}
+.srow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid rgba(154,163,217,.14);}
+.srow:last-child{border-bottom:0;}
+.srow > div{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.srow b{font-size:.95rem;color:var(--ion);}
+.srow small{font-size:.75rem;color:var(--mist);line-height:1.35;}
+.srow .pill{margin-top:0;flex-shrink:0;}
+.switch{flex-shrink:0;width:52px;height:30px;border-radius:999px;border:0;background:rgba(154,163,217,.28);position:relative;cursor:pointer;padding:0;transition:background .2s;}
+.switch i{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s;}
+.switch[aria-checked="true"]{background:var(--sun);}
+.switch[aria-checked="true"] i{transform:translateX(22px);}
+.switch:disabled{opacity:.4;cursor:default;}
+.switch:focus-visible{outline:2px solid var(--shard);outline-offset:2px;}
+.scontact{padding:12px 14px;gap:4px;}
+.scontact b{color:var(--ion);}
+.scontact p{margin:0;color:var(--mist);font-size:.9rem;max-width:none;}
 .profcard{max-width:440px;}
 .avatar{width:84px;height:84px;display:block;}
 .pname{font-family:var(--display);font-weight:800;font-size:1.5rem;margin-top:-6px;}
@@ -215,13 +234,13 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 
 <div class="overlay" id="menu">
   <div class="card">
+    <button class="icon gear" id="setBtn" aria-label="Réglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     <div class="eyebrow">Arcade · une touche</div>
     <h1 id="title">ORBITE</h1>
     <p>Touchez l'écran pour changer d'orbite.</p>
     <button class="cta" id="play">JOUER</button>
     <div class="duo"><button class="cta ghost" id="boardBtn">CLASSEMENT</button><button class="cta ghost" id="profileBtn">PROFIL</button><button class="cta ghost" id="shopBtn">SKINS</button><button class="cta ghost" id="howBtn">COMMENT JOUER</button></div>
     <div class="stats"><div>Record<b id="menuBest">0</b></div><div>Moyenne<b id="menuAvg">0</b></div><div>Parties<b id="menuGames">0</b></div><div>Éclats<b id="menuGems">0</b></div></div>
-    <button class="link version" id="newsBtn">Version <span id="verLabel"></span> · Nouveautés</button>
   </div>
 </div>
 
@@ -344,6 +363,29 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
   </div>
 </div>
 
+<div class="overlay" id="settings" hidden>
+  <div class="card setcard">
+    <div class="eyebrow">Réglages</div>
+    <h2>Réglages</h2>
+    <div class="sgroup">
+      <div class="srow"><div><b>Son</b><small>Effets sonores du jeu et des menus</small></div><button class="switch" id="swSound" role="switch" aria-label="Son"><i></i></button></div>
+      <div class="srow"><div><b>Vibrations</b><small id="vibNote">Petites vibrations pendant la partie</small></div><button class="switch" id="swVib" role="switch" aria-label="Vibrations"><i></i></button></div>
+      <div class="srow"><div><b>Réduire les effets lumineux</b><small>Atténue les éclairs, les secousses de l'écran et les étoiles filantes</small></div><button class="switch" id="swFx" role="switch" aria-label="Réduire les effets lumineux"><i></i></button></div>
+      <div class="srow"><div><b>Afficher le chrono</b><small>Le temps de la partie, en haut de l'écran</small></div><button class="switch" id="swClock" role="switch" aria-label="Afficher le chrono"><i></i></button></div>
+    </div>
+    <div class="sgroup">
+      <div class="srow"><div><b>Pseudo</b><small id="setPseudo">Aucun pseudo</small></div><button class="pill" id="setPseudoBtn">Changer</button></div>
+      <div class="srow"><div><b>Didacticiel</b><small>Revoir comment jouer, pas à pas</small></div><button class="pill" id="setTuto">Revoir</button></div>
+      <div class="srow"><div><b>Nouveautés</b><small>Version <span id="verLabel"></span></small></div><button class="pill" id="newsBtn">Voir</button></div>
+    </div>
+    <div class="sgroup scontact">
+      <b>Un bug ? Une idée ?</b>
+      <p>Envoie-moi un message en privé, fais pas le timide&nbsp;!</p>
+    </div>
+    <button class="link" id="setClose">Retour à l'accueil</button>
+  </div>
+</div>
+
 <div class="overlay" id="shop" hidden>
   <div class="card shopcard">
     <div class="eyebrow">Boutique</div>
@@ -425,6 +467,7 @@ const $ = id => document.getElementById(id);
 const cv = $('c'), ctx = cv.getContext('2d');
 const TAU = Math.PI * 2;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const calmFx = () => reduceMotion || settings.lowfx;   // "Réduire les effets lumineux" (or the phone's reduce-motion setting)
 const COL = {void:'#0A0C22', void2:'#151A44', sun:'#F2A541', ion:'#BFF3FF', rock:'#FF4D6D', shard:'#FFD66B', mist:'#9AA3D9'};
 
 // ---------- storage (best-effort) ----------
@@ -462,6 +505,8 @@ let best = store.get('v2.best', 0), games = store.get('v2.games', 0), lapsTotal 
     gemsTotal = store.get('v2.gems', 0), muted = store.get('muted', false);
 let wallet = store.get('v2.wallet', gemsTotal), nearTotal = store.get('v2.near', 0);            // spendable crystals (gemsTotal = lifetime)
 let owned = store.get('v2.owned', ['sonde']), equipped = store.get('v2.skin', 'sonde');
+// Player settings (2.2). Sound stays in its own key ('muted').
+let settings = Object.assign({vib: true, lowfx: false, clock: true}, store.get('settings', {}));
 // Count a finished run in the stats (never for test runs). Returns true on a new record.
 function recordRun(){
   if (testRun) return false;
@@ -551,7 +596,7 @@ const sfx = {
   },
   crash(){ noise(.6, .35); tone(180, 40, .5, 'sawtooth', .12); }
 };
-function buzz(p){ try { navigator.vibrate && navigator.vibrate(p); } catch(e){} }
+function buzz(p){ if (!settings.vib) return; try { navigator.vibrate && navigator.vibrate(p); } catch(e){} }
 
 // ---------- geometry ----------
 let W, H, cx, cy, R0, lanes = [0,0], unit;
@@ -698,7 +743,7 @@ function spawnHardGem(){
 }
 // a few faint shooting stars crossing the background, staggered
 function shootingStars(){
-  if (reduceMotion) return;
+  if (calmFx()) return;
   const n = 2 + (Math.random() < .5 ? 1 : 0), big = Math.max(W, H);
   const dir = Math.random() < .5 ? 1 : -1;
   for (let i = 0; i < n; i++){
@@ -736,7 +781,7 @@ function popup(text, x, y, color){ S.popups.push({text, x, y, life:1, color}); }
 
 // ---------- UI ----------
 const ui = {
-  show(id){ for (const k of ['menu','paused','over','test','shop','news','howto','board','pseudoBox','profile','unlock','sharebox','notice']) $(k).hidden = k !== id; },
+  show(id){ for (const k of ['menu','paused','over','test','shop','news','howto','board','pseudoBox','profile','unlock','sharebox','notice','settings']) $(k).hidden = k !== id; },
   hud(on){ $('hud').hidden = !on; },
   score(){ $('sc').textContent = S.laps; $('hs').textContent = 'Record ' + Math.max(best, testRun || S.tuto ? 0 : S.laps); $('gm').textContent = '◆ ' + S.shards; },
   stats(){ $('menuBest').textContent = best; $('menuGames').textContent = games; $('menuGems').textContent = wallet;
@@ -781,6 +826,7 @@ function banner(title, color, pulses = 1, dur = 1.2, hold = false){
 function fxLevel(){                              // 0..1, current brightness of the event light
   if (!fx) return 0;
   const k = fx.t / fx.dur;
+  if (settings.lowfx) return k >= 1 ? (fx.hold ? .3 : 0) : .3*(1 - k);   // reduced effects: a soft, steady glow, no flashes
   if (k >= 1) return fx.hold ? .5 + .25*Math.sin((fx.t - fx.dur)*3) : 0;   // held: gentle breathing
   const phase = (k * fx.pulses) % 1;
   return Math.sin(Math.PI * phase) * (1 - .35*k);
@@ -1077,6 +1123,11 @@ $('tutoAgain').addEventListener('click', () => startTutorial('howto'));
 // ---------- versions & news ----------
 // Newest first. Texts are written for players (no tech talk) and are proofread before each release.
 const CHANGELOG = [
+  {v:'2.2', date:'26/11/2026', notes:[
+    "Nouveau : les Réglages, avec la roue dentée de l'accueil. Son, vibrations, chrono, pseudo, didacticiel et nouveautés, tout est au même endroit.",
+    "Une option « Réduire les effets lumineux » adoucit les éclairs, les secousses de l'écran et les étoiles filantes.",
+    "Un bug ? Une idée ? Les Réglages vous disent comment me contacter.",
+  ]},
   {v:'2.1.1', date:'25/11/2026', notes:[
     "Corrections et sécurité : le mode de test caché a été retiré du jeu.",
   ]},
@@ -1323,7 +1374,7 @@ async function submitPseudo(){
   try {
     pseudo = await rpc('set_pseudo', {p_id: playerId, p_pseudo: v}); store.set('v2.pseudo', pseudo); await loadPlayerInfo();
     sfx.go(); flushScores();
-    if (pseudoBack === 'board') openBoard(); else if (pseudoBack === 'over'){ ui.show('over'); showOverRank(); } else ui.show('menu');
+    if (pseudoBack === 'board') openBoard(); else if (pseudoBack === 'over'){ ui.show('over'); showOverRank(); } else if (pseudoBack === 'settings') openSettings(); else ui.show('menu');
   } catch(e){
     let m = PSEUDO_ERR[e.code] || "Une erreur est survenue. Réessayez.";
     if (e.code === 'pseudo_limite'){ await loadPlayerInfo(); if (pinfo) m += ` Prochain changement possible le ${fmtReset(pinfo.next_reset)}.`; }
@@ -1334,7 +1385,7 @@ async function submitPseudo(){
 $('pseudoOk').addEventListener('click', submitPseudo);
 $('pseudoInput').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') submitPseudo(); });
 $('pseudoInput').addEventListener('input', () => { pseudoConfirm = false; $('pseudoOk').textContent = 'VALIDER'; $('pseudoErr').textContent = ''; });
-$('pseudoLater').addEventListener('click', () => { if (pseudoBack === 'board') openBoard(); else ui.show(pseudoBack === 'over' ? 'over' : 'menu'); });
+$('pseudoLater').addEventListener('click', () => { if (pseudoBack === 'board') openBoard(); else if (pseudoBack === 'settings') openSettings(); else ui.show(pseudoBack === 'over' ? 'over' : 'menu'); });
 $('overPseudo').addEventListener('click', () => openPseudo('over'));
 
 // ----- leaderboard screen -----
@@ -1569,6 +1620,28 @@ $('shareCopy').addEventListener('click', async () => {
 $('shareClose').addEventListener('click', () => { if (shareBack === 'unlock'){ ui.show('unlock'); startAnim(); } else ui.show(shareBack); });
 $('shareRun').addEventListener('click', () => openShare('run', {laps: S.laps, gems: S.shards, chain: S.bestChain || 0, record: !$('newBest').hidden, rank: lastRunRank}, 'over'));
 
+// ---------- settings ----------
+const canVibrate = typeof navigator.vibrate === 'function';
+function setSwitch(id, on){ $(id).setAttribute('aria-checked', String(!!on)); }
+function saveSettings(){ store.set('settings', settings); }
+function openSettings(){
+  setSwitch('swSound', !muted); setSwitch('swVib', settings.vib && canVibrate); setSwitch('swFx', settings.lowfx); setSwitch('swClock', settings.clock);
+  $('swVib').disabled = !canVibrate;
+  $('vibNote').textContent = canVibrate ? 'Petites vibrations pendant la partie' : 'Non disponible sur cet appareil';
+  $('setPseudo').textContent = pseudo || 'Aucun pseudo';
+  $('setPseudoBtn').textContent = pseudo ? 'Changer' : 'Choisir';
+  if (pseudo) loadPlayerInfo().then(() => { if (pinfo && !$('settings').hidden) $('setPseudo').textContent = `${pseudo} · ${changesText(pinfo.changes_left).toLowerCase()}`; });
+  ui.show('settings');
+}
+$('setBtn').addEventListener('click', openSettings);
+$('setClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
+$('swSound').addEventListener('click', () => { muted = !muted; store.set('muted', muted); ui.muteIcon(); setSwitch('swSound', !muted); if (!muted) sfx.ui(); });
+$('swVib').addEventListener('click', () => { settings.vib = !settings.vib; saveSettings(); setSwitch('swVib', settings.vib); buzz(20); });
+$('swFx').addEventListener('click', () => { settings.lowfx = !settings.lowfx; saveSettings(); setSwitch('swFx', settings.lowfx); });
+$('swClock').addEventListener('click', () => { settings.clock = !settings.clock; saveSettings(); setSwitch('swClock', settings.clock); $('clock').hidden = !settings.clock; });
+$('setPseudoBtn').addEventListener('click', () => openPseudo('settings'));
+$('setTuto').addEventListener('click', () => startTutorial('howto'));
+
 // ---------- hidden test mode ----------
 let testRun = null;                              // {lap, kind} while a test run is active
 let testCfg = store.get('test', {lap: 29, kind: 'random'});
@@ -1670,6 +1743,7 @@ $('again').addEventListener('click', start);
 $('resume').addEventListener('click', resume);
 $('pauseBtn').addEventListener('click', pause);
 $('mute').addEventListener('click', () => { muted = !muted; store.set('muted', muted); ui.muteIcon(); if (!muted) sfx.lap(); });
+$('clock').hidden = !settings.clock;
 document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
 
 // ---------- update ----------
@@ -1771,7 +1845,7 @@ function draw(now){
   bg.addColorStop(0, COL.void2); bg.addColorStop(1, COL.void);
   ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
 
-  if (S.shake > 0 && !reduceMotion){ const k = S.shake*S.shake*10*unit; ctx.translate((Math.random()-.5)*k, (Math.random()-.5)*k); }
+  if (S.shake > 0 && !calmFx()){ const k = S.shake*S.shake*10*unit; ctx.translate((Math.random()-.5)*k, (Math.random()-.5)*k); }
 
   // stars
   starRot += reduceMotion ? 0 : 0.0006;
