@@ -25,7 +25,7 @@ modifié, décision prise, idée notée, version publiée), dans le même commit
 | Serveur (Supabase) | https://gnltdkmweifqfceapwws.supabase.co | Région Europe. Tableau de bord : supabase.com/dashboard/project/gnltdkmweifqfceapwws |
 
 **Clés Supabase**
-- La **clé publique** (`sb_publishable_…`) est dans `index.html` (`SUPA_KEY`). Elle est faite pour être visible.
+- La **clé publique** (`sb_publishable_…`) est dans `js/08-online.js` (`SUPA_KEY`). Elle est faite pour être visible.
 - La **clé secrète / service_role** et le **mot de passe de la base** ne doivent **jamais** être demandés,
   écrits dans le code ou collés dans une conversation.
 - Les changements de base se font en donnant un script SQL au propriétaire, qui le colle dans l'éditeur SQL.
@@ -34,18 +34,23 @@ modifié, décision prise, idée notée, version publiée), dans le même commit
 
 | Fichier | Rôle |
 |---|---|
-| `index.html` | Tout le jeu : HTML, CSS et JavaScript (~2 000 lignes). Aucune dépendance. |
-| `sw.js` | Mode hors ligne. **Augmenter `CACHE` à chaque version.** Ne met en cache que la page de l'application (jamais `/beta/`). Ne met jamais `version.json` en cache. |
+| `index.html` | Les écrans (HTML) et le chargement des fichiers ci-dessous. Aucune dépendance externe. |
+| `css/style.css` | Tout le style. |
+| `js/01-core.js` … `js/11-game.js` | Le code, découpé par thème : bases et sauvegarde, sons, monde (astéroïdes, éclats, paliers), interface, skins et boutique, didacticiel, nouveautés et correction 2.1.1, classement en ligne, profil et partage, réglages et mode de test, boucle du jeu. **Chargés dans l'ordre du numéro et partageant les mêmes variables** (pas de modules) : un fichier peut utiliser ce qu'un fichier précédent déclare au chargement, et n'importe quoi au moment de jouer. |
+| `tools/build.py` | Fabrique les variantes (voir ci-dessous). |
+| `tests/run.js` | Tests automatiques (voir § 6). |
+| `sw.js` | Mode hors ligne. `CACHE` est réglé automatiquement par `tools/build.py` (`orbite-VERSION`). Ne met en cache que la page de l'application (jamais `/beta/`). Ne met jamais `version.json` en cache. Les fichiers css/js portent `?v=VERSION` : une nouvelle version ne mélange jamais anciens et nouveaux fichiers. |
 | `version.json` | Version en ligne. Sert au bandeau « Nouvelle version disponible ». |
 | `manifest.webmanifest`, `icons/` | Installation comme application. |
 | `supabase/schema.sql` | Script complet de la base, relançable sans risque. **Tout changement de base passe par ce fichier.** |
-| `beta/index.html` | Copie de test générée depuis `index.html` (voir § 7). |
+| `beta/index.html` | Copie de test **fabriquée** par `tools/build.py` (ne pas la modifier à la main). |
+| `build/claude.html` | Copie pour le lien Claude, **fabriquée** par `tools/build.py` (non versionnée). |
 
-**Variantes générées depuis `index.html`**
+**Variantes fabriquées par `python3 tools/build.py`** (depuis la racine ; version lue dans `version.json`)
 - **Application** : `STORE_PREFIX = 'orbite.'`, mode hors ligne, outils de test désactivés.
-- **`/beta/`** : `STORE_PREFIX = 'orbite-beta.'` (sauvegarde séparée → `TEST_TOOLS` actif), sans manifeste
+- **`/beta/`** (un seul fichier, css et js intégrés) : `STORE_PREFIX = 'orbite-beta.'` (sauvegarde séparée → `TEST_TOOLS` actif), sans manifeste
   ni service worker, eyebrow « Version de test · X.Y », `noindex`, chemins d'icônes en `../icons/`.
-- **Lien Claude** : sans service worker ; `rpc()` lève immédiatement une erreur `reseau`, et les messages
+- **Lien Claude** (un seul fichier) : sans service worker ; `rpc()` lève immédiatement une erreur `reseau`, et les messages
   réseau sont remplacés par « Le classement en ligne fonctionne uniquement dans l'application ».
 
 **Sauvegarde sur l'appareil (localStorage, préfixe ci-dessus)**
@@ -110,12 +115,14 @@ Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frô
 1. Le propriétaire décrit ce qu'il veut. Claude **propose** (options + recommandation) quand c'est un choix,
    et **construit** directement quand la demande est claire.
 2. Travail sur une branche `version-X.Y`.
-3. Tests automatiques (Playwright, iPhone et Android simulés) avant de montrer quoi que ce soit.
+3. `python3 tools/build.py && node tests/run.js` : **toute la série doit passer** avant de montrer quoi que ce soit
+   (ajouter un test pour chaque nouvelle fonction). `node tests/run.js classement profil` ne lance que ces tests.
+   Les tests simulent Supabase : ils n'écrivent jamais dans le vrai classement.
 4. **Mise à jour simultanée** de `/beta/` (via `main`) **et** du lien Claude pour que le propriétaire teste.
 5. **Le propriétaire relit tous les textes visibles** (nouveautés, messages, boutons) avant publication.
 6. Après son « OK » : fusion dans `main` → GitHub Pages publie → vérification du site en ligne.
-7. À chaque version : ajouter l'entrée dans `CHANGELOG` (dans `index.html`), mettre à jour `version.json`,
-   augmenter `CACHE` dans `sw.js`, mettre la date du jour de publication.
+7. À chaque version : ajouter l'entrée dans `CHANGELOG` (dans `js/07-news.js`), mettre à jour `version.json`,
+   relancer `tools/build.py` (cache et numéros de fichiers suivent), mettre la date du jour de publication.
 8. Ne rien publier sur `main` (donc sur le site) sans accord explicite.
 
 **Commits** : en français, avec les lignes d'attribution Claude demandées par la session.
@@ -140,6 +147,7 @@ Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frô
 | 2.1 | 25/11/2026 | Profil, partage des parties et des skins |
 | 2.1.1 | 25/11/2026 | Mode de test retiré de l'application, correction des tricheurs |
 | 2.2 | 26/11/2026 | Réglages (son, vibrations, effets réduits, chrono…), accueil épuré |
+| 2.2.1 | 26/11/2026 | Technique : jeu découpé en fichiers, script de fabrication, tests automatiques |
 
 ## 8. Décisions prises (et pourquoi)
 
@@ -157,7 +165,7 @@ Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frô
 ## 9. Feuille de route
 
 **Priorités validées (dans l'ordre)**
-1. ~~Ce document~~ ✅
+1. ~~Ce document~~ ✅ · ~~script de fabrication, tests automatiques, découpage en fichiers~~ ✅ (2.2.1)
 2. Alléger le dessin des halos lumineux (performances sur téléphones modestes)
 3. Double authentification GitHub et Supabase (à faire par le propriétaire)
 4. Statistiques anonymes des joueurs pour le propriétaire + page **Confidentialité** dans les Réglages
