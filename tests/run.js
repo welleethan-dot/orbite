@@ -244,7 +244,8 @@ const TESTS = {
     const size = await t.page.evaluate(() => { const i = document.getElementById('shareImg'); return i.naturalWidth + 'x' + i.naturalHeight; });
     check(size === '1080x1350', `image de partage : ${size}`);
     await t.page.tap('#shareClose'); await t.page.tap('#homeFromOver'); await t.page.tap('#profileBtn'); await wait(1200);
-    check((await t.page.textContent('#pBest')).startsWith('12'), 'record absent du profil');
+    const bestNow = await t.page.evaluate(() => __t.best), shown = await t.page.textContent('#pBest');
+    check(bestNow >= 12 && shown.startsWith(String(bestNow)), `record du profil « ${shown} » ≠ ${bestNow}`);
     check((await t.page.textContent('#profRanks')).includes('1er'), 'rang absent du profil');
     check(t.errors.length === 0, `erreurs ${t.errors}`); await t.close();
   },
