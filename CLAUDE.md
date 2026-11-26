@@ -147,7 +147,7 @@ Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frô
 | 2.1 | 25/11/2026 | Profil, partage des parties et des skins |
 | 2.1.1 | 25/11/2026 | Mode de test retiré de l'application, correction des tricheurs |
 | 2.2 | 26/11/2026 | Réglages (son, vibrations, effets réduits, chrono…), accueil épuré |
-| 2.2.1 | (en test) | Technique : jeu découpé en fichiers, script de fabrication, tests automatiques |
+| 2.2.1 | 26/11/2026 | Technique : jeu découpé en fichiers, script de fabrication, tests automatiques |
 
 ## 8. Décisions prises (et pourquoi)
 
