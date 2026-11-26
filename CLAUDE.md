@@ -1,8 +1,8 @@
 # Orbite — mémoire du projet
 
 Ce fichier est la référence du projet. Il est lu automatiquement par Claude au début de chaque session
-sur ce dépôt. **À mettre à jour à chaque version publiée** (sections « Historique », « Réglages du jeu »
-et « Feuille de route » au minimum).
+sur ce dépôt. **Consigne du propriétaire : le tenir à jour à chaque changement** (nouvelle fonction, réglage
+modifié, décision prise, idée notée, version publiée), dans le même commit que le changement lui-même.
 
 ---
 
