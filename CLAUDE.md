@@ -150,6 +150,8 @@ Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frô
 - **Musique** : pas encore. Préférence pour une musique **générée par le code** (quelques Ko, sans droits).
 - **Temps de jeu** : enregistré mais **pas affiché** au joueur.
 - **Vibrations iPhone** : impossibles en application web (Apple). Astuce iOS 18 mise de côté.
+- **Dépôt GitHub public** jusqu'au lancement officiel (GitHub Pages n'est gratuit qu'en public). Au lancement :
+  passer en privé avec GitHub Pro, ou changer d'hébergeur en même temps que le nom de domaine.
 - **Poids** : le jeu doit rester léger. Signaler toute demande qui ajoute un poids notable (fichiers audio, images).
 
 ## 9. Feuille de route
