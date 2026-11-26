@@ -94,6 +94,15 @@ modifié, décision prise, idée notée, version publiée), dans le même commit
   Trou noir 14 000. **Mezen** : skin bonus (portrait pixel), débloqué à **92 390 tours cumulés**.
 - Le joueur ne voit **jamais** l'équivalence en parties dans la boutique.
 
+**Dessin (performances, depuis 2.2.2)**
+- Aucun `shadowBlur` ni dégradé recalculé à chaque image dans la partie : halos, fond et planète sont peints une fois
+  dans de petites images (`glowSprite`, `haloSprite`, `blitBackground` ; cache `glowCache`) puis copiés (`blit`).
+- Halo d'astéroïde = halo rond partagé (copié sans rotation, au pixel près) + léger dégradé dans le remplissage
+  (lueur intérieure). Visuellement identique à l'ancien flou (comparé image par image).
+- `shadowBlur` compte en pixels d'écran, pas en unités de page : en tenir compte (÷ DPR) pour les marges.
+- Mesure : scène de 8 astéroïdes, Pixel 7 simulé, processeur ralenti ×6 : 19 → 28 images/s (30 astéroïdes, ×4 : 16 → 30).
+  Test « dessin allégé » : 0 flou et 0 dégradé recalculés en 30 images.
+
 **Frôlement** : esquive à moins de **0,12 s** de l'impact (`NEAR_TIME`) ou passage très serré (`NEAR_GAP`).
 Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frôlements à moins de 2,5 s d'écart.
 
@@ -148,6 +157,7 @@ Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frô
 | 2.1.1 | 25/11/2026 | Mode de test retiré de l'application, correction des tricheurs |
 | 2.2 | 26/11/2026 | Réglages (son, vibrations, effets réduits, chrono…), accueil épuré |
 | 2.2.1 | 26/11/2026 | Technique : jeu découpé en fichiers, script de fabrication, tests automatiques |
+| 2.2.2 | (en test) | Dessin allégé : halos, fond et planète peints une fois puis copiés (≈ +50 % d'images/s sur téléphone lent simulé) |
 
 ## 8. Décisions prises (et pourquoi)
 
@@ -166,7 +176,7 @@ Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frô
 
 **Priorités validées (dans l'ordre)**
 1. ~~Ce document~~ ✅ · ~~script de fabrication, tests automatiques, découpage en fichiers~~ ✅ (2.2.1)
-2. Alléger le dessin des halos lumineux (performances sur téléphones modestes)
+2. ~~Alléger le dessin des halos lumineux~~ ✅ (2.2.2)
 3. Double authentification GitHub et Supabase (à faire par le propriétaire)
 4. Statistiques anonymes des joueurs pour le propriétaire + page **Confidentialité** dans les Réglages
 5. Code de transfert de progression, puis sauvegarde en ligne

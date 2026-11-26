@@ -60,6 +60,44 @@ function drawSprite(c, x, y, u){
     c.fillStyle = MEZEN_COL[ch]; c.fillRect(x0 + q*ps, y0 + r*ps, Math.ceil(ps), Math.ceil(ps));
   }
 }
+// ---------- cached glows ----------
+// A glow (canvas shadowBlur) is expensive to compute. Each glowing object is painted once into a small offscreen
+// picture at the screen's pixel density, and that picture is copied every frame. Keyed by what changes its look.
+const glowCache = new Map();
+function glowSprite(key, half, paint){
+  const dpr = Math.min(window.devicePixelRatio || 1, 2), k = key + '|' + dpr;
+  let sp = glowCache.get(k);
+  if (!sp){
+    if (glowCache.size > 300) glowCache.clear();                     // many sizes seen (resizes): start over
+    const cv2 = document.createElement('canvas'), px = Math.ceil(half*2*dpr);
+    cv2.width = cv2.height = Math.max(1, px);
+    const g = cv2.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, half*dpr, half*dpr);
+    paint(g);
+    sp = {img: cv2, half}; glowCache.set(k, sp);
+  }
+  return sp;
+}
+// A soft round glow only (no shape inside): shared by every object of the same colour and size, copied without
+// rotation. The object itself is then drawn on top with a plain path, without any blur. Glow of a filled disc, plus,
+// when `ring` > 0, the glow of its outline of that thickness (a filled and stroked shape casts both).
+function haloSprite(color, radius, blur, ring){
+  const r = Math.max(1, Math.round(radius)), b = Math.max(1, Math.round(blur)), dpr = Math.min(window.devicePixelRatio || 1, 2);
+  return glowSprite(`halo|${color}|${r}|${b}|${ring}`, r + ring + b*1.5/dpr + 1, g => {   // shadowBlur counts screen pixels
+    const far = 10000;                                    // the shape is drawn off-canvas; only its shadow lands
+    g.shadowColor = color; g.shadowBlur = b; g.shadowOffsetX = far*dpr; g.fillStyle = g.strokeStyle = '#000'; g.lineWidth = ring;
+    g.beginPath(); g.arc(-far, 0, r, 0, TAU); g.fill(); if (ring) g.stroke();
+  });
+}
+// Copies a glow picture centred on (x, y). At full size it lands exactly on the screen's pixels, without smoothing:
+// the cheapest copy there is, and identical to the eye (the glow is soft; it moves by less than half a pixel).
+function blit(sp, x, y, f = 1, c = ctx){
+  const h = sp.half*f;
+  if (f !== 1){ c.drawImage(sp.img, x - h, y - h, h*2, h*2); return; }
+  const d = Math.min(window.devicePixelRatio || 1, 2), px = sp.img.width/d;
+  c.imageSmoothingEnabled = false;
+  c.drawImage(sp.img, Math.round((x - h)*d)/d, Math.round((y - h)*d)/d, px, px);
+  c.imageSmoothingEnabled = true;
+}
 function drawProbe(c, x, y, trail, sk, now, u){
   c.lineCap = 'round';
   for (let i = 1; i < trail.length; i++){
@@ -77,8 +115,11 @@ function drawProbe(c, x, y, trail, sk, now, u){
       c.beginPath(); c.arc(x, y, 11*u, a0, a0 + TAU/12 + .03); c.stroke();
     }
   }
-  c.save(); c.shadowColor = sk.glow; c.shadowBlur = 20*u;
-  c.fillStyle = sk.core; c.beginPath(); c.arc(x, y, 7*u, 0, TAU); c.fill(); c.restore();
+  // glowing core: drawn once into a cached picture, then copied (a live shadowBlur every frame was the costliest part)
+  const r = 7*u, pad = 20*u*1.5/Math.min(window.devicePixelRatio || 1, 2) + 1, core = glowSprite(`core|${sk.core}|${sk.glow}|${u.toFixed(2)}`, r + pad, g => {
+    g.shadowColor = sk.glow; g.shadowBlur = 20*u; g.fillStyle = sk.core; g.beginPath(); g.arc(0, 0, r, 0, TAU); g.fill();
+  });
+  c.drawImage(core.img, x - core.half, y - core.half, core.half*2, core.half*2);
   if (sk.disk){ c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 1.2*u; c.beginPath(); c.arc(x, y, 7*u, 0, TAU); c.stroke(); }
   else {
     c.strokeStyle = hexA(sk.glow, .5); c.lineWidth = 1.5;

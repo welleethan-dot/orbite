@@ -109,12 +109,25 @@ function update(dt){
 
 // ---------- draw ----------
 let starRot = 0;
+// The deep-space background gradient covers the whole screen: painted once per screen size, then copied each frame.
+let bgCache = null;
+function blitBackground(){
+  const key = `${W}|${H}|${DPR}|${cx}|${cy}`;
+  if (!bgCache || bgCache.key !== key){
+    const c2 = bgCache && bgCache.img || document.createElement('canvas');
+    c2.width = Math.round(W*DPR); c2.height = Math.round(H*DPR);
+    const g = c2.getContext('2d'); g.setTransform(DPR, 0, 0, DPR, 0, 0);
+    const bg = g.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W,H)*.75);
+    bg.addColorStop(0, COL.void2); bg.addColorStop(1, COL.void);
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    bgCache = {key, img: c2};
+  }
+  ctx.imageSmoothingEnabled = false; ctx.drawImage(bgCache.img, 0, 0, W, H); ctx.imageSmoothingEnabled = true;
+}
 function draw(now){
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);          // re-applied every frame (lost if the canvas is reset)
   ctx.save();
-  const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W,H)*.75);
-  bg.addColorStop(0, COL.void2); bg.addColorStop(1, COL.void);
-  ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+  blitBackground();
 
   if (S.shake > 0 && !calmFx()){ const k = S.shake*S.shake*10*unit; ctx.translate((Math.random()-.5)*k, (Math.random()-.5)*k); }
 
@@ -157,17 +170,20 @@ function draw(now){
   ctx.setLineDash([]);
 
   // planet
-  const pr = R0*(1 + S.pulse*.06);
-  const halo = ctx.createRadialGradient(cx, cy, pr*.8, cx, cy, pr*2.2);
-  halo.addColorStop(0, 'rgba(242,165,65,.28)'); halo.addColorStop(1, 'rgba(242,165,65,0)');
-  ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(cx, cy, pr*2.2, 0, TAU); ctx.fill();
-  const pg = ctx.createRadialGradient(cx - pr*.35, cy - pr*.4, pr*.1, cx, cy, pr);
-  pg.addColorStop(0, '#FFE2A8'); pg.addColorStop(.45, COL.sun); pg.addColorStop(1, '#B4482A');
-  ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(cx, cy, pr, 0, TAU); ctx.fill();
-  ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, pr, 0, TAU); ctx.clip();
-  ctx.strokeStyle = 'rgba(120,40,20,.25)'; ctx.lineWidth = pr*.12;
-  for (let k=-2;k<=2;k++){ ctx.beginPath(); ctx.ellipse(cx, cy + k*pr*.33, pr*1.2, pr*.12, -.18, 0, TAU); ctx.stroke(); }
-  ctx.restore();
+  const planet = glowSprite(`planet|${R0.toFixed(2)}`, R0*2.2, g => {   // never changes: painted once, then copied
+    const pr = R0;
+    const halo = g.createRadialGradient(0, 0, pr*.8, 0, 0, pr*2.2);
+    halo.addColorStop(0, 'rgba(242,165,65,.28)'); halo.addColorStop(1, 'rgba(242,165,65,0)');
+    g.fillStyle = halo; g.beginPath(); g.arc(0, 0, pr*2.2, 0, TAU); g.fill();
+    const pg = g.createRadialGradient(-pr*.35, -pr*.4, pr*.1, 0, 0, pr);
+    pg.addColorStop(0, '#FFE2A8'); pg.addColorStop(.45, COL.sun); pg.addColorStop(1, '#B4482A');
+    g.fillStyle = pg; g.beginPath(); g.arc(0, 0, pr, 0, TAU); g.fill();
+    g.save(); g.beginPath(); g.arc(0, 0, pr, 0, TAU); g.clip();
+    g.strokeStyle = 'rgba(120,40,20,.25)'; g.lineWidth = pr*.12;
+    for (let k=-2;k<=2;k++){ g.beginPath(); g.ellipse(0, k*pr*.33, pr*1.2, pr*.12, -.18, 0, TAU); g.stroke(); }
+    g.restore();
+  });
+  blit(planet, cx, cy, 1 + S.pulse*.06);
   // lap counter on the planet
   if (mode === 'play' || mode === 'dying'){
     ctx.fillStyle = 'rgba(10,12,34,.75)'; ctx.font = `700 ${Math.round(13*unit)}px "JetBrains Mono", monospace`;
@@ -178,10 +194,12 @@ function draw(now){
   // gems
   for (const g of S.gems){
     const p = pos(g.a, lanes[g.lane]), f = Math.min(1, (S.t - g.born)/.4), s = 8*unit*f, sp = g.spin + now/400;
-    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(sp);
-    ctx.shadowColor = COL.shard; ctx.shadowBlur = 14*unit;
-    ctx.fillStyle = COL.shard; ctx.beginPath();
-    ctx.moveTo(0, -s*1.3); ctx.lineTo(s*.8, 0); ctx.lineTo(0, s*1.3); ctx.lineTo(-s*.8, 0); ctx.closePath(); ctx.fill();
+    const S8 = 8*unit, gem = glowSprite(`gem|${unit.toFixed(3)}`, S8*1.3 + 14*unit*1.5/DPR + 1, c => {   // one shared picture, turned
+      c.shadowColor = COL.shard; c.shadowBlur = 14*unit; c.fillStyle = COL.shard; c.beginPath();
+      c.moveTo(0, -S8*1.3); c.lineTo(S8*.8, 0); c.lineTo(0, S8*1.3); c.lineTo(-S8*.8, 0); c.closePath(); c.fill();
+    });
+    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(sp); ctx.scale(f, f);
+    ctx.drawImage(gem.img, -gem.half, -gem.half, gem.half*2, gem.half*2);
     ctx.restore();
     if (g.hard){ // rare crystal: pulsing double ring
       ctx.strokeStyle = COL.shard; ctx.lineWidth = 1.5*unit;
@@ -204,13 +222,20 @@ function draw(now){
       ctx.lineCap = 'butt';
     }
     const fadeOut = o.passed ? .45 : 1;
-    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(o.rot); ctx.globalAlpha = fadeOut;
-    ctx.shadowColor = COL.rock; ctx.shadowBlur = 16*unit;
-    ctx.fillStyle = '#3A1630'; ctx.strokeStyle = COL.rock; ctx.lineWidth = 2*unit;
+    // glow: one shared picture under the rock; the faint glow just inside its outline is a gradient in the fill
+    const R = o.size*.88, halo = haloSprite(COL.rock, R, 16*unit, Math.round(2*unit)), hz = halo.half*f, inner = 16*unit*1.6/DPR;
+    ctx.globalAlpha = fadeOut;
+    blit(halo, p.x, p.y, f);
+    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(o.rot); ctx.scale(f, f);
+    if (!o.fill || o.fillUnit !== unit){
+      o.fillUnit = unit; o.fill = ctx.createRadialGradient(0, 0, Math.max(0, R - inner), 0, 0, R);
+      o.fill.addColorStop(0, '#3A1630'); o.fill.addColorStop(.5, '#4B1B3A'); o.fill.addColorStop(1, '#63213C');
+    }
+    ctx.fillStyle = o.fill; ctx.strokeStyle = COL.rock; ctx.lineWidth = 2*unit/f;
     ctx.beginPath();
-    o.shape.forEach((v,i) => { const x = Math.cos(v.a)*v.r*s, y = Math.sin(v.a)*v.r*s; i ? ctx.lineTo(x,y) : ctx.moveTo(x,y); });
+    o.shape.forEach((v,i) => { const x = Math.cos(v.a)*v.r*o.size, y = Math.sin(v.a)*v.r*o.size; i ? ctx.lineTo(x,y) : ctx.moveTo(x,y); });
     ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.restore();
+    ctx.restore(); ctx.globalAlpha = 1;
   }
 
   // trail + probe
