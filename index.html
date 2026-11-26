@@ -72,8 +72,8 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 .dot{width:12px;height:12px;border-radius:50%;margin-top:3px;}
 .cta{font-family:var(--display);font-weight:800;font-size:1.2rem;letter-spacing:.08em;color:var(--void);background:var(--sun);border:0;border-radius:999px;padding:18px 46px;cursor:pointer;margin-top:6px;box-shadow:0 0 32px rgba(242,165,65,.35);}
 .cta:active{transform:scale(.97);}
-#menu .card{position:relative;}
-.gear{position:absolute;top:-6px;right:0;width:44px;height:44px;}
+.gear{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);right:max(14px, env(safe-area-inset-right,0px));width:38px;height:38px;z-index:2;}
+.gear svg{width:19px;height:19px;}
 .setcard{max-width:440px;}
 .sgroup{width:100%;display:flex;flex-direction:column;background:rgba(21,26,68,.55);border-radius:16px;padding:4px 14px;text-align:left;}
 .srow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid rgba(154,163,217,.14);}
@@ -239,8 +239,8 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
     <h1 id="title">ORBITE</h1>
     <p>Touchez l'écran pour changer d'orbite.</p>
     <button class="cta" id="play">JOUER</button>
-    <div class="duo"><button class="cta ghost" id="boardBtn">CLASSEMENT</button><button class="cta ghost" id="profileBtn">PROFIL</button><button class="cta ghost" id="shopBtn">SKINS</button><button class="cta ghost" id="howBtn">COMMENT JOUER</button></div>
-    <div class="stats"><div>Record<b id="menuBest">0</b></div><div>Moyenne<b id="menuAvg">0</b></div><div>Parties<b id="menuGames">0</b></div><div>Éclats<b id="menuGems">0</b></div></div>
+    <div class="duo"><button class="cta ghost" id="boardBtn">CLASSEMENT</button><button class="cta ghost" id="profileBtn">PROFIL</button><button class="cta ghost" id="shopBtn">SKINS</button></div>
+    <div class="stats"><div>Record<b id="menuBest">0</b></div><div>Parties<b id="menuGames">0</b></div><div>Éclats<b id="menuGems">0</b></div></div>
   </div>
 </div>
 
@@ -263,7 +263,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
       <span class="dot" style="background:conic-gradient(#FF4D6D,#19E6D2,#B46BFF,#FFD66B,#FF4D6D)"></span><span>À chaque palier, son nom s'affiche en haut et les orbites prennent sa couleur</span>
     </div>
     <button class="cta" id="tutoAgain">REFAIRE LE DIDACTICIEL</button>
-    <button class="link" id="howClose">Retour à l'accueil</button>
+    <button class="link" id="howClose">Retour aux réglages</button>
   </div>
 </div>
 
@@ -375,6 +375,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
     </div>
     <div class="sgroup">
       <div class="srow"><div><b>Pseudo</b><small id="setPseudo">Aucun pseudo</small></div><button class="pill" id="setPseudoBtn">Changer</button></div>
+      <div class="srow"><div><b>Comment jouer</b><small>Toutes les règles du jeu</small></div><button class="pill" id="howBtn">Voir</button></div>
       <div class="srow"><div><b>Didacticiel</b><small>Revoir comment jouer, pas à pas</small></div><button class="pill" id="setTuto">Revoir</button></div>
       <div class="srow"><div><b>Nouveautés</b><small>Version <span id="verLabel"></span></small></div><button class="pill" id="newsBtn">Voir</button></div>
     </div>
@@ -784,8 +785,7 @@ const ui = {
   show(id){ for (const k of ['menu','paused','over','test','shop','news','howto','board','pseudoBox','profile','unlock','sharebox','notice','settings']) $(k).hidden = k !== id; },
   hud(on){ $('hud').hidden = !on; },
   score(){ $('sc').textContent = S.laps; $('hs').textContent = 'Record ' + Math.max(best, testRun || S.tuto ? 0 : S.laps); $('gm').textContent = '◆ ' + S.shards; },
-  stats(){ $('menuBest').textContent = best; $('menuGames').textContent = games; $('menuGems').textContent = wallet;
-    $('menuAvg').textContent = games ? Math.round(lapsTotal/games) : 0; },
+  stats(){ $('menuBest').textContent = best; $('menuGames').textContent = games; $('menuGems').textContent = wallet; },
   muteIcon(){ $('wave').style.display = muted ? 'none' : ''; $('mute').setAttribute('aria-label', muted ? 'Activer le son' : 'Couper le son'); }
 };
 ui.stats(); ui.muteIcon();
@@ -1117,7 +1117,7 @@ function tutoFinish(play){
 $('tutoNext').addEventListener('click', () => { if (TUTO[S.tuto.step].last) tutoFinish(true); else tutoNext(); });
 $('tutoSkip').addEventListener('click', () => tutoFinish(tutoFrom === 'play'));
 $('howBtn').addEventListener('click', () => ui.show('howto'));
-$('howClose').addEventListener('click', () => ui.show('menu'));
+$('howClose').addEventListener('click', () => openSettings());   // « Comment jouer » lives in the settings
 $('tutoAgain').addEventListener('click', () => startTutorial('howto'));
 
 // ---------- versions & news ----------
@@ -1127,6 +1127,7 @@ const CHANGELOG = [
     "Nouveau : les Réglages, avec la roue dentée de l'accueil. Son, vibrations, chrono, pseudo, didacticiel et nouveautés, tout est au même endroit.",
     "Une option « Réduire les effets lumineux » adoucit les éclairs, les secousses de l'écran et les étoiles filantes.",
     "Un bug ? Une idée ? Les Réglages vous disent comment me contacter.",
+    "L'accueil est épuré : « Comment jouer » passe dans les Réglages, et la moyenne de tours reste dans votre Profil.",
     "Sur Android, nouvelles vibrations pour les astéroïdes rapides et les nouveaux records.",
   ]},
   {v:'2.1.1', date:'25/11/2026', notes:[
