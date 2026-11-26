@@ -1,0 +1,185 @@
+# Orbite — mémoire du projet
+
+Ce fichier est la référence du projet. Il est lu automatiquement par Claude au début de chaque session
+sur ce dépôt. **À mettre à jour à chaque version publiée** (sections « Historique », « Réglages du jeu »
+et « Feuille de route » au minimum).
+
+---
+
+## 1. Le projet en bref
+
+- **Orbite** : jeu d'arcade mobile à une touche. Une sonde tourne autour d'une planète ; un toucher la fait
+  passer d'une orbite à l'autre pour éviter les astéroïdes et ramasser des éclats.
+- **Mode actuel** : partie infinie, score = nombre de tours. Classement en ligne, profil, boutique de skins.
+- **Public actuel** : un petit groupe de testeurs. Pas encore de diffusion publique.
+- **Propriétaire** : le compte GitHub `welleethan-dot`. Toutes les décisions passent par lui.
+
+## 2. Adresses et accès
+
+| Quoi | Adresse | Remarque |
+|---|---|---|
+| Application (testeurs) | https://welleethan-dot.github.io/orbite/ | Version publiée. Installable sur l'écran d'accueil. |
+| Adresse de test | https://welleethan-dot.github.io/orbite/beta/ | Version en cours. Sauvegarde séparée, outils de test actifs, **scores envoyés au vrai classement**. |
+| Lien Claude | https://claude.ai/artifact/GUnGRoLMjJWHkSFiFF8LvE | Copie pour regarder sur ordinateur. Le classement n'y fonctionne pas (connexions bloquées). |
+| Dépôt | https://github.com/welleethan-dot/orbite | Public. GitHub Pages publie la branche `main`. |
+| Serveur (Supabase) | https://gnltdkmweifqfceapwws.supabase.co | Région Europe. Tableau de bord : supabase.com/dashboard/project/gnltdkmweifqfceapwws |
+
+**Clés Supabase**
+- La **clé publique** (`sb_publishable_…`) est dans `index.html` (`SUPA_KEY`). Elle est faite pour être visible.
+- La **clé secrète / service_role** et le **mot de passe de la base** ne doivent **jamais** être demandés,
+  écrits dans le code ou collés dans une conversation.
+- Les changements de base se font en donnant un script SQL au propriétaire, qui le colle dans l'éditeur SQL.
+
+## 3. Architecture technique
+
+| Fichier | Rôle |
+|---|---|
+| `index.html` | Tout le jeu : HTML, CSS et JavaScript (~2 000 lignes). Aucune dépendance. |
+| `sw.js` | Mode hors ligne. **Augmenter `CACHE` à chaque version.** Ne met en cache que la page de l'application (jamais `/beta/`). Ne met jamais `version.json` en cache. |
+| `version.json` | Version en ligne. Sert au bandeau « Nouvelle version disponible ». |
+| `manifest.webmanifest`, `icons/` | Installation comme application. |
+| `supabase/schema.sql` | Script complet de la base, relançable sans risque. **Tout changement de base passe par ce fichier.** |
+| `beta/index.html` | Copie de test générée depuis `index.html` (voir § 7). |
+
+**Variantes générées depuis `index.html`**
+- **Application** : `STORE_PREFIX = 'orbite.'`, mode hors ligne, outils de test désactivés.
+- **`/beta/`** : `STORE_PREFIX = 'orbite-beta.'` (sauvegarde séparée → `TEST_TOOLS` actif), sans manifeste
+  ni service worker, eyebrow « Version de test · X.Y », `noindex`, chemins d'icônes en `../icons/`.
+- **Lien Claude** : sans service worker ; `rpc()` lève immédiatement une erreur `reseau`, et les messages
+  réseau sont remplacés par « Le classement en ligne fonctionne uniquement dans l'application ».
+
+**Sauvegarde sur l'appareil (localStorage, préfixe ci-dessus)**
+- Scellées, groupe 1 (`v2.seal`) : `v2.best`, `v2.games`, `v2.laps`, `v2.gems`, `v2.wallet`, `v2.owned`, `v2.near`.
+- Scellées, groupe 2 (`v2.seal2`) : `v2.stats` (bestChain, bestNearRun, bestGemsRun, bestTime, timeTotal, hops, bestDate, since).
+- Non scellées : `v2.skin`, `v2.pid` (identifiant secret du joueur), `v2.pseudo`, `v2.pending` (parties à envoyer),
+  `settings`, `muted`, `seenVersion`, `tutoDone`, `boardSort`, `boardPeriod`, `test`.
+- **Ne jamais ajouter une clé à un groupe de sceau existant** : ça invaliderait le sceau et effacerait la
+  progression de tout le monde. Créer un nouveau groupe (`v2.seal3`…).
+
+**Serveur (Supabase)**
+- Tables `players`, `scores`, `pseudo_changes` : **aucun accès direct** depuis le jeu (RLS activé, droits retirés).
+- Le jeu n'appelle que 4 fonctions : `set_pseudo`, `submit_score`, `get_leaderboard`, `player_info`.
+- `submit_score` vérifie : 1 envoi / 3 s, 400 / jour / joueur, tours cohérents avec la durée (bornes calculées
+  sur les vitesses normale et difficile), éclats ≤ 3 × (tours / 5) + 3, série ≤ 3 × tours + 3.
+- Pseudo : 3 à 16 caractères, filtre de grossièretés, unique (sans tenir compte des majuscules et accents),
+  3 changements par mois (remise à zéro le 1er, heure de Paris), ancien pseudo réservé 30 jours et affiché
+  « anciennement … » pendant 30 jours.
+
+## 4. Réglages du jeu (valeurs actuelles)
+
+**Vitesse et difficulté**
+- Vitesse : `omegaAt(t)`. Normale : 1,5 → 3,25 rad/s en ~45 s. Difficile : 1,75 → 3,6 rad/s en ~40 s.
+- **Partie difficile secrète** : 1 partie sur 5, jamais annoncée ni marquée dans le classement.
+- Orbites : la sonde va **55 %** plus vite sur l'orbite extérieure (`lanes = [outer/1.55, outer]`).
+- Astéroïdes : visent l'orbite du joueur à 60 % → 80 % (tour 40), 90 % puis 100 % s'il reste trop longtemps
+  sur une orbite. Un passage reste toujours libre sur l'autre orbite.
+
+**Paliers** (titre en haut + orbites et bords colorés ; rythme d'éclairs propre à chacun)
+| Palier | Couleur | Effet |
+|---|---|---|
+| 30 tours : Pluie d'astéroïdes | Rouge `#FF4D6D` | Astéroïdes plus fréquents et plus proches (jusqu'au tour 60) |
+| 40 tours : Astéroïdes rapides | Turquoise `#19E6D2` | Certains foncent vers la sonde (plus nombreux jusqu'au tour 70) |
+| 50 tours puis tous les 8 : Inversion | Violet `#B46BFF` | 1,6 s d'alerte sans astéroïde, puis changement de sens |
+| Nouveau record | Or `#FFD66B` | — |
+
+**Éclats et économie**
+- 1 cristal tous les 5 tours. Rares (valent 3) : 2 sur 4 en partie normale, 3 sur 4 en partie difficile.
+- ≈ 14 éclats par partie de 50 tours (20 au maximum).
+- Prix fixés à « N parties de 50 tours » : Comète 140, Glacier 280, Nébuleuse 700, Aurore 1 400,
+  Trou noir 14 000. **Mezen** : skin bonus (portrait pixel), débloqué à **92 390 tours cumulés**.
+- Le joueur ne voit **jamais** l'équivalence en parties dans la boutique.
+
+**Frôlement** : esquive à moins de **0,12 s** de l'impact (`NEAR_TIME`) ou passage très serré (`NEAR_GAP`).
+Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frôlements à moins de 2,5 s d'écart.
+
+## 5. Sécurité et anti-triche
+
+- Le jeu tourne sur l'appareil du joueur : **rien de ce qui s'y passe n'est fiable à 100 %**. La vraie
+  protection est côté serveur.
+- Côté jeu : sauvegarde scellée (modification à la main → remise à zéro du groupe concerné), copie privée de
+  `Math.hypot` pour les collisions, pseudos toujours affichés en texte (`textContent`, jamais `innerHTML`).
+- **Mode de test caché** (5 touchers sur le titre) : **uniquement sur `/beta/`** depuis la 2.1.1.
+- **Correction 2.1.1** : un joueur dont « porte-monnaie + skins achetés > éclats gagnés en jeu », ou qui a
+  Mezen sans 92 390 tours, perd ses skins (Sonde conservée) et garde la moitié de ses éclats gagnés ;
+  message « Pris la main dans le sac », bouton « COMPRIS CHEF ».
+- **Limites connues** : un tricheur déterminé peut envoyer au serveur un faux score vraisemblable sans jouer
+  (→ vérification par rejeu, à faire). Aucune limite sur la création de joueurs.
+
+## 6. Méthode de travail (à respecter)
+
+1. Le propriétaire décrit ce qu'il veut. Claude **propose** (options + recommandation) quand c'est un choix,
+   et **construit** directement quand la demande est claire.
+2. Travail sur une branche `version-X.Y`.
+3. Tests automatiques (Playwright, iPhone et Android simulés) avant de montrer quoi que ce soit.
+4. **Mise à jour simultanée** de `/beta/` (via `main`) **et** du lien Claude pour que le propriétaire teste.
+5. **Le propriétaire relit tous les textes visibles** (nouveautés, messages, boutons) avant publication.
+6. Après son « OK » : fusion dans `main` → GitHub Pages publie → vérification du site en ligne.
+7. À chaque version : ajouter l'entrée dans `CHANGELOG` (dans `index.html`), mettre à jour `version.json`,
+   augmenter `CACHE` dans `sw.js`, mettre la date du jour de publication.
+8. Ne rien publier sur `main` (donc sur le site) sans accord explicite.
+
+**Commits** : en français, avec les lignes d'attribution Claude demandées par la session.
+
+**Conventions de texte**
+- Jeu en français. Le jeu vouvoie ; les Réglages tutoient (« Envoie-moi un message… ») — **accepté pour les
+  testeurs, à harmoniser avant le public**.
+- Les nouveautés sont écrites du point de vue du joueur, sans jargon. Ne jamais y révéler la partie difficile
+  secrète, le mode de test ou la détection de triche.
+
+## 7. Historique des versions
+
+| Version | Date | Contenu principal |
+|---|---|---|
+| 1.0 | 16/11/2026 | Première version installable |
+| 1.1 | 16/11/2026 | Plein écran mobile, record en tours, difficulté relevée |
+| 1.2 – 1.4 | 19/11/2026 | Boutique de skins, éclats tous les 5 tours, prix ×1,4, Mezen |
+| 1.5 – 1.7 | 22/11/2026 | Correctifs mobile, son au retour d'arrière-plan, code couleur des annonces |
+| 1.8 | 22/11/2026 | Numéro de version, nouveautés, bandeau de mise à jour |
+| 1.9 | 23/11/2026 | Paliers en couleur + titre, didacticiel, « Comment jouer », frôlements |
+| 2.0 | 25/11/2026 | Classement en ligne (Supabase), pseudo, anti-triche, statistiques détaillées |
+| 2.1 | 25/11/2026 | Profil, partage des parties et des skins |
+| 2.1.1 | 25/11/2026 | Mode de test retiré de l'application, correction des tricheurs |
+| 2.2 | 26/11/2026 | Réglages (son, vibrations, effets réduits, chrono…), accueil épuré |
+
+## 8. Décisions prises (et pourquoi)
+
+- **Supabase** plutôt que Firebase ou Neon : base + API + règles d'accès sans serveur à gérer, protections
+  gratuites, aucun poids ajouté au jeu, données exportables (PostgreSQL standard).
+- **Application web installable** (GitHub Pages) pour les tests ; application native (Capacitor) seulement
+  pour l'App Store.
+- **Musique** : pas encore. Préférence pour une musique **générée par le code** (quelques Ko, sans droits).
+- **Temps de jeu** : enregistré mais **pas affiché** au joueur.
+- **Vibrations iPhone** : impossibles en application web (Apple). Astuce iOS 18 mise de côté.
+- **Poids** : le jeu doit rester léger. Signaler toute demande qui ajoute un poids notable (fichiers audio, images).
+
+## 9. Feuille de route
+
+**Priorités validées (dans l'ordre)**
+1. ~~Ce document~~ ✅
+2. Alléger le dessin des halos lumineux (performances sur téléphones modestes)
+3. Double authentification GitHub et Supabase (à faire par le propriétaire)
+4. Statistiques anonymes des joueurs pour le propriétaire + page **Confidentialité** dans les Réglages
+5. Code de transfert de progression, puis sauvegarde en ligne
+6. Musique générée par le code (réglage Musique séparé du Son)
+7. Décider du modèle économique avant les stores
+
+**Idées notées**
+- Mode **Entraînement** (partir du tour 29, 39 ou 49, sans récompense)
+- **Skin secret** débloqué par une série de frôlements (seuil à définir : x5 difficile, x10 exploit)
+- **Défis du jour**, série de jours consécutifs, badges dans le Profil
+- Récompense du top 3 de la semaine, défi d'un ami par lien, fantôme du record, skins saisonniers,
+  skin réservé aux testeurs
+- Amélioration de la partie skins de la boutique et du Profil
+- **Niveaux** façon jeu de rythme (fixes, %, essais, univers et musique par niveau) — après la base
+- Vérification des scores par rejeu côté serveur
+- Adresse e-mail de contact définitive, nom de domaine, forfait Supabase payant au lancement
+
+## 10. Points de vigilance
+
+- **Supabase gratuit** se met en pause après ~7 jours sans activité → « Restore project » dans le tableau de bord.
+- **Progression uniquement sur l'appareil** : perdue en changeant de téléphone ou en vidant le navigateur.
+  Sur iPhone, jouer dans Safari **sans installer** expose à un effacement par iOS.
+- Les scores de `/beta/` comptent dans le vrai classement.
+- Jamais vérifié sur un vrai appareil par Claude : menu de partage, vibrations Android, son après
+  arrière-plan sur iPhone, bandeau de mise à jour.
+- Anciennes branches GitHub non supprimables par Claude (à effacer dans l'onglet Branches si souhaité).
