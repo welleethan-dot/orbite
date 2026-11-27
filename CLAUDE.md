@@ -109,7 +109,8 @@ tour pour **100 éclats** du porte-monnaie (`REVIVE_COST`), **une fois par parti
 La partie n'est comptée (stats, classement) qu'après le refus ou la fin du temps. Le score repris compte normalement au classement.
 
 **Navigation (2.3)** : flèche retour en haut à gauche de chaque écran de menu (`BACK_OF` dans `js/04-ui.js`) ; elle fait
-exactement comme le bouton « Retour… » du bas de l'écran (gardé).
+exactement comme le bouton « Retour… » du bas de l'écran (gardé). Un seul bouton `#backBtn` posé sur la page (pas dans
+les écrans : leur fond flouté `backdrop-filter` ferait défiler un élément `fixed` avec le contenu), affiché tant qu'un écran de `BACK_OF` est visible.
 
 **Frôlement** : esquive à moins de **0,12 s** de l'impact (`NEAR_TIME`) ou passage très serré (`NEAR_GAP`).
 Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frôlements à moins de 2,5 s d'écart.

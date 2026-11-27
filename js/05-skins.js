@@ -204,7 +204,7 @@ $('confirmYes').addEventListener('click', () => {
 
 // Click sound on every button of the menus (not in game). Purchases have their own sound.
 document.addEventListener('click', e => {
-  const b = e.target.closest('.overlay button, .tuto button'); if (!b || b.disabled || b.id === 'confirmYes' || b.classList.contains('back')) return;
+  const b = e.target.closest('.overlay button, .tuto button'); if (!b || b.disabled || b.id === 'confirmYes') return;
   if (b.dataset.equip) return;                   // equipping has its own sound
   if (['play', 'again', 'testGo', 'resume', 'secondYes'].includes(b.id)) sfx.go(); else sfx.ui();
 });

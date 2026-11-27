@@ -189,18 +189,23 @@ const TESTS = {
     check((await ls(t.page, t.pre, 'v2.skin')) === 'sonde', 'équipement non pris en compte');
     check(t.errors.length === 0, `erreurs ${t.errors}`); await t.close();
   },
-  async 'flèche retour sur chaque écran'(){
-    const t = await open('app');
-    for (const [btn, screen, back] of [['#setBtn', 'settings', 'menu'], ['#boardBtn', 'board', 'menu'], ['#profileBtn', 'profile', 'menu'], ['#shopBtn', 'shop', 'menu']]){
+  async 'flèche retour sur chaque écran (fixe au défilement)'(){
+    const t = await open('app', {device: 'iPhone SE'});
+    check(await t.page.isHidden('#backBtn'), 'flèche visible sur l’accueil');
+    for (const [btn, screen] of [['#setBtn', 'settings'], ['#boardBtn', 'board'], ['#profileBtn', 'profile'], ['#shopBtn', 'shop']]){
       await t.page.tap(btn); await wait(150);
-      check(await t.page.isVisible(`#${screen}Back`), `${screen} : pas de flèche retour visible`);
-      const r = await t.page.evaluate(id => { const b = document.getElementById(id).getBoundingClientRect(); return {top: b.top, left: b.left}; }, screen + 'Back');
-      check(r.top < 80 && r.left < 60, `${screen} : flèche pas en haut à gauche (${r.top}, ${r.left})`);
-      await t.page.tap(`#${screen}Back`); await wait(150);
-      check(await t.page.isVisible('#' + back), `${screen} : la flèche ne ramène pas à l’accueil`);
+      check(await t.page.isVisible('#backBtn'), `${screen} : pas de flèche retour visible`);
+      await t.page.evaluate(id => { document.getElementById(id).scrollTop = 99999; }, screen); await wait(100);
+      const r = await t.page.evaluate(() => { const b = document.getElementById('backBtn').getBoundingClientRect(); return {top: b.top, left: b.left}; });
+      check(r.top >= 0 && r.top < 80 && r.left < 60, `${screen} : flèche pas en haut à gauche après défilement (${r.top}, ${r.left})`);
+      await t.page.tap('#backBtn'); await wait(150);
+      check(await t.page.isVisible('#menu'), `${screen} : la flèche ne ramène pas à l’accueil`);
+      check(await t.page.isHidden('#backBtn'), `${screen} : flèche restée sur l’accueil`);
     }
-    await t.page.tap('#setBtn'); await t.page.tap('#howBtn'); await t.page.tap('#howtoBack'); await wait(150);
+    await t.page.tap('#setBtn'); await t.page.tap('#howBtn'); await t.page.tap('#backBtn'); await wait(150);
     check(await t.page.isVisible('#settings'), '« Comment jouer » : la flèche ne ramène pas aux réglages');
+    await t.page.tap('#backBtn'); await wait(150); await t.page.tap('#play'); await wait(200);
+    check(await t.page.isHidden('#backBtn'), 'flèche visible pendant la partie');
     check(t.errors.length === 0, `erreurs ${t.errors}`); await t.close();
   },
   async 'seconde chance : 100 éclats, une fois par partie'(){
@@ -380,7 +385,7 @@ const TESTS = {
   for (const [name, fn] of chosen){
     const s = Date.now();
     try { await fn(); console.log(`  ✓ ${name}  (${((Date.now() - s)/1000).toFixed(1)} s)`); }
-    catch(e){ failed++; console.log(`  ✗ ${name}\n      → ${e.message.split('\n')[0]}`); }
+    catch(e){ failed++; console.log(`  ✗ ${name}\n      → ${e.message.split('\n').slice(0, process.env.DEBUG ? 30 : 1).join('\n')}`); }
   }
   await browser.close(); server.close();
   console.log(`\n${chosen.length - failed}/${chosen.length} réussis en ${((Date.now() - t0)/1000).toFixed(0)} s`);

@@ -211,7 +211,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 @media (prefers-reduced-motion: reduce){.cta{box-shadow:none;}}
 
 /* back arrow (2.3): top left of every menu screen, same place on every phone */
-.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);left:max(14px, env(safe-area-inset-left,0px));width:38px;height:38px;z-index:2;}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);left:max(14px, env(safe-area-inset-left,0px));width:38px;height:38px;z-index:30;}
 .back svg{width:20px;height:20px;}
 /* second chance (2.3): time left to decide */
 .timebar{width:100%;max-width:240px;height:4px;border-radius:2px;background:rgba(191,243,255,.15);overflow:hidden;}
@@ -879,15 +879,19 @@ function pause(){ if (mode !== 'play') return; mode = 'paused'; ui.show('paused'
 function resume(){ if (mode !== 'paused') return; mode = 'play'; ui.show(null); last = performance.now(); }
 
 // Back arrow (2.3) at the top left of each menu screen: does exactly what the screen's own "Retour…" button does.
+// A single button on the page itself (not inside the screens, whose blurred background would make it scroll away).
 const BACK_OF = {settings: 'setClose', board: 'boardClose', profile: 'profClose', shop: 'shopClose', howto: 'howClose',
   pseudoBox: 'pseudoLater', news: 'newsOk', sharebox: 'shareClose', unlock: 'unlockClose', test: 'testClose'};
-for (const [screen, target] of Object.entries(BACK_OF)){
-  const b = document.createElement('button');
-  b.className = 'icon back'; b.id = screen + 'Back'; b.setAttribute('aria-label', 'Retour');
-  b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';
-  b.addEventListener('click', () => $(target).click());       // the target button plays the click sound
-  $(screen).querySelector('.card').prepend(b);
-}
+const backBtn = document.createElement('button');
+backBtn.className = 'icon back'; backBtn.id = 'backBtn'; backBtn.setAttribute('aria-label', 'Retour'); backBtn.hidden = true;
+backBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';
+document.body.appendChild(backBtn);
+const backScreen = () => Object.keys(BACK_OF).find(k => !$(k).hidden);
+backBtn.addEventListener('click', () => { const k = backScreen(); if (k) $(BACK_OF[k]).click(); });   // that button plays the click sound
+const syncBack = () => { backBtn.hidden = !backScreen(); };
+const backWatch = new MutationObserver(syncBack);
+for (const k of Object.keys(BACK_OF)) backWatch.observe($(k), {attributes: true, attributeFilter: ['hidden']});
+syncBack();
 </script>
 <script>
 // Orbite · Skins et boutique
@@ -1096,7 +1100,7 @@ $('confirmYes').addEventListener('click', () => {
 
 // Click sound on every button of the menus (not in game). Purchases have their own sound.
 document.addEventListener('click', e => {
-  const b = e.target.closest('.overlay button, .tuto button'); if (!b || b.disabled || b.id === 'confirmYes' || b.classList.contains('back')) return;
+  const b = e.target.closest('.overlay button, .tuto button'); if (!b || b.disabled || b.id === 'confirmYes') return;
   if (b.dataset.equip) return;                   // equipping has its own sound
   if (['play', 'again', 'testGo', 'resume', 'secondYes'].includes(b.id)) sfx.go(); else sfx.ui();
 });
