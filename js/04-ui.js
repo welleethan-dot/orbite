@@ -3,7 +3,7 @@
 
 // ---------- UI ----------
 const ui = {
-  show(id){ for (const k of ['menu','paused','over','test','shop','news','howto','board','pseudoBox','profile','unlock','sharebox','notice','settings']) $(k).hidden = k !== id; },
+  show(id){ for (const k of ['menu','paused','over','test','shop','news','howto','board','pseudoBox','profile','unlock','sharebox','notice','settings','second']) $(k).hidden = k !== id; },
   hud(on){ $('hud').hidden = !on; },
   score(){ $('sc').textContent = S.laps; $('hs').textContent = 'Record ' + Math.max(best, testRun || S.tuto ? 0 : S.laps); $('gm').textContent = '◆ ' + S.shards; },
   stats(){ $('menuBest').textContent = best; $('menuGames').textContent = games; $('menuGems').textContent = wallet; },
@@ -63,3 +63,14 @@ function reverse(){
 }
 function pause(){ if (mode !== 'play') return; mode = 'paused'; ui.show('paused'); }
 function resume(){ if (mode !== 'paused') return; mode = 'play'; ui.show(null); last = performance.now(); }
+
+// Back arrow (2.3) at the top left of each menu screen: does exactly what the screen's own "Retour…" button does.
+const BACK_OF = {settings: 'setClose', board: 'boardClose', profile: 'profClose', shop: 'shopClose', howto: 'howClose',
+  pseudoBox: 'pseudoLater', news: 'newsOk', sharebox: 'shareClose', unlock: 'unlockClose', test: 'testClose'};
+for (const [screen, target] of Object.entries(BACK_OF)){
+  const b = document.createElement('button');
+  b.className = 'icon back'; b.id = screen + 'Back'; b.setAttribute('aria-label', 'Retour');
+  b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';
+  b.addEventListener('click', () => $(target).click());       // the target button plays the click sound
+  $(screen).querySelector('.card').prepend(b);
+}

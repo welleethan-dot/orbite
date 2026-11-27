@@ -4,6 +4,10 @@
 // ---------- versions & news ----------
 // Newest first. Texts are written for players (no tech talk) and are proofread before each release.
 const CHANGELOG = [
+  {v:'2.3', date:'27/11/2026', notes:[
+    "Nouveau : la seconde chance. Après une collision, reprenez la partie au même tour pour 100 ◆. Une seule fois par partie.",
+    "Une flèche en haut à gauche de chaque écran pour revenir en arrière, sans descendre jusqu'en bas.",
+  ]},
   {v:'2.2.2', date:'27/11/2026', notes:[
     "Le jeu est plus fluide, surtout sur les téléphones modestes et quand l'écran est rempli d'astéroïdes.",
   ]},

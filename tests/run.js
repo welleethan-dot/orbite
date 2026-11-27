@@ -189,6 +189,50 @@ const TESTS = {
     check((await ls(t.page, t.pre, 'v2.skin')) === 'sonde', 'équipement non pris en compte');
     check(t.errors.length === 0, `erreurs ${t.errors}`); await t.close();
   },
+  async 'flèche retour sur chaque écran'(){
+    const t = await open('app');
+    for (const [btn, screen, back] of [['#setBtn', 'settings', 'menu'], ['#boardBtn', 'board', 'menu'], ['#profileBtn', 'profile', 'menu'], ['#shopBtn', 'shop', 'menu']]){
+      await t.page.tap(btn); await wait(150);
+      check(await t.page.isVisible(`#${screen}Back`), `${screen} : pas de flèche retour visible`);
+      const r = await t.page.evaluate(id => { const b = document.getElementById(id).getBoundingClientRect(); return {top: b.top, left: b.left}; }, screen + 'Back');
+      check(r.top < 80 && r.left < 60, `${screen} : flèche pas en haut à gauche (${r.top}, ${r.left})`);
+      await t.page.tap(`#${screen}Back`); await wait(150);
+      check(await t.page.isVisible('#' + back), `${screen} : la flèche ne ramène pas à l’accueil`);
+    }
+    await t.page.tap('#setBtn'); await t.page.tap('#howBtn'); await t.page.tap('#howtoBack'); await wait(150);
+    check(await t.page.isVisible('#settings'), '« Comment jouer » : la flèche ne ramène pas aux réglages');
+    check(t.errors.length === 0, `erreurs ${t.errors}`); await t.close();
+  },
+  async 'seconde chance : 100 éclats, une fois par partie'(){
+    const t = await open('app', {store: {'v2.gems': 250, 'v2.wallet': 250, 'v2.games': 3}, seal: true});
+    await t.page.tap('#play'); await wait(300);
+    const crash = () => t.page.evaluate(() => { const S = __t.S; S.laps = 17; S.rocks.length = 0;
+      const o = makeRock(S.lane, S.a + .05); o.born = -9; S.rocks.push(o); });
+    await crash(); await t.page.waitForSelector('#second:not([hidden])', {timeout: 5000});
+    check((await t.page.textContent('#secondLaps')) === '17', 'mauvais nombre de tours affiché');
+    check((await ls(t.page, t.pre, 'v2.games')) === 3, 'partie comptée avant le choix');
+    await t.page.tap('#secondYes'); await wait(300);
+    check(await t.page.evaluate(() => mode === 'play' && __t.S.laps === 17 && __t.S.rocks.length === 0), 'la partie ne reprend pas au même tour');
+    check((await ls(t.page, t.pre, 'v2.wallet')) === 150, 'les 100 éclats ne sont pas déduits');
+    await t.page.evaluate(() => { const S = __t.S, o = makeRock(S.lane, S.a + .05); o.born = -9; S.rocks.push(o); });
+    await wait(400);
+    check(await t.page.evaluate(() => mode === 'play'), 'pas de protection juste après la reprise');
+    await t.page.evaluate(() => { __t.S.shield = 0; }); await crash();
+    await t.page.waitForSelector('#over:not([hidden])', {timeout: 5000});
+    check(await t.page.isHidden('#second'), 'seconde chance proposée deux fois');
+    check((await ls(t.page, t.pre, 'v2.games')) === 4 && (await t.page.textContent('#finalScore')) === '17', 'partie mal comptée après la reprise');
+    check((await ls(t.page, t.pre, 'v2.wallet')) === 150, 'porte-monnaie faux');
+    // refus (temps écoulé) et porte-monnaie insuffisant
+    await t.page.tap('#again'); await wait(300); await crash();
+    await t.page.waitForSelector('#second:not([hidden])', {timeout: 5000});
+    await t.page.waitForSelector('#over:not([hidden])', {timeout: 9000});
+    check((await ls(t.page, t.pre, 'v2.wallet')) === 150, 'éclats déduits sans accord');
+    await t.page.evaluate(() => { wallet = 50; });
+    await t.page.tap('#again'); await wait(300); await crash();
+    await t.page.waitForSelector('#over:not([hidden])', {timeout: 5000});
+    check(await t.page.isHidden('#second'), 'proposée sans assez d’éclats');
+    check(t.errors.length === 0, `erreurs ${t.errors}`); await t.close();
+  },
   async 'sceau : modification à la main remise à zéro'(){
     const t = await open('app', {store: {'v2.gems': 50, 'v2.wallet': 50, 'v2.best': 20}, seal: true});
     check((await t.page.textContent('#menuBest')) === '20', 'progression légitime perdue');

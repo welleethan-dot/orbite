@@ -22,7 +22,7 @@ function pos(a = S.a, r = S.r){ return {x: cx + Math.cos(a)*r, y: cy + Math.sin(
 
 function update(dt){
   if (mode === 'play'){
-    S.t += dt; S.campT += dt;
+    S.t += dt; S.campT += dt; if (S.shield > 0) S.shield -= dt;   // second chance: a moment without collisions
     S.omega = S.tuto ? 1.3 : omegaAt(S.t);           // the tutorial runs slowly
     if (!S.tuto){ const ct = fmtTime(S.t); if (ct !== S.clockShown){ S.clockShown = ct; $('clock').textContent = ct; } }
     const da = S.omega*dt; S.a += S.dir*da; S.lapAcc += da;
@@ -69,7 +69,7 @@ function update(dt){
       const op = pos(o.a, lanes[o.lane]);
       const fade = Math.min(1, (S.t - o.born)/.35);
       const d = hypot(op.x-p.x, op.y-p.y), hitR = o.size*.8 + 6*unit;
-      if (!o.passed && !o.ghost && fade > .6 && d < hitR){ if (S.tuto) tutoHit(); else gameOver(); break; }
+      if (!o.passed && !o.ghost && fade > .6 && d < hitR && !(S.shield > 0)){ if (S.tuto) tutoHit(); else gameOver(); break; }
       if (!o.passed && !o.ghost && fade > .6) o.minD = Math.min(o.minD ?? 1e9, d - hitR);   // closest it came, edge to edge
       const ah = ahead(o.a);
       if (!o.passed && ah > o.prev + Math.PI){ o.passed = true; if (o.nearArmed || (o.minD !== undefined && o.minD < NEAR_GAP*unit)) nearMiss(o); }
@@ -85,8 +85,12 @@ function update(dt){
       const ah = ahead(g.a); if (ah > g.prev + Math.PI) g.passed = true; g.prev = ah;
     }
     S.gems = S.gems.filter(g => !g.got && !g.passed);
-  } else if (mode === 'dying' || mode === 'over'){
+  } else if (mode === 'dying' || mode === 'over' || mode === 'offer'){
     S.deadT += dt;
+    if (mode === 'offer'){
+      S.offerT -= dt; $('secondBar').style.width = Math.max(0, S.offerT/REVIVE_WAIT*100) + '%';
+      if (S.offerT <= 0) declineRevive();
+    }
   } else if (mode === 'menu'){
     // idle demo orbit behind the menu
     S.t += dt; S.a += 1.1*dt; S.r += (lanes[S.lane] - S.r)*Math.min(1, dt*10);
@@ -185,7 +189,7 @@ function draw(now){
   });
   blit(planet, cx, cy, 1 + S.pulse*.06);
   // lap counter on the planet
-  if (mode === 'play' || mode === 'dying'){
+  if (mode === 'play' || mode === 'dying' || mode === 'offer'){
     ctx.fillStyle = 'rgba(10,12,34,.75)'; ctx.font = `700 ${Math.round(13*unit)}px "JetBrains Mono", monospace`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(String(S.laps), cx, cy);
@@ -241,7 +245,9 @@ function draw(now){
   // trail + probe
   if (!S.dead){
     const p = pos();
+    if (S.shield > 0) ctx.globalAlpha = .45 + .4*Math.sin(now/(calmFx() ? 160 : 70));   // second chance: the probe flickers
     drawProbe(ctx, p.x, p.y, S.trail, skin(), now, unit);
+    ctx.globalAlpha = 1;
     if (S.nearFlash > 0){                          // near miss: a white ring bursting out of the probe
       ctx.strokeStyle = `rgba(255,255,255,${S.nearFlash})`; ctx.lineWidth = 2.5*unit*S.nearFlash;
       ctx.beginPath(); ctx.arc(p.x, p.y, (12 + (1 - S.nearFlash)*26)*unit, 0, TAU); ctx.stroke();

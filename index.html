@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#0A0C22">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;800&family=JetBrains+Mono:wght@500;700&display=swap">
-<link rel="stylesheet" href="css/style.css?v=2.2.2">
+<link rel="stylesheet" href="css/style.css?v=2.3">
 
 </head>
 <body>
@@ -61,6 +61,7 @@
       <span class="dot" style="background:var(--sun)"></span><span>Classement en ligne : choisissez un pseudo, vos parties y sont envoyées automatiquement</span>
       <span class="dot" style="background:#FFFFFF"></span><span>Esquivez un astéroïde au tout dernier moment : c'est un frôlement. Enchaînez-les pour faire monter le multiplicateur (x2, x3…)</span>
       <span class="dot" style="background:var(--shard)"></span><span>Un éclat ◆ apparaît tous les 5 tours, à dépenser en skins</span>
+      <span class="dot" style="background:var(--shard)"></span><span>Touché ? Une seconde chance vous est proposée pour 100 ◆ : la partie reprend au même tour. Une seule fois par partie</span>
       <span class="dot" style="background:transparent;border:2px solid var(--shard)"></span><span>Les éclats rares, collés à un astéroïde, valent 3 ◆</span>
       <span class="dot" style="background:#FF4D6D"></span><span>30 tours : pluie d'astéroïdes, ils arrivent plus souvent</span>
       <span class="dot" style="background:#19E6D2"></span><span>40 tours : astéroïdes rapides, repérez leur traînée</span>
@@ -253,6 +254,19 @@
   </div>
 </div>
 
+<div class="overlay" id="second" hidden>
+  <div class="card">
+    <div class="eyebrow" style="color:var(--shard)">Seconde chance</div>
+    <div class="big" id="secondLaps">0</div>
+    <div class="eyebrow" style="color:var(--mist)">tours</div>
+    <p>Reprenez la partie là où elle s'est arrêtée. Une seule fois par partie.</p>
+    <button class="cta" id="secondYes">REPRENDRE · 100&nbsp;◆</button>
+    <div class="timebar" aria-hidden="true"><i id="secondBar"></i></div>
+    <p class="note">Vous avez <b id="secondWallet">0</b> ◆</p>
+    <button class="link" id="secondNo">Non merci</button>
+  </div>
+</div>
+
 <div class="overlay" id="over" hidden>
   <div class="card">
     <div class="eyebrow" id="overTitle">Collision</div>
@@ -268,17 +282,17 @@
   </div>
 </div>
 
-<script src="js/01-core.js?v=2.2.2"></script>
-<script src="js/02-audio.js?v=2.2.2"></script>
-<script src="js/03-world.js?v=2.2.2"></script>
-<script src="js/04-ui.js?v=2.2.2"></script>
-<script src="js/05-skins.js?v=2.2.2"></script>
-<script src="js/06-tutorial.js?v=2.2.2"></script>
-<script src="js/07-news.js?v=2.2.2"></script>
-<script src="js/08-online.js?v=2.2.2"></script>
-<script src="js/09-profile.js?v=2.2.2"></script>
-<script src="js/10-settings.js?v=2.2.2"></script>
-<script src="js/11-game.js?v=2.2.2"></script>
+<script src="js/01-core.js?v=2.3"></script>
+<script src="js/02-audio.js?v=2.3"></script>
+<script src="js/03-world.js?v=2.3"></script>
+<script src="js/04-ui.js?v=2.3"></script>
+<script src="js/05-skins.js?v=2.3"></script>
+<script src="js/06-tutorial.js?v=2.3"></script>
+<script src="js/07-news.js?v=2.3"></script>
+<script src="js/08-online.js?v=2.3"></script>
+<script src="js/09-profile.js?v=2.3"></script>
+<script src="js/10-settings.js?v=2.3"></script>
+<script src="js/11-game.js?v=2.3"></script>
 
 <script>
 // Offline support: cache the game once it has been opened online.
