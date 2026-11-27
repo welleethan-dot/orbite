@@ -161,6 +161,44 @@ const TESTS = {
     check(await t.page.evaluate(() => __t.S.dir === -1), "l'inversion n'a pas changé le sens");
     await t.close();
   },
+  async 'répit avant les paliers, bonus 100 / 200, inversions folles'(){
+    const t = await open('app');
+    await t.page.tap('#play'); await wait(300);
+    // lap 30: the sky clears and nothing new arrives for 2 s
+    const r30 = await t.page.evaluate(() => new Promise(res => { const S = __t.S;
+      S.t = 60; S.laps = 29; S.lapAcc = Math.PI*2 - .01; S.rocks = []; for (let i = 0; i < 4; i++){ const o = makeRock(i % 2, S.a + 1.5 + i*.6); o.born = -9; S.rocks.push(o); }
+      setTimeout(() => { const a = {laps: S.laps, rocks: S.rocks.filter(o => !o.passed).length, calm: S.calm};
+        setTimeout(() => { a.rocksLater = S.rocks.filter(o => !o.passed).length; res(a); }, 1500); }, 150); }));
+    check(r30.laps === 30 && r30.rocks === 0 && r30.calm > 1.5, `tour 30 : pas de répit (${JSON.stringify(r30)})`);
+    check(r30.rocksLater === 0, `tour 30 : astéroïdes pendant le répit (${r30.rocksLater})`);
+    await t.page.evaluate(() => setInterval(() => { __t.S.rocks = []; }, 30));   // no collision from here on
+    await t.page.evaluate(() => { const S = __t.S; S.laps = 99; S.lapAcc = Math.PI*2 - .01; }); await wait(300);
+    check((await t.page.textContent('#banner')).includes('+10'), 'tour 100 : pas d’annonce du bonus');
+    check(await t.page.evaluate(() => __t.S.bonus === 10), 'tour 100 : bonus non compté');
+    await wait(1800);
+    await t.page.evaluate(() => { const S = __t.S; S.laps = 199; S.lapAcc = Math.PI*2 - .01; }); await wait(300);
+    check((await t.page.textContent('#banner')).includes('Inversions folles'), 'tour 200 : titre absent');
+    const r200 = await t.page.evaluate(() => ({bonus: __t.S.bonus, next: __t.S.nextFlip, calm: __t.S.calm}));
+    check(r200.bonus === 35 && r200.next >= 203 && r200.next <= 206 && r200.calm > 1.5, `tour 200 : ${JSON.stringify(r200)}`);
+    // chaos: reversals every 3 to 6 laps, 0.9 s warning
+    const flips = await t.page.evaluate(() => new Promise(res => { const S = __t.S, seen = [];
+      const iv = setInterval(() => {
+        if (S.revWarn > 0 && !seen.find(x => x.lap === S.laps)) seen.push({lap: S.laps, warn: S.revWarn});
+        if (S.revWarn <= 0 && !(S.calm > 0)){ S.lapAcc = Math.PI*2 - .01; }
+        if (S.laps >= 240){ clearInterval(iv); res(seen); }
+      }, 20); }));
+    const gaps = flips.slice(1).map((f, i) => f.lap - flips[i].lap);
+    check(flips.length >= 7 && gaps.every(g => g >= 3 && g <= 6), `inversions folles : ${JSON.stringify(flips.map(f => f.lap))}`);
+    check(flips.every(f => f.warn <= .9), 'alerte d’inversion trop longue après 200');
+    check(new Set(gaps).size > 1, 'inversions pas aléatoires');
+    // the bonus goes to the wallet, not to the run's crystals (checked by the server)
+    const before = await ls(t.page, t.pre, 'v2.wallet') || 0, shards = await t.page.evaluate(() => __t.S.shards);
+    await t.page.evaluate(() => { const S = __t.S, o = makeRock(S.lane, S.a + .05); o.born = -9; S.rocks.push(o); });
+    await t.page.evaluate(() => { const S = __t.S; S.rocks = []; gameOver(); }); await wait(1200);
+    check((await ls(t.page, t.pre, 'v2.wallet')) === before + shards + 35, 'bonus non ajouté au porte-monnaie');
+    check((await ls(t.page, t.pre, 'v2.pending'))[0].g === shards || t.db.scores.length === 0, 'bonus envoyé au classement comme éclats de la partie');
+    check(t.errors.length === 0, `erreurs ${t.errors}`); await t.close();
+  },
   async 'didacticiel complet'(){
     const t = await open('app', {store: {tutoDone: undefined}});
     await t.page.tap('#play'); await wait(400);

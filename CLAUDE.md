@@ -90,7 +90,17 @@ modifié, décision prise, idée notée, version publiée), dans le même commit
 | 30 tours : Pluie d'astéroïdes | Rouge `#FF4D6D` | Astéroïdes plus fréquents et plus proches (jusqu'au tour 60) |
 | 40 tours : Astéroïdes rapides | Turquoise `#19E6D2` | Certains foncent vers la sonde (plus nombreux jusqu'au tour 70) |
 | 50 tours puis tous les 8 : Inversion | Violet `#B46BFF` | 1,6 s d'alerte sans astéroïde, puis changement de sens |
+| 100 tours : bonus | Or `#FFD66B` | « 100 tours · +10 ◆ » (2.4) |
+| 200 tours : Inversions folles | Magenta `#FF5BD8` | Inversion tous les 3 à 6 tours au hasard (`chaosGap`), alerte 0,9 s (`CHAOS_WARN`) ; +25 ◆ (2.4) |
 | Nouveau record | Or `#FFD66B` | — |
+
+- **Répit (2.4)** : aux tours 30, 40 et 200, les astéroïdes à l'écran disparaissent et rien n'arrive pendant 2 s
+  (`CALM_TIME`, `calmSky`) le temps de lire le titre. Réglages des paliers dans `js/04-ui.js` (section « stages »).
+- **Bonus de palier (2.4)** : `PALIER_BONUS = {100: 10, 200: 25}`, gardés dans `S.bonus`, ajoutés au porte-monnaie et aux
+  éclats gagnés en fin de partie, **jamais** aux éclats de la partie envoyés au serveur (sinon `submit_score` refuserait
+  le score : éclats ≤ 3 × tours/5 + 3). L'écran de fin affiche éclats + bonus.
+- 3ᵉ anneau au tour 100 : étudié, **mis de côté** par le propriétaire (27/11/2026). Commandes envisagées : aller-retour
+  (recommandé), côté de l'écran, boucle.
 
 **Éclats et économie**
 - 1 cristal tous les 5 tours. Rares (valent 3) : 2 sur 4 en partie normale, 3 sur 4 en partie difficile.
@@ -178,6 +188,7 @@ Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frô
 | 2.2.1 | 26/11/2026 | Technique : jeu découpé en fichiers, script de fabrication, tests automatiques |
 | 2.2.2 | 27/11/2026 | Dessin allégé : halos, fond et planète peints une fois puis copiés (≈ +50 % d'images/s sur téléphone lent simulé) |
 | 2.3 | 27/11/2026 | Seconde chance (100 ◆, une fois par partie), flèche retour en haut à gauche des écrans, profil des joueurs depuis le classement |
+| 2.4 | (en test) | Répit avant les paliers 30/40, bonus aux tours 100 (+10 ◆) et 200 (+25 ◆), inversions folles dès 200 |
 
 ## 8. Décisions prises (et pourquoi)
 
@@ -205,6 +216,7 @@ Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frô
 
 **Idées notées**
 - Mode **Entraînement** (partir du tour 29, 39 ou 49, sans récompense)
+- **3ᵉ anneau** à partir du tour 100 (voir § 4, mis de côté)
 - **Skin secret** débloqué par une série de frôlements (seuil à définir : x5 difficile, x10 exploit)
 - **Défis du jour**, série de jours consécutifs, badges dans le Profil
 - Récompense du top 3 de la semaine, défi d'un ami par lien, fantôme du record, skins saisonniers,

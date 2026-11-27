@@ -4,6 +4,11 @@
 // ---------- versions & news ----------
 // Newest first. Texts are written for players (no tech talk) and are proofread before each release.
 const CHANGELOG = [
+  {v:'2.4', date:'27/11/2026', notes:[
+    "Avant la pluie d'astéroïdes et les astéroïdes rapides, le ciel se dégage un instant : vous avez le temps de lire ce qui arrive.",
+    "Nouveau palier à 100 tours : 10 ◆ en bonus.",
+    "Nouveau palier à 200 tours : les inversions folles, plus rapides et imprévisibles. Et 25 ◆ en bonus pour l'avoir atteint.",
+  ]},
   {v:'2.3', date:'27/11/2026', notes:[
     "Nouveau : la seconde chance. Après une collision, reprenez la partie au même tour pour 100 ◆. Une seule fois par partie.",
     "Une flèche en haut à gauche de chaque écran pour revenir en arrière, sans descendre jusqu'en bas.",

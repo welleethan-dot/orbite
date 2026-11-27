@@ -246,7 +246,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 <div class="overlay" id="menu">
   <div class="card">
     <button class="icon gear" id="setBtn" aria-label="Réglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
-    <div class="eyebrow">Version de test · 2.3</div>
+    <div class="eyebrow">Version de test · 2.4</div>
     <h1 id="title">ORBITE</h1>
     <p>Touchez l'écran pour changer d'orbite.</p>
     <button class="cta" id="play">JOUER</button>
@@ -271,8 +271,10 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
       <span class="dot" style="background:#FF4D6D"></span><span>30 tours : pluie d'astéroïdes, ils arrivent plus souvent</span>
       <span class="dot" style="background:#19E6D2"></span><span>40 tours : astéroïdes rapides, repérez leur traînée</span>
       <span class="dot" style="background:#B46BFF"></span><span>50 tours : inversions du sens de rotation, puis tous les 8 tours</span>
+      <span class="dot" style="background:var(--shard)"></span><span>100 tours : 10 ◆ en bonus</span>
+      <span class="dot" style="background:#FF5BD8"></span><span>200 tours : inversions folles, plus rapides et imprévisibles, et 25 ◆ en bonus</span>
       <span class="dot" style="background:#FFD66B"></span><span>Nouveau record : tout passe à l'or</span>
-      <span class="dot" style="background:conic-gradient(#FF4D6D,#19E6D2,#B46BFF,#FFD66B,#FF4D6D)"></span><span>À chaque palier, son nom s'affiche en haut et les orbites prennent sa couleur</span>
+      <span class="dot" style="background:conic-gradient(#FF4D6D,#19E6D2,#B46BFF,#FFD66B,#FF4D6D)"></span><span>À chaque palier, son nom s'affiche en haut, les orbites prennent sa couleur et le ciel se dégage un instant pour vous laisser le lire</span>
     </div>
     <button class="cta" id="tutoAgain">REFAIRE LE DIDACTICIEL</button>
     <button class="link" id="howClose">Retour aux réglages</button>
@@ -471,9 +473,9 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
       <button class="icon" id="lapPlus" aria-label="Un tour de plus">+</button>
     </div>
     <div class="chips" id="lapChips">
-      <button class="chip" data-lap="0">0</button><button class="chip" data-lap="29">29</button><button class="chip" data-lap="39">39</button><button class="chip" data-lap="49">49</button><button class="chip" data-lap="57">57</button><button class="chip" data-lap="70">70</button>
+      <button class="chip" data-lap="0">0</button><button class="chip" data-lap="29">29</button><button class="chip" data-lap="39">39</button><button class="chip" data-lap="49">49</button><button class="chip" data-lap="57">57</button><button class="chip" data-lap="70">70</button><button class="chip" data-lap="99">99</button><button class="chip" data-lap="199">199</button>
     </div>
-    <p class="note">29 : juste avant la pluie<br>39 : avant les astéroïdes rapides<br>49 et 57 : avant une inversion</p>
+    <p class="note">29 : juste avant la pluie<br>39 : avant les astéroïdes rapides<br>49 et 57 : avant une inversion<br>99 : avant le bonus · 199 : avant les inversions folles</p>
     <div class="chips" id="kindChips" role="group" aria-label="Type de partie">
       <button class="chip" data-kind="random">Tirage normal</button><button class="chip" data-kind="normal">Normale</button><button class="chip" data-kind="hard">Difficile</button>
     </div>
@@ -563,7 +565,7 @@ let settings = Object.assign({vib: true, lowfx: false, clock: true}, store.get('
 // Count a finished run in the stats (never for test runs). Returns true on a new record.
 function recordRun(){
   if (testRun) return false;
-  games++; lapsTotal += S.laps; gemsTotal += S.shards; wallet += S.shards; store.set('v2.wallet', wallet);
+  games++; lapsTotal += S.laps; gemsTotal += S.shards + (S.bonus || 0); wallet += S.shards + (S.bonus || 0); store.set('v2.wallet', wallet);   // + stage bonus (2.4)
   nearTotal += S.near || 0; store.set('v2.near', nearTotal);
   // Detailed stats, recorded now for the future Profile screen (not shown yet).
   const st = store.get('v2.stats', {});
@@ -869,7 +871,7 @@ function start(){
 }
 let bannerTimer = 0;
 // One colour per event, so it can be recognised out of the corner of the eye without reading it.
-const EVENT_COL = {rain:'#FF4D6D', fast:'#19E6D2', flip:'#B46BFF', record:'#FFD66B'};   // red, turquoise, violet, gold
+const EVENT_COL = {rain:'#FF4D6D', fast:'#19E6D2', flip:'#B46BFF', record:'#FFD66B', chaos:'#FF5BD8'};   // red, turquoise, violet, gold, magenta
 // One word, read in a glance (full explanations are in the rules on the home screen).
 // Events are shown without any text: the orbits and the screen edges light up in the event's colour.
 // Each event also has its own rhythm (1 flash, 2 flashes, a longer pulse) so it reads even without the colour.
@@ -903,6 +905,23 @@ function reverse(){
   for (const g of S.gems) g.prev = ahead(g.a);
   S.spawnT = .5; S.shake = .35;
   tone(300, 900, .25, 'sine', .1);
+}
+// ---------- stages (2.4) ----------
+// Before the rain (30) and the fast rocks (40), and at lap 200: the sky clears and nothing arrives for CALM_TIME
+// seconds, long enough to read the title. From lap 200 (CHAOS_LAP), reversals come every 3 to 6 laps, at random,
+// with a shorter warning. Laps 100 and 200 give bonus crystals: in the wallet, not in the run's crystals
+// (the server checks those against the laps).
+const CALM_TIME = 2, CHAOS_LAP = 200, CHAOS_WARN = .9, PALIER_BONUS = {100: 10, 200: 25};
+const chaosGap = () => 3 + Math.floor(Math.random()*4);
+function calmSky(secs){
+  for (const o of S.rocks){ if (o.passed) continue; const p = pos(o.a, lanes[o.lane]); burst(p.x, p.y, COL.rock, 6, 90); }
+  S.rocks = S.rocks.filter(o => o.passed); S.calm = secs;
+}
+function flipWarn(secs){ S.revWarn = secs; banner('Inversion', EVENT_COL.flip, 2, secs); buzz([20,40,20]); }
+function palierBonus(n){
+  S.bonus = (S.bonus || 0) + n; const p = pos();
+  popup('+' + n + ' ◆', p.x, p.y - 18*unit, COL.shard); burst(p.x, p.y, COL.shard, 30, 220); sfx.shard();
+  if (S.laps !== CHAOS_LAP){ banner(S.laps + ' tours · +' + n + ' ◆', EVENT_COL.record, 1, 1.2); buzz([15, 30, 15]); }
 }
 function pause(){ if (mode !== 'play') return; mode = 'paused'; ui.show('paused'); }
 function resume(){ if (mode !== 'paused') return; mode = 'play'; ui.show(null); last = performance.now(); }
@@ -1256,6 +1275,11 @@ $('tutoAgain').addEventListener('click', () => startTutorial('howto'));
 // ---------- versions & news ----------
 // Newest first. Texts are written for players (no tech talk) and are proofread before each release.
 const CHANGELOG = [
+  {v:'2.4', date:'27/11/2026', notes:[
+    "Avant la pluie d'astéroïdes et les astéroïdes rapides, le ciel se dégage un instant : vous avez le temps de lire ce qui arrive.",
+    "Nouveau palier à 100 tours : 10 ◆ en bonus.",
+    "Nouveau palier à 200 tours : les inversions folles, plus rapides et imprévisibles. Et 25 ◆ en bonus pour l'avoir atteint.",
+  ]},
   {v:'2.3', date:'27/11/2026', notes:[
     "Nouveau : la seconde chance. Après une collision, reprenez la partie au même tour pour 100 ◆. Une seule fois par partie.",
     "Une flèche en haut à gauche de chaque écran pour revenir en arrière, sans descendre jusqu'en bas.",
@@ -1863,7 +1887,8 @@ function jumpToLap(n){
   const w = tt => omegaAt(tt);
   while (ang < target){ ang += w(t)*0.01; t += 0.01; }
   S.t = t; S.omega = w(t); S.laps = n; S.storm = n >= 30;
-  const flips = n >= 50 ? Math.floor((n - 50)/8) + 1 : 0;
+  const flips = n >= 50 ? Math.floor((Math.min(n, CHAOS_LAP - 1) - 50)/8) + 1 : 0;
+  if (n >= CHAOS_LAP) S.nextFlip = n + 1 + Math.floor(Math.random()*3);
   S.dir = flips % 2 ? -1 : 1;
   S.spawnT = 1; S.gemCount = Math.floor(n/5); ui.score();
 }
@@ -1934,7 +1959,7 @@ function finishRun(delay){
   setTimeout(() => {
     mode = 'over'; ui.hud(false);
     $('finalScore').textContent = S.laps; $('overBest').textContent = best;
-    $('overShards').textContent = S.shards; $('overNear').textContent = S.near || 0;
+    $('overShards').textContent = S.shards + (S.bonus || 0); $('overNear').textContent = S.near || 0;
     $('overTime').textContent = fmtTime(S.t);
     $('overTitle').textContent = testRun ? 'Fin du test' : 'Collision';
     $('newBest').hidden = !isBest; ui.show('over'); ui.stats();
@@ -2004,9 +2029,12 @@ function update(dt){
       if (S.laps % 5 === 0) S.gemDue++;
       if (!testRun && !S.tuto && best > 0 && S.laps === best + 1) { banner('Nouveau record', EVENT_COL.record, 1, 1.2); buzz([70, 50, 15, 40, 15]); }   // victory: long, then two taps
       if (S.laps % 7 === 0 || (S.hard && S.laps === 15)) shootingStars(); // lap 15: only in a hard run
-      if (S.laps === 40) { banner('Astéroïdes rapides', EVENT_COL.fast, 2, 1.2); buzz([12, 40, 12, 40, 12]); }   // three quick taps
-      if (S.laps >= 50 && (S.laps - 50) % 8 === 0){ S.revWarn = 1.6; banner('Inversion', EVENT_COL.flip, 2, 1.6); buzz([20,40,20]); }
-      if (S.laps === 30){ S.storm = true; banner('Pluie d’astéroïdes', EVENT_COL.rain, 1, 1.2); buzz([30,50,30]); }
+      if (S.laps === 40) { calmSky(CALM_TIME); banner('Astéroïdes rapides', EVENT_COL.fast, 2, 1.2); buzz([12, 40, 12, 40, 12]); }   // three quick taps
+      if (S.laps >= 50 && S.laps < CHAOS_LAP && (S.laps - 50) % 8 === 0) flipWarn(1.6);
+      if (S.laps > CHAOS_LAP && S.laps >= S.nextFlip){ flipWarn(CHAOS_WARN); S.nextFlip = S.laps + chaosGap(); }   // from lap 200: sooner, at random
+      if (S.laps === 30){ S.storm = true; calmSky(CALM_TIME); banner('Pluie d’astéroïdes', EVENT_COL.rain, 1, 1.2); buzz([30,50,30]); }
+      if (S.laps === CHAOS_LAP){ calmSky(CALM_TIME); S.nextFlip = S.laps + chaosGap(); banner('Inversions folles', EVENT_COL.chaos, 3, 1.6); buzz([20, 30, 20, 30, 20, 30, 20]); }
+      if (PALIER_BONUS[S.laps] && !S.tuto) palierBonus(PALIER_BONUS[S.laps]);
     }
     S.r += (lanes[S.lane] - S.r) * Math.min(1, dt*40);
 
@@ -2015,12 +2043,14 @@ function update(dt){
       S.revWarn -= dt; S.spawnT = Math.max(S.spawnT, .1); S.gemTry = 0;
       if (S.revWarn <= 0) reverse();
     }
+    // respite before a new stage (2.4): the sky was cleared, nothing new arrives while the title is read
+    if (S.calm > 0){ S.calm -= dt; S.spawnT = Math.max(S.spawnT, .1); S.gemTry = 0; }
     if (S.tuto) tutoUpdate(dt); else {
     S.spawnT -= dt;
     if (S.spawnT <= 0){ const lane = pickLane(); // if a spot is refused (it would block both orbits), try other spots on the same orbit
       const ok = spawnRocks(lane) || spawnRocks(lane) || spawnRocks(lane) || spawnRocks(lane); S.spawnT = ok ? Math.max(.38, 1.15 - S.t*0.017) * (S.hard ? .82 : 1) * (S.storm ? .65 : 1) * (0.75 + Math.random()*.5) : .1; }
     // Crystals: one every 5 laps. Rare ones (worth 3): 2 in 4 in a normal run, 3 in 4 in a hard run.
-    if (S.gemDue > 0 && S.revWarn <= 0){
+    if (S.gemDue > 0 && S.revWarn <= 0 && !(S.calm > 0)){
       S.gemTry += dt;
       if (S.gemTry >= .15){
         S.gemTry = 0; S.gemWait += .15;

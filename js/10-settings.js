@@ -32,7 +32,8 @@ function jumpToLap(n){
   const w = tt => omegaAt(tt);
   while (ang < target){ ang += w(t)*0.01; t += 0.01; }
   S.t = t; S.omega = w(t); S.laps = n; S.storm = n >= 30;
-  const flips = n >= 50 ? Math.floor((n - 50)/8) + 1 : 0;
+  const flips = n >= 50 ? Math.floor((Math.min(n, CHAOS_LAP - 1) - 50)/8) + 1 : 0;
+  if (n >= CHAOS_LAP) S.nextFlip = n + 1 + Math.floor(Math.random()*3);
   S.dir = flips % 2 ? -1 : 1;
   S.spawnT = 1; S.gemCount = Math.floor(n/5); ui.score();
 }
@@ -103,7 +104,7 @@ function finishRun(delay){
   setTimeout(() => {
     mode = 'over'; ui.hud(false);
     $('finalScore').textContent = S.laps; $('overBest').textContent = best;
-    $('overShards').textContent = S.shards; $('overNear').textContent = S.near || 0;
+    $('overShards').textContent = S.shards + (S.bonus || 0); $('overNear').textContent = S.near || 0;
     $('overTime').textContent = fmtTime(S.t);
     $('overTitle').textContent = testRun ? 'Fin du test' : 'Collision';
     $('newBest').hidden = !isBest; ui.show('over'); ui.stats();

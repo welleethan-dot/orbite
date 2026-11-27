@@ -30,9 +30,12 @@ function update(dt){
       if (S.laps % 5 === 0) S.gemDue++;
       if (!testRun && !S.tuto && best > 0 && S.laps === best + 1) { banner('Nouveau record', EVENT_COL.record, 1, 1.2); buzz([70, 50, 15, 40, 15]); }   // victory: long, then two taps
       if (S.laps % 7 === 0 || (S.hard && S.laps === 15)) shootingStars(); // lap 15: only in a hard run
-      if (S.laps === 40) { banner('Astéroïdes rapides', EVENT_COL.fast, 2, 1.2); buzz([12, 40, 12, 40, 12]); }   // three quick taps
-      if (S.laps >= 50 && (S.laps - 50) % 8 === 0){ S.revWarn = 1.6; banner('Inversion', EVENT_COL.flip, 2, 1.6); buzz([20,40,20]); }
-      if (S.laps === 30){ S.storm = true; banner('Pluie d’astéroïdes', EVENT_COL.rain, 1, 1.2); buzz([30,50,30]); }
+      if (S.laps === 40) { calmSky(CALM_TIME); banner('Astéroïdes rapides', EVENT_COL.fast, 2, 1.2); buzz([12, 40, 12, 40, 12]); }   // three quick taps
+      if (S.laps >= 50 && S.laps < CHAOS_LAP && (S.laps - 50) % 8 === 0) flipWarn(1.6);
+      if (S.laps > CHAOS_LAP && S.laps >= S.nextFlip){ flipWarn(CHAOS_WARN); S.nextFlip = S.laps + chaosGap(); }   // from lap 200: sooner, at random
+      if (S.laps === 30){ S.storm = true; calmSky(CALM_TIME); banner('Pluie d’astéroïdes', EVENT_COL.rain, 1, 1.2); buzz([30,50,30]); }
+      if (S.laps === CHAOS_LAP){ calmSky(CALM_TIME); S.nextFlip = S.laps + chaosGap(); banner('Inversions folles', EVENT_COL.chaos, 3, 1.6); buzz([20, 30, 20, 30, 20, 30, 20]); }
+      if (PALIER_BONUS[S.laps] && !S.tuto) palierBonus(PALIER_BONUS[S.laps]);
     }
     S.r += (lanes[S.lane] - S.r) * Math.min(1, dt*40);
 
@@ -41,12 +44,14 @@ function update(dt){
       S.revWarn -= dt; S.spawnT = Math.max(S.spawnT, .1); S.gemTry = 0;
       if (S.revWarn <= 0) reverse();
     }
+    // respite before a new stage (2.4): the sky was cleared, nothing new arrives while the title is read
+    if (S.calm > 0){ S.calm -= dt; S.spawnT = Math.max(S.spawnT, .1); S.gemTry = 0; }
     if (S.tuto) tutoUpdate(dt); else {
     S.spawnT -= dt;
     if (S.spawnT <= 0){ const lane = pickLane(); // if a spot is refused (it would block both orbits), try other spots on the same orbit
       const ok = spawnRocks(lane) || spawnRocks(lane) || spawnRocks(lane) || spawnRocks(lane); S.spawnT = ok ? Math.max(.38, 1.15 - S.t*0.017) * (S.hard ? .82 : 1) * (S.storm ? .65 : 1) * (0.75 + Math.random()*.5) : .1; }
     // Crystals: one every 5 laps. Rare ones (worth 3): 2 in 4 in a normal run, 3 in 4 in a hard run.
-    if (S.gemDue > 0 && S.revWarn <= 0){
+    if (S.gemDue > 0 && S.revWarn <= 0 && !(S.calm > 0)){
       S.gemTry += dt;
       if (S.gemTry >= .15){
         S.gemTry = 0; S.gemWait += .15;

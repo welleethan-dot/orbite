@@ -48,7 +48,7 @@ let settings = Object.assign({vib: true, lowfx: false, clock: true}, store.get('
 // Count a finished run in the stats (never for test runs). Returns true on a new record.
 function recordRun(){
   if (testRun) return false;
-  games++; lapsTotal += S.laps; gemsTotal += S.shards; wallet += S.shards; store.set('v2.wallet', wallet);
+  games++; lapsTotal += S.laps; gemsTotal += S.shards + (S.bonus || 0); wallet += S.shards + (S.bonus || 0); store.set('v2.wallet', wallet);   // + stage bonus (2.4)
   nearTotal += S.near || 0; store.set('v2.near', nearTotal);
   // Detailed stats, recorded now for the future Profile screen (not shown yet).
   const st = store.get('v2.stats', {});
