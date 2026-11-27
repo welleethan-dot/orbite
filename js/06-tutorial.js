@@ -19,7 +19,7 @@ const TUTO = [
   {id:'chaos',  info:true, ev:['Inversions folles', 'chaos', 3, 1.6], text:"À 200 tours : les inversions folles, plus rapides et imprévisibles. Les tours 100 et 200 rapportent aussi des éclats en bonus."},
   {id:'record', info:true, ev:['Nouveau record', 'record', 1, 1.2], text:"Et voici ce qui s'affichera quand vous battrez votre record : tout passe à l'or."},
   {id:'second', info:true, text:"Touché ? Avec 100 ◆, une seconde chance vous permet de reprendre au même tour, une fois par partie."},
-  {id:'ready',  info:true, last:true, text:"Vous êtes prêt ! Pour vous exercer sur un palier déjà atteint, essayez l'Entraînement depuis l'accueil. Bonne chance !"},
+  {id:'ready',  info:true, last:true, text:"Vous êtes prêt ! Pour vous exercer sur un palier, essayez l'Entraînement depuis l'accueil. Bonne chance !"},
 ];
 function playPressed(){ if (!tutoDone) startTutorial('play'); else start(); }
 function startTutorial(from){

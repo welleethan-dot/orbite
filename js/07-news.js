@@ -5,7 +5,7 @@
 // Newest first. Texts are written for players (no tech talk) and are proofread before each release.
 const CHANGELOG = [
   {v:'2.5', date:'27/11/2026', notes:[
-    "Nouveau : l'Entraînement, depuis l'accueil. Recommencez juste avant un palier déjà atteint, ou au tour de votre choix jusqu'au tour 200. Rien ne compte : ni record, ni classement, ni éclats.",
+    "Nouveau : l'Entraînement, depuis l'accueil. Commencez juste avant un palier, ou au tour de votre choix jusqu'au tour 200, pour vous exercer. Rien ne compte : ni record, ni classement, ni éclats.",
     "Le didacticiel apprend maintenant les frôlements, et présente les inversions folles, les bonus de palier et la seconde chance.",
   ]},
   {v:'2.4', date:'27/11/2026', notes:[

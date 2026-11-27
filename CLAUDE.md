@@ -133,8 +133,8 @@ série, éclats en une partie, parties classées, collection de skins, date d'ar
 Les skins déclarés par le jeu ne sont pas vérifiables côté serveur (affichage seulement).
 
 **Entraînement (2.5)** : bouton sous JOUER → écran `train` (`TRAINING` dans `js/10-settings.js`) : départ au tour 28, 38,
-48 ou 198, juste avant la pluie, les rapides, l'inversion ou les inversions folles. Un palier s'ouvre quand le record l'a
-atteint. Plus **« Tour au choix »** : n'importe quel tour de 0 à 200 (`TRAIN_MAX`, mémorisé dans `trainLap`, non scellé),
+48 ou 198, juste avant la pluie, les rapides, l'inversion ou les inversions folles. Tous les paliers sont ouverts dès le
+départ (décision du propriétaire). Plus **« Tour au choix »** : n'importe quel tour de 0 à 200 (`TRAIN_MAX`, mémorisé dans `trainLap`, non scellé),
 sans condition de record (demande du propriétaire). Techniquement une partie de test (`testRun` avec `train: true`) : ni record, ni stats, ni classement, ni éclats,
 ni bonus de palier, ni seconde chance, pas de partage. Tirage normal de la partie difficile (jamais affiché).
 
@@ -201,7 +201,7 @@ Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frô
 | 2.2.2 | 27/11/2026 | Dessin allégé : halos, fond et planète peints une fois puis copiés (≈ +50 % d'images/s sur téléphone lent simulé) |
 | 2.3 | 27/11/2026 | Seconde chance (100 ◆, une fois par partie), flèche retour en haut à gauche des écrans, profil des joueurs depuis le classement |
 | 2.4 | 27/11/2026 | Répit avant les paliers 30/40, bonus aux tours 100 (+10 ◆) et 200 (+25 ◆), inversions folles dès 200 |
-| 2.5 | (en test) | Entraînement (départ avant un palier atteint ou tour au choix jusqu'à 200, rien ne compte), didacticiel mis à jour (frôlements, nouveautés) |
+| 2.5 | 27/11/2026 | Entraînement (départ avant un palier ou tour au choix jusqu'à 200, rien ne compte), didacticiel mis à jour (frôlements, nouveautés) |
 
 ## 8. Décisions prises (et pourquoi)
 

@@ -144,7 +144,7 @@ function hop(){
 
 // ---------- training (2.5) ----------
 // Start just before a stage, to practise it. Nothing counts (it is a test run without the test tools):
-// no record, no leaderboard, no crystals, no second chance. A stage opens once the record has reached it.
+// no record, no leaderboard, no crystals, no second chance. Every stage is open (owner's choice, 2.5).
 const TRAINING = [
   {lap: 28,  at: 30,  name: 'Pluie d’astéroïdes', col: 'rain'},
   {lap: 38,  at: 40,  name: 'Astéroïdes rapides', col: 'fast'},
@@ -154,12 +154,12 @@ const TRAINING = [
 function openTraining(){
   const box = $('trainList'); box.replaceChildren();
   for (const tr of TRAINING){
-    const b = document.createElement('button'), open = best >= tr.at;
+    const b = document.createElement('button');
     const dot = document.createElement('span'); dot.className = 'tdot'; dot.style.background = EVENT_COL[tr.col];
     const nm = document.createElement('b'); nm.textContent = tr.name;
     const lap = document.createElement('span'); lap.className = 'tlap'; lap.textContent = 'tour ' + tr.at;
-    const sm = document.createElement('small'); sm.textContent = open ? 'Départ au tour ' + tr.lap : 'Atteignez le tour ' + tr.at + ' pour le débloquer';
-    b.append(dot, nm, lap, sm); b.disabled = !open; b.dataset.lap = tr.lap;
+    const sm = document.createElement('small'); sm.textContent = 'Départ au tour ' + tr.lap;
+    b.append(dot, nm, lap, sm); b.dataset.lap = tr.lap;
     b.addEventListener('click', () => { testRun = {lap: tr.lap, kind: 'random', train: true, name: tr.name}; start(); });
     box.append(b);
   }

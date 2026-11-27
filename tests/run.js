@@ -226,12 +226,12 @@ const TESTS = {
   async 'entraînement : paliers débloqués, rien ne compte'(){
     let t = await open('app');
     await t.page.tap('#trainBtn'); await wait(150);
-    check(await t.page.$$eval('#trainList button', l => l.every(b => b.disabled)), 'paliers ouverts sans les avoir atteints');
+    check(await t.page.$$eval('#trainList button', l => l.length === 4 && l.every(b => !b.disabled)), 'paliers pas tous ouverts pour un nouveau joueur');
     await t.close();
     t = await open('app', {store: {'v2.best': 60, 'v2.games': 5, 'v2.gems': 500, 'v2.wallet': 500}, seal: true});
     await t.page.tap('#trainBtn'); await wait(150);
     const st = await t.page.$$eval('#trainList button', l => l.map(b => b.disabled ? 0 : 1).join(''));
-    check(st === '1110', 'paliers débloqués faux : ' + st);
+    check(st === '1111', 'paliers pas tous ouverts : ' + st);
     await t.page.tap('#trainList button:nth-child(2)'); await wait(300);
     check(await t.page.evaluate(() => mode === 'play' && __t.S.laps === 38), 'l’entraînement ne commence pas au tour 38');
     check((await t.page.textContent('#testTag')).includes('Astéroïdes rapides'), 'mention « Entraînement » absente');
