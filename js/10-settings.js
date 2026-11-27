@@ -6,6 +6,7 @@ const canVibrate = typeof navigator.vibrate === 'function';
 function setSwitch(id, on){ $(id).setAttribute('aria-checked', String(!!on)); }
 function saveSettings(){ store.set('settings', settings); }
 function openSettings(){
+  if ($('privacy').hidden && $('howto').hidden && $('news').hidden) track('view', {s: 'settings'});
   setSwitch('swSound', !muted); setSwitch('swVib', settings.vib && canVibrate); setSwitch('swFx', settings.lowfx); setSwitch('swClock', settings.clock);
   $('swVib').disabled = !canVibrate;
   $('vibNote').textContent = canVibrate ? 'Petites vibrations pendant la partie' : 'Non disponible sur cet appareil';
@@ -22,6 +23,14 @@ $('swFx').addEventListener('click', () => { settings.lowfx = !settings.lowfx; sa
 $('swClock').addEventListener('click', () => { settings.clock = !settings.clock; saveSettings(); setSwitch('swClock', settings.clock); $('clock').hidden = !settings.clock; });
 $('setPseudoBtn').addEventListener('click', () => openPseudo('settings'));
 $('setTuto').addEventListener('click', () => startTutorial('howto'));
+// Privacy (2.6)
+function openPrivacy(){ setSwitch('swStats', settings.stats); $('statsNote').textContent = 'Votre numéro anonyme : ' + anonId.slice(0, 8); ui.show('privacy'); }
+$('privBtn').addEventListener('click', openPrivacy);
+$('privClose').addEventListener('click', openSettings);
+$('swStats').addEventListener('click', () => {
+  settings.stats = !settings.stats; saveSettings(); setSwitch('swStats', settings.stats);
+  if (!settings.stats){ events = []; store.set('v2.events', events); }       // nothing waiting is sent either
+});
 
 // ---------- hidden test mode ----------
 let testRun = null;                              // {lap, kind} while a test run is active
@@ -101,6 +110,10 @@ function gameOver(){
 }
 function finishRun(delay){
   const isBest = recordRun();                   // test runs never touch the stats
+  if (!testRun || testRun.train) track('game', {laps: S.laps, dur: Math.round(S.t), gems: S.shards, bonus: S.bonus || 0, hard: S.hard,
+    revived: !!S.revived, near: S.near || 0, chain: S.bestChain || 0, hops: S.hops || 0, record: isBest,
+    train: testRun ? testRun.lap : null});
+  setTimeout(sendEvents, 1500);
   setTimeout(() => {
     mode = 'over'; ui.hud(false);
     $('finalScore').textContent = S.laps; $('overBest').textContent = best;
@@ -114,11 +127,11 @@ function finishRun(delay){
 }
 function declineRevive(){
   if (mode !== 'offer') return;
-  mode = 'dying'; ui.show(null); finishRun(0);
+  mode = 'dying'; ui.show(null); track('revive', {used: false, laps: S.laps}); finishRun(0);
 }
 function revive(){
   if (mode !== 'offer' || wallet < REVIVE_COST) return;
-  wallet -= REVIVE_COST; store.set('v2.wallet', wallet);
+  wallet -= REVIVE_COST; store.set('v2.wallet', wallet); track('revive', {used: true, laps: S.laps});
   S.revived = true; S.dead = false; S.shield = REVIVE_SHIELD;
   S.rocks = []; S.spawnT = Math.max(S.spawnT, 1);              // a clear sky to start again
   S.trail = []; S.shake = 0;
@@ -173,5 +186,5 @@ $('trMinus').addEventListener('click', () => setTrainLap(trainLap - 1));
 $('trPlus').addEventListener('click', () => setTrainLap(trainLap + 1));
 $('trLap').addEventListener('change', e => setTrainLap(e.target.value));
 $('trGo').addEventListener('click', () => { setTrainLap($('trLap').value); testRun = {lap: trainLap, kind: 'random', train: true, name: 'Tour ' + trainLap}; start(); });
-$('trainBtn').addEventListener('click', () => { setTrainLap(trainLap); openTraining(); });
+$('trainBtn').addEventListener('click', () => { setTrainLap(trainLap); openTraining(); track('view', {s: 'train'}); });
 $('trainClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });

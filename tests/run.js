@@ -40,7 +40,7 @@ function serve(){
 
 // ---------- serveur Supabase simulé ----------
 function fakeSupabase(){
-  const db = {players: {}, scores: [], skins: {}, offline: false, calls: []};
+  const db = {players: {}, scores: [], skins: {}, events: [], offline: false, calls: []};
   db.handler = async route => {
     if (db.offline) return route.abort('internetdisconnected');
     const fn = route.request().url().split('/rpc/')[1], a = JSON.parse(route.request().postData() || '{}');
@@ -53,6 +53,7 @@ function fakeSupabase(){
       db.players[a.p_id] = a.p_pseudo; return ok(a.p_pseudo);
     }
     if (fn === 'player_info') return ok(db.players[a.p_id] ? {pseudo: db.players[a.p_id], changes_left: 3, next_reset: '2026-12-01'} : null);
+    if (fn === 'log_events'){ for (const e of a.p_events) db.events.push({...e, aid: a.p_aid, platform: a.p_platform, version: a.p_version}); return ok(a.p_events.length); }
     if (fn === 'set_skins'){ if (!db.players[a.p_id]) return ko('joueur_inconnu'); db.skins[a.p_id] = {skin: a.p_skin, skins: a.p_skins}; return ok(true); }
     if (fn === 'player_profile'){
       const id = Object.keys(db.players).find(k => db.players[k].toLowerCase() === String(a.p_pseudo).toLowerCase()); if (!id) return ok(null);
@@ -256,6 +257,30 @@ const TESTS = {
     await t.page.tap('#backBtn'); await wait(100);
     await t.page.tap('#play'); await wait(300);
     check(await t.page.evaluate(() => __t.S.laps === 0) && await t.page.isHidden('#testTag'), 'JOUER après un entraînement ne lance pas une vraie partie');
+    check(t.errors.length === 0, `erreurs ${t.errors}`); await t.close();
+  },
+  async 'statistiques anonymes et confidentialité'(){
+    const t = await open('app', {store: {'v2.pseudo': 'Moi_42'}});
+    await playUntilOver(t.page, () => { __t.S.laps = 14; __t.S.shards = 2; }); await wait(1800);
+    const kinds = t.db.events.map(e => e.k);
+    check(kinds.includes('open') && kinds.includes('game'), 'événements non envoyés : ' + kinds);
+    const g = t.db.events.find(e => e.k === 'game'), pid = await ls(t.page, t.pre, 'v2.pid');
+    check(g.d.laps === 14 && g.d.gems === 2 && g.d.train === null, 'partie mal décrite : ' + JSON.stringify(g.d));
+    check(!JSON.stringify(t.db.events).includes('Moi_42') && !JSON.stringify(t.db.events).includes(pid), 'pseudo ou identifiant du joueur dans les statistiques');
+    check(g.aid !== pid && /^(ios|android|desktop)/.test(g.platform) && !g.version.includes('-test'), 'numéro anonyme / appareil / version faux');
+    check((await ls(t.page, t.pre, 'v2.events')).length === 0, 'événements envoyés restés en attente');
+    // Confidentialité : page, numéro anonyme, interrupteur
+    await t.page.tap('#homeFromOver'); await t.page.tap('#setBtn'); await t.page.tap('#privBtn'); await wait(150);
+    check(await t.page.isVisible('#privacy') && (await t.page.textContent('#statsNote')).includes(g.aid.slice(0, 8)), 'page Confidentialité ou numéro anonyme absent');
+    check((await t.page.getAttribute('#swStats', 'aria-checked')) === 'true', 'statistiques coupées par défaut');
+    await t.page.tap('#swStats');
+    check((await ls(t.page, t.pre, 'settings')).stats === false, 'choix non mémorisé');
+    await t.page.tap('#backBtn'); await wait(100);
+    check(await t.page.isVisible('#settings'), 'la flèche ne ramène pas aux réglages');
+    const n = t.db.events.length;
+    await t.page.tap('#setClose'); await playUntilOver(t.page, () => { __t.S.laps = 3; }); await wait(1800);
+    await t.page.evaluate(() => document.dispatchEvent(new Event('visibilitychange'))); await wait(300);
+    check(t.db.events.length === n && ((await ls(t.page, t.pre, 'v2.events')) || []).length === 0, 'statistiques envoyées ou gardées alors qu’elles sont coupées');
     check(t.errors.length === 0, `erreurs ${t.errors}`); await t.close();
   },
   async 'boutique : achat, célébration, équipement'(){

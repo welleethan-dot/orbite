@@ -58,13 +58,15 @@ modifié, décision prise, idée notée, version publiée), dans le même commit
 - Scellées, groupe 1 (`v2.seal`) : `v2.best`, `v2.games`, `v2.laps`, `v2.gems`, `v2.wallet`, `v2.owned`, `v2.near`.
 - Scellées, groupe 2 (`v2.seal2`) : `v2.stats` (bestChain, bestNearRun, bestGemsRun, bestTime, timeTotal, hops, bestDate, since).
 - Non scellées : `v2.skin`, `v2.pid` (identifiant secret du joueur), `v2.pseudo`, `v2.pending` (parties à envoyer),
-  `settings`, `muted`, `seenVersion`, `tutoDone`, `boardSort`, `boardPeriod`, `test`, `v2.skinsSent` (skins déjà envoyés, 2.3), `trainLap` (2.5).
+  `settings`, `muted`, `seenVersion`, `tutoDone`, `boardSort`, `boardPeriod`, `test`, `v2.skinsSent` (skins déjà envoyés, 2.3), `trainLap` (2.5), `v2.aid` (numéro anonyme des statistiques, distinct de
+  `v2.pid`) et `v2.events` (statistiques en attente d'envoi, 200 au plus) (2.6). `settings.stats` = partage des statistiques.
 - **Ne jamais ajouter une clé à un groupe de sceau existant** : ça invaliderait le sceau et effacerait la
   progression de tout le monde. Créer un nouveau groupe (`v2.seal3`…).
 
 **Serveur (Supabase)**
 - Tables `players`, `scores`, `pseudo_changes` : **aucun accès direct** depuis le jeu (RLS activé, droits retirés).
-- Le jeu n'appelle que 6 fonctions : `set_pseudo`, `submit_score`, `get_leaderboard`, `player_info`, et depuis la 2.3
+- Le jeu n'appelle que 7 fonctions : `set_pseudo`, `submit_score`, `get_leaderboard`, `player_info`, `log_events`
+  (statistiques anonymes, 2.6), et depuis la 2.3
   `set_skins` (skins débloqués + skin équipé, envoyés quand ils changent ; seuls les skins connus sont gardés, 1 envoi / 2 s)
   et `player_profile(pseudo)` (profil public : record et sa date, rang de tous les temps, meilleure série, éclats en une
   partie, parties classées, date d'arrivée, skins). Colonnes `players.skin`, `skins` (null = jamais envoyés), `skins_at`.
@@ -74,6 +76,26 @@ modifié, décision prise, idée notée, version publiée), dans le même commit
 - Pseudo : 3 à 16 caractères, filtre de grossièretés, unique (sans tenir compte des majuscules et accents),
   3 changements par mois (remise à zéro le 1er, heure de Paris), ancien pseudo réservé 30 jours et affiché
   « anciennement … » pendant 30 jours.
+
+**Statistiques anonymes (2.6)**
+- Le jeu appelle `track(kind, data)` (`js/08-online.js`) ; envoi par paquets de 50 via `log_events` en fin de partie, à la
+  mise en arrière-plan et au démarrage. **Jamais** de pseudo ni de `v2.pid` : seulement `v2.aid` (tiré au hasard), la
+  version (`-test` pour /beta/), l'appareil (`ios`/`android`/`desktop`, `-app` si installé).
+- Événements : `open` (réglages, a un pseudo, parties, record), `game` (tours, durée, éclats, bonus, difficile, seconde
+  chance, frôlements, série, sauts, record, `train` = tour de départ si entraînement), `tuto` (terminé ou étape quittée),
+  `buy` (skin, prix), `revive` (utilisée ou refusée), `view` (écran ouvert : board, player, profile, shop, settings, train).
+- Serveur : table `events` (aucun accès du jeu), types autorisés seulement, 2 000 événements / jour / appareil, dates
+  bornées, **effacement automatique après 13 mois**. Coupé par le joueur → rien n'est enregistré ni envoyé.
+- **Lecture par le propriétaire** dans l'éditeur SQL de Supabase (schéma `stats`, invisible du jeu ; hors /beta/ et hors
+  entraînement) : `select * from stats.resume;` · `stats.jours` · `stats.paliers` · `stats.fidelite` (retours J+1 et
+  semaine 2) · `stats.didacticiel` · `stats.skins` · `stats.seconde_chance` · `stats.ecrans` · `stats.parties` (détail).
+- **Effacer les données d'un joueur** qui le demande (éditeur SQL) :
+  `delete from public.players where pseudo_key = public.orbite_norm('Pseudo');` (scores et historique suivent) et
+  `delete from public.events where aid::text like 'xxxxxxxx%';` (8 premiers caractères du « numéro anonyme »).
+- Page **Confidentialité** (Réglages) : ce qui reste sur le téléphone, le classement, les statistiques (interrupteur +
+  numéro anonyme), où et combien de temps, comment effacer. Vouvoiement. Ce n'est pas un avis juridique : à faire relire
+  avant le lancement public (mentions légales, contact définitif).
+- Script vérifié sur un PostgreSQL 16 local avant d'être donné au propriétaire (rôles `anon`/`authenticated` simulés).
 
 ## 4. Réglages du jeu (valeurs actuelles)
 
@@ -202,6 +224,7 @@ Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frô
 | 2.3 | 27/11/2026 | Seconde chance (100 ◆, une fois par partie), flèche retour en haut à gauche des écrans, profil des joueurs depuis le classement |
 | 2.4 | 27/11/2026 | Répit avant les paliers 30/40, bonus aux tours 100 (+10 ◆) et 200 (+25 ◆), inversions folles dès 200 |
 | 2.5 | 27/11/2026 | Entraînement (départ avant un palier ou tour au choix jusqu'à 200, rien ne compte), didacticiel mis à jour (frôlements, nouveautés) |
+| 2.6 | (en test) | Statistiques anonymes (avec interrupteur) et page Confidentialité dans les Réglages |
 
 ## 8. Décisions prises (et pourquoi)
 

@@ -4,6 +4,10 @@
 // ---------- versions & news ----------
 // Newest first. Texts are written for players (no tech talk) and are proofread before each release.
 const CHANGELOG = [
+  {v:'2.6', date:'27/11/2026', notes:[
+    "Nouveau dans les Réglages : la page Confidentialité. Elle explique ce que le jeu garde sur votre téléphone et ce qu'il envoie.",
+    "Pour améliorer le jeu, des statistiques anonymes sont envoyées (sans pseudo). Vous pouvez les couper à tout moment dans Confidentialité.",
+  ]},
   {v:'2.5', date:'27/11/2026', notes:[
     "Nouveau : l'Entraînement, depuis l'accueil. Commencez juste avant un palier, ou au tour de votre choix jusqu'au tour 200, pour vous exercer. Rien ne compte : ni record, ni classement, ni éclats.",
     "Le didacticiel apprend maintenant les frôlements, et présente les inversions folles, les bonus de palier et la seconde chance.",

@@ -211,7 +211,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 @media (prefers-reduced-motion: reduce){.cta{box-shadow:none;}}
 
 /* back arrow (2.3): top left of every menu screen, same place on every phone */
-.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);left:max(14px, env(safe-area-inset-left,0px));width:38px;height:38px;z-index:30;}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);left:max(14px, env(safe-area-inset-left,0px));width:38px;height:38px;z-index:30;background:rgba(21,26,68,.94);}
 .back svg{width:20px;height:20px;}
 /* second chance (2.3): time left to decide */
 .timebar{width:100%;max-width:240px;height:4px;border-radius:2px;background:rgba(191,243,255,.15);overflow:hidden;}
@@ -233,6 +233,11 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 .trainfree{width:100%;display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px;border-radius:14px;background:rgba(21,26,68,.55);border:1px solid rgba(191,243,255,.14);}
 .trainfree b{font-family:var(--display);font-weight:800;letter-spacing:.03em;color:var(--ion);}
 .trainfree .cta{margin-top:0;padding:13px 38px;font-size:1rem;}
+/* privacy (2.6) */
+.privcard{text-align:left;align-items:stretch;}
+.privcard .eyebrow,.privcard h2,.privcard > .link{align-self:center;text-align:center;}
+.privcard p{max-width:none;font-size:.92rem;}
+.privcard .srow{margin-top:10px;padding:12px 14px;border-radius:14px;background:rgba(21,26,68,.55);}
 </style>
 
 </head>
@@ -259,7 +264,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 <div class="overlay" id="menu">
   <div class="card">
     <button class="icon gear" id="setBtn" aria-label="Réglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
-    <div class="eyebrow">Version de test · 2.5</div>
+    <div class="eyebrow">Version de test · 2.6</div>
     <h1 id="title">ORBITE</h1>
     <p>Touchez l'écran pour changer d'orbite.</p>
     <button class="cta" id="play">JOUER</button>
@@ -351,6 +356,30 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
       <button class="cta" id="trGo">COMMENCER</button>
     </div>
     <button class="link" id="trainClose">Retour à l'accueil</button>
+  </div>
+</div>
+
+<div class="overlay" id="privacy" hidden>
+  <div class="card privcard">
+    <div class="eyebrow">Réglages</div>
+    <h2>Confidentialité</h2>
+    <section class="psec"><h3>Sur votre téléphone</h3>
+      <p>Votre progression (record, éclats, skins, statistiques) et vos réglages restent sur cet appareil. Rien d'autre ne le quitte, à part ce qui suit.</p>
+    </section>
+    <section class="psec"><h3>Classement en ligne</h3>
+      <p>Si vous choisissez un pseudo, il est envoyé avec le résultat de vos parties (tours, durée, éclats, série de frôlements) et vos skins, pour le classement et votre profil public. Pas de nom, pas d'adresse e-mail, pas de compte.</p>
+    </section>
+    <section class="psec"><h3>Statistiques anonymes</h3>
+      <p>Pour améliorer le jeu, des statistiques sans pseudo sont envoyées, reliées à un numéro tiré au hasard : parties jouées, tours, paliers atteints, skins achetés, écrans ouverts, type d'appareil (iPhone, Android ou ordinateur).</p>
+      <div class="srow"><div><b>Partager les statistiques anonymes</b><small id="statsNote"></small></div><button class="switch" id="swStats" role="switch" aria-label="Partager les statistiques anonymes"><i></i></button></div>
+    </section>
+    <section class="psec"><h3>Où et combien de temps</h3>
+      <p>Sur un serveur en Europe (Supabase). Pas de publicité, aucun pistage par d'autres sociétés. Les statistiques anonymes sont effacées au bout de 13 mois.</p>
+    </section>
+    <section class="psec"><h3>Effacer vos données</h3>
+      <p>Envoyez-moi un message en privé avec votre pseudo (et votre numéro anonyme ci-dessus) : tout ce qui vous concerne sur le serveur sera effacé.</p>
+    </section>
+    <button class="link" id="privClose">Retour aux réglages</button>
   </div>
 </div>
 
@@ -451,6 +480,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
       <div class="srow"><div><b>Comment jouer</b><small>Toutes les règles du jeu</small></div><button class="pill" id="howBtn">Voir</button></div>
       <div class="srow"><div><b>Didacticiel</b><small>Revoir comment jouer, pas à pas</small></div><button class="pill" id="setTuto">Revoir</button></div>
       <div class="srow"><div><b>Nouveautés</b><small>Version <span id="verLabel"></span></small></div><button class="pill" id="newsBtn">Voir</button></div>
+      <div class="srow"><div><b>Confidentialité</b><small>Ce que le jeu garde et envoie</small></div><button class="pill" id="privBtn">Voir</button></div>
     </div>
     <div class="sgroup scontact">
       <b>Un bug ? Une idée ?</b>
@@ -595,7 +625,7 @@ let best = store.get('v2.best', 0), games = store.get('v2.games', 0), lapsTotal 
 let wallet = store.get('v2.wallet', gemsTotal), nearTotal = store.get('v2.near', 0);            // spendable crystals (gemsTotal = lifetime)
 let owned = store.get('v2.owned', ['sonde']), equipped = store.get('v2.skin', 'sonde');
 // Player settings (2.2). Sound stays in its own key ('muted').
-let settings = Object.assign({vib: true, lowfx: false, clock: true}, store.get('settings', {}));
+let settings = Object.assign({vib: true, lowfx: false, clock: true, stats: true}, store.get('settings', {}));   // stats: anonymous statistics (2.6)
 // Count a finished run in the stats (never for test runs). Returns true on a new record.
 function recordRun(){
   if (testRun) return false;
@@ -882,7 +912,7 @@ function popup(text, x, y, color){ S.popups.push({text, x, y, life:1, color}); }
 
 // ---------- UI ----------
 const ui = {
-  show(id){ for (const k of ['menu','paused','over','test','shop','news','howto','board','pseudoBox','profile','unlock','sharebox','notice','settings','second','player','train']) $(k).hidden = k !== id; },
+  show(id){ for (const k of ['menu','paused','over','test','shop','news','howto','board','pseudoBox','profile','unlock','sharebox','notice','settings','second','player','train','privacy']) $(k).hidden = k !== id; },
   hud(on){ $('hud').hidden = !on; },
   score(){ $('sc').textContent = S.laps; $('hs').textContent = 'Record ' + Math.max(best, testRun || S.tuto ? 0 : S.laps); $('gm').textContent = '◆ ' + S.shards; },
   stats(){ $('menuBest').textContent = best; $('menuGames').textContent = games; $('menuGems').textContent = wallet; },
@@ -965,7 +995,7 @@ function resume(){ if (mode !== 'paused') return; mode = 'play'; ui.show(null); 
 // Back arrow (2.3) at the top left of each menu screen: does exactly what the screen's own "Retour…" button does.
 // A single button on the page itself (not inside the screens, whose blurred background would make it scroll away).
 const BACK_OF = {settings: 'setClose', board: 'boardClose', profile: 'profClose', shop: 'shopClose', howto: 'howClose',
-  pseudoBox: 'pseudoLater', news: 'newsOk', sharebox: 'shareClose', unlock: 'unlockClose', test: 'testClose', player: 'plClose', train: 'trainClose'};
+  pseudoBox: 'pseudoLater', news: 'newsOk', sharebox: 'shareClose', unlock: 'unlockClose', test: 'testClose', player: 'plClose', train: 'trainClose', privacy: 'privClose'};
 const backBtn = document.createElement('button');
 backBtn.className = 'icon back'; backBtn.id = 'backBtn'; backBtn.setAttribute('aria-label', 'Retour'); backBtn.hidden = true;
 backBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';
@@ -1158,10 +1188,10 @@ function previewLoop(now){
 }
 function unlockBonus(){
   for (const sk of SKINS) if (sk.unlockLaps && lapsTotal >= sk.unlockLaps && !owned.includes(sk.id)){
-    owned.push(sk.id); store.set('v2.owned', owned); syncSkins(); setTimeout(() => celebrateSkin(sk.id), 300);
+    owned.push(sk.id); store.set('v2.owned', owned); syncSkins(); track('buy', {skin: sk.id, price: sk.price}); setTimeout(() => celebrateSkin(sk.id), 300);
   }
 }
-function openShop(){ pendingBuy = null; renderShop(); ui.show('shop'); if (!previewRaf) previewRaf = requestAnimationFrame(previewLoop); }
+function openShop(){ track('view', {s: 'shop'}); pendingBuy = null; renderShop(); ui.show('shop'); if (!previewRaf) previewRaf = requestAnimationFrame(previewLoop); }
 $('shopBtn').addEventListener('click', openShop);
 $('shopClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
 $('skins').addEventListener('click', e => {
@@ -1304,6 +1334,7 @@ function tutoUpdate(dt){
 }
 function tutoNext(){ const i = S.tuto.step + 1; if (i < TUTO.length) tutoEnter(i); else tutoFinish(true); }
 function tutoFinish(play){
+  track('tuto', {done: S.tuto.step === TUTO.length - 1, step: S.tuto.step, from: tutoFrom});
   tutoDone = true; store.set('tutoDone', true);
   clearEvent(); $('tuto').hidden = true; $('sc').classList.remove('glow'); resize();
   if (play) start(); else goHome();
@@ -1321,6 +1352,10 @@ $('tutoAgain').addEventListener('click', () => startTutorial('howto'));
 // ---------- versions & news ----------
 // Newest first. Texts are written for players (no tech talk) and are proofread before each release.
 const CHANGELOG = [
+  {v:'2.6', date:'27/11/2026', notes:[
+    "Nouveau dans les Réglages : la page Confidentialité. Elle explique ce que le jeu garde sur votre téléphone et ce qu'il envoie.",
+    "Pour améliorer le jeu, des statistiques anonymes sont envoyées (sans pseudo). Vous pouvez les couper à tout moment dans Confidentialité.",
+  ]},
   {v:'2.5', date:'27/11/2026', notes:[
     "Nouveau : l'Entraînement, depuis l'accueil. Commencez juste avant un palier, ou au tour de votre choix jusqu'au tour 200, pour vous exercer. Rien ne compte : ni record, ni classement, ni éclats.",
     "Le didacticiel apprend maintenant les frôlements, et présente les inversions folles, les bonus de palier et la seconde chance.",
@@ -1664,7 +1699,7 @@ async function loadBoard(){
     }
   } catch(e){ if (id === boardReq) msg.textContent = 'Impossible de charger le classement. Vérifiez votre connexion.'; }
 }
-function openBoard(){ syncSkins(); boardMe(); ui.show('board'); loadBoard(); loadPlayerInfo().then(() => { if (!$('board').hidden) boardMe(); }); }
+function openBoard(){ track('view', {s: 'board'}); syncSkins(); boardMe(); ui.show('board'); loadBoard(); loadPlayerInfo().then(() => { if (!$('board').hidden) boardMe(); }); }
 $('boardBtn').addEventListener('click', openBoard);
 $('boardClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
 $('boardPeriod').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ boardPeriod = b.dataset.p; store.set('boardPeriod', boardPeriod); loadBoard(); } });
@@ -1688,6 +1723,7 @@ setTimeout(syncSkins, 2500);
 // ----- another player's profile, opened from the leaderboard (2.3) -----
 let plSkin = null, plReq = 0;
 async function openPlayer(name){
+  track('view', {s: 'player'});
   const id = ++plReq;
   plSkin = null; $('plName').textContent = name; $('plWas').textContent = ''; $('plSince').textContent = '';
   $('plPerf').hidden = $('plColl').hidden = true; $('plMsg').textContent = 'Chargement…';
@@ -1720,6 +1756,34 @@ async function openPlayer(name){
   $('plSince').textContent = p.since ? 'Dans le classement depuis le ' + fmtDate(p.since) : '';
 }
 $('plClose').addEventListener('click', () => ui.show('board'));
+
+// ----- anonymous statistics (2.6) -----
+// No pseudo, no player id: a separate random number (anonId) only links a device's events together.
+// Events wait on the device (v2.events) and are sent in small batches: at the end of a run, when the app is put
+// away, and at start. Nothing is recorded or sent when the player turns statistics off (Confidentialité).
+let anonId = store.get('v2.aid', null); if (!anonId){ anonId = newId(); store.set('v2.aid', anonId); }
+let events = store.get('v2.events', []), sendingEvents = null;
+const PLATFORM = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ? 'ios'
+  : /Android/.test(navigator.userAgent) ? 'android' : 'desktop';
+const INSTALLED = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+function track(kind, data = {}){
+  if (!settings.stats) return;
+  events.push({k: kind, d: data, at: new Date().toISOString()});
+  events = events.slice(-200); store.set('v2.events', events);
+}
+function sendEvents(){
+  if (sendingEvents || !settings.stats || !events.length) return sendingEvents || Promise.resolve();
+  const batch = events.slice(0, 50);
+  sendingEvents = rpc('log_events', {p_aid: anonId, p_version: APP_VERSION + (STORE_PREFIX === 'orbite.' ? '' : '-test'),
+      p_platform: PLATFORM + (INSTALLED ? '-app' : ''), p_events: batch})
+    .then(() => { events = events.slice(batch.length); store.set('v2.events', events); })
+    .catch(e => { if (e.code !== 'reseau' && e.code !== 'trop_rapide'){ events = events.slice(batch.length); store.set('v2.events', events); } })   // refused: dropped
+    .finally(() => { sendingEvents = null; });
+  return sendingEvents;
+}
+track('open', {sound: !muted, vib: settings.vib, lowfx: settings.lowfx, clock: settings.clock, pseudo: !!pseudo, games, best});
+document.addEventListener('visibilitychange', () => { if (document.hidden) sendEvents(); });
+setTimeout(sendEvents, 3000);
 </script>
 <script>
 // Orbite · Profil, célébration des skins, partage
@@ -1755,6 +1819,7 @@ function drawSkinBadge(cvs, sk){
   drawProbe(c, 19, 19, sk.sprite ? [] : tr.map(p => ({x: p.x - 8, y: p.y + 6})), sk, 0, sk.sprite ? .55 : .9);
 }
 async function openProfile(){
+  track('view', {s: 'profile'});
   unlockBonus();
   const st = store.get('v2.stats', {});
   $('profName').textContent = pseudo || 'Sans pseudo';
@@ -1911,6 +1976,7 @@ const canVibrate = typeof navigator.vibrate === 'function';
 function setSwitch(id, on){ $(id).setAttribute('aria-checked', String(!!on)); }
 function saveSettings(){ store.set('settings', settings); }
 function openSettings(){
+  if ($('privacy').hidden && $('howto').hidden && $('news').hidden) track('view', {s: 'settings'});
   setSwitch('swSound', !muted); setSwitch('swVib', settings.vib && canVibrate); setSwitch('swFx', settings.lowfx); setSwitch('swClock', settings.clock);
   $('swVib').disabled = !canVibrate;
   $('vibNote').textContent = canVibrate ? 'Petites vibrations pendant la partie' : 'Non disponible sur cet appareil';
@@ -1927,6 +1993,14 @@ $('swFx').addEventListener('click', () => { settings.lowfx = !settings.lowfx; sa
 $('swClock').addEventListener('click', () => { settings.clock = !settings.clock; saveSettings(); setSwitch('swClock', settings.clock); $('clock').hidden = !settings.clock; });
 $('setPseudoBtn').addEventListener('click', () => openPseudo('settings'));
 $('setTuto').addEventListener('click', () => startTutorial('howto'));
+// Privacy (2.6)
+function openPrivacy(){ setSwitch('swStats', settings.stats); $('statsNote').textContent = 'Votre numéro anonyme : ' + anonId.slice(0, 8); ui.show('privacy'); }
+$('privBtn').addEventListener('click', openPrivacy);
+$('privClose').addEventListener('click', openSettings);
+$('swStats').addEventListener('click', () => {
+  settings.stats = !settings.stats; saveSettings(); setSwitch('swStats', settings.stats);
+  if (!settings.stats){ events = []; store.set('v2.events', events); }       // nothing waiting is sent either
+});
 
 // ---------- hidden test mode ----------
 let testRun = null;                              // {lap, kind} while a test run is active
@@ -2006,6 +2080,10 @@ function gameOver(){
 }
 function finishRun(delay){
   const isBest = recordRun();                   // test runs never touch the stats
+  if (!testRun || testRun.train) track('game', {laps: S.laps, dur: Math.round(S.t), gems: S.shards, bonus: S.bonus || 0, hard: S.hard,
+    revived: !!S.revived, near: S.near || 0, chain: S.bestChain || 0, hops: S.hops || 0, record: isBest,
+    train: testRun ? testRun.lap : null});
+  setTimeout(sendEvents, 1500);
   setTimeout(() => {
     mode = 'over'; ui.hud(false);
     $('finalScore').textContent = S.laps; $('overBest').textContent = best;
@@ -2019,11 +2097,11 @@ function finishRun(delay){
 }
 function declineRevive(){
   if (mode !== 'offer') return;
-  mode = 'dying'; ui.show(null); finishRun(0);
+  mode = 'dying'; ui.show(null); track('revive', {used: false, laps: S.laps}); finishRun(0);
 }
 function revive(){
   if (mode !== 'offer' || wallet < REVIVE_COST) return;
-  wallet -= REVIVE_COST; store.set('v2.wallet', wallet);
+  wallet -= REVIVE_COST; store.set('v2.wallet', wallet); track('revive', {used: true, laps: S.laps});
   S.revived = true; S.dead = false; S.shield = REVIVE_SHIELD;
   S.rocks = []; S.spawnT = Math.max(S.spawnT, 1);              // a clear sky to start again
   S.trail = []; S.shake = 0;
@@ -2078,7 +2156,7 @@ $('trMinus').addEventListener('click', () => setTrainLap(trainLap - 1));
 $('trPlus').addEventListener('click', () => setTrainLap(trainLap + 1));
 $('trLap').addEventListener('change', e => setTrainLap(e.target.value));
 $('trGo').addEventListener('click', () => { setTrainLap($('trLap').value); testRun = {lap: trainLap, kind: 'random', train: true, name: 'Tour ' + trainLap}; start(); });
-$('trainBtn').addEventListener('click', () => { setTrainLap(trainLap); openTraining(); });
+$('trainBtn').addEventListener('click', () => { setTrainLap(trainLap); openTraining(); track('view', {s: 'train'}); });
 $('trainClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
 </script>
 <script>

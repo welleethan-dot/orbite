@@ -44,7 +44,7 @@ let best = store.get('v2.best', 0), games = store.get('v2.games', 0), lapsTotal 
 let wallet = store.get('v2.wallet', gemsTotal), nearTotal = store.get('v2.near', 0);            // spendable crystals (gemsTotal = lifetime)
 let owned = store.get('v2.owned', ['sonde']), equipped = store.get('v2.skin', 'sonde');
 // Player settings (2.2). Sound stays in its own key ('muted').
-let settings = Object.assign({vib: true, lowfx: false, clock: true}, store.get('settings', {}));
+let settings = Object.assign({vib: true, lowfx: false, clock: true, stats: true}, store.get('settings', {}));   // stats: anonymous statistics (2.6)
 // Count a finished run in the stats (never for test runs). Returns true on a new record.
 function recordRun(){
   if (testRun) return false;

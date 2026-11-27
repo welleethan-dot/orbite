@@ -261,3 +261,120 @@ revoke all on function public.set_skins(uuid, text, text[]) from public;
 revoke all on function public.player_profile(text) from public;
 grant execute on function public.set_skins(uuid, text, text[]) to anon, authenticated;
 grant execute on function public.player_profile(text) to anon, authenticated;
+
+-- =====================================================================
+-- 5. Statistiques anonymes (2.6)
+-- Événements envoyés par le jeu SANS pseudo ni identifiant de joueur : seulement un numéro tiré au hasard
+-- sur l'appareil (aid). Le joueur peut couper l'envoi (Réglages > Confidentialité). Effacés après 13 mois.
+-- Lecture par le propriétaire uniquement, dans l'éditeur SQL : schéma « stats » (jamais exposé au jeu).
+-- =====================================================================
+create table if not exists public.events (
+  id         bigint generated always as identity primary key,
+  aid        uuid not null,
+  kind       text not null,
+  data       jsonb not null default '{}',
+  version    text,
+  platform   text,
+  at         timestamptz not null default now()
+);
+create index if not exists events_at_idx  on public.events (at);
+create index if not exists events_aid_idx on public.events (aid, at);
+alter table public.events enable row level security;
+revoke all on public.events from anon, authenticated;
+
+create or replace function public.log_events(p_aid uuid, p_version text, p_platform text, p_events jsonb) returns integer
+language plpgsql security definer set search_path = public as $$
+declare
+  v_kinds text[] := array['open','game','tuto','buy','revive','view'];
+  v_n integer := 0;
+  e jsonb;
+  v_at timestamptz;
+begin
+  if p_aid is null or jsonb_typeof(p_events) <> 'array' or jsonb_array_length(p_events) > 50 then raise exception 'invalide'; end if;
+  if (select count(*) from events where aid = p_aid and at > now() - interval '1 day') > 2000 then raise exception 'trop_rapide'; end if;
+  for e in select * from jsonb_array_elements(p_events) loop
+    continue when not (e->>'k' = any(v_kinds)) or jsonb_typeof(coalesce(e->'d', '{}')) <> 'object' or length((e->'d')::text) > 600;
+    begin v_at := (e->>'at')::timestamptz; exception when others then v_at := now(); end;
+    if v_at is null or v_at > now() or v_at < now() - interval '30 days' then v_at := now(); end if;
+    insert into events (aid, kind, data, version, platform, at)
+    values (p_aid, e->>'k', coalesce(e->'d', '{}'), left(p_version, 20), left(p_platform, 20), v_at);
+    v_n := v_n + 1;
+  end loop;
+  if random() < 0.01 then delete from events where at < now() - interval '13 months'; end if;   -- ménage
+  return v_n;
+end $$;
+revoke all on function public.log_events(uuid, text, text, jsonb) from public;
+grant execute on function public.log_events(uuid, text, text, jsonb) to anon, authenticated;
+
+-- ---------- Vues pour le propriétaire (éditeur SQL : select * from stats.jours;) ----------
+create schema if not exists stats;
+revoke all on schema stats from public, anon, authenticated;
+
+-- Hors adresse de test (version « -test ») et hors entraînement.
+create or replace view stats.parties as
+  select aid, at, version, platform, (data->>'laps')::int laps, (data->>'dur')::int duree, (data->>'gems')::int eclats,
+         (data->>'hard')::boolean difficile, (data->>'revived')::boolean seconde_chance, (data->>'record')::boolean record
+  from public.events where kind = 'game' and version not like '%-test' and data->>'train' is null;
+
+-- Une ligne par jour (heure de Paris) : appareils actifs, nouveaux, parties, tours.
+create or replace view stats.jours as
+  with ev as (select aid, (at at time zone 'Europe/Paris')::date jour, kind, data, platform from public.events where version not like '%-test'),
+  premiers as (select aid, min(jour) jour from ev group by aid)
+  select e.jour,
+    count(distinct e.aid) as appareils_actifs,
+    (select count(*) from premiers p where p.jour = e.jour) as nouveaux,
+    count(*) filter (where kind = 'game' and data->>'train' is null) as parties,
+    round(avg((data->>'laps')::int) filter (where kind = 'game' and data->>'train' is null), 1) as tours_moyens,
+    max((data->>'laps')::int) filter (where kind = 'game' and data->>'train' is null) as tours_max,
+    count(distinct e.aid) filter (where platform like '%-app') as appareils_appli_installee
+  from ev e group by e.jour order by e.jour desc;
+
+-- Résumé : appareils, parties, plateformes (7 et 30 derniers jours).
+create or replace view stats.resume as
+  select periode,
+    count(distinct aid) as appareils,
+    count(*) filter (where kind = 'game' and data->>'train' is null) as parties,
+    count(*) filter (where kind = 'game' and data->>'train' is not null) as entrainements,
+    count(distinct aid) filter (where platform like 'ios%') as iphone,
+    count(distinct aid) filter (where platform like 'android%') as android,
+    count(distinct aid) filter (where platform like 'desktop%') as ordinateur,
+    count(distinct aid) filter (where platform like '%-app') as appli_installee
+  from (select '7 jours' periode, * from public.events where at > now() - interval '7 days' and version not like '%-test'
+        union all select '30 jours', * from public.events where at > now() - interval '30 days' and version not like '%-test') x
+  group by periode;
+
+-- Quelle part des parties atteint chaque palier.
+create or replace view stats.paliers as
+  select count(*) as parties,
+    round(100.0 * count(*) filter (where laps >= 10)  / nullif(count(*), 0), 1) as pct_10,
+    round(100.0 * count(*) filter (where laps >= 30)  / nullif(count(*), 0), 1) as pct_30_pluie,
+    round(100.0 * count(*) filter (where laps >= 40)  / nullif(count(*), 0), 1) as pct_40_rapides,
+    round(100.0 * count(*) filter (where laps >= 50)  / nullif(count(*), 0), 1) as pct_50_inversion,
+    round(100.0 * count(*) filter (where laps >= 100) / nullif(count(*), 0), 1) as pct_100,
+    round(100.0 * count(*) filter (where laps >= 200) / nullif(count(*), 0), 1) as pct_200
+  from stats.parties;
+
+-- Fidélité : parmi les appareils arrivés un jour donné, combien sont revenus le lendemain, et 7 jours après.
+create or replace view stats.fidelite as
+  with j as (select distinct aid, (at at time zone 'Europe/Paris')::date jour from public.events where version not like '%-test'),
+  f as (select aid, min(jour) premier from j group by aid)
+  select f.premier as arrives_le, count(*) as appareils,
+    count(*) filter (where exists (select 1 from j where j.aid = f.aid and j.jour = f.premier + 1)) as revenus_j1,
+    count(*) filter (where exists (select 1 from j where j.aid = f.aid and j.jour between f.premier + 7 and f.premier + 13)) as revenus_semaine_2
+  from f group by f.premier order by f.premier desc;
+
+-- Didacticiel, skins achetés, seconde chance, écrans ouverts.
+create or replace view stats.didacticiel as
+  select data->>'from' as lance_depuis, count(*) as fois,
+    count(*) filter (where (data->>'done')::boolean) as termines, round(avg((data->>'step')::int), 1) as etape_moyenne_quittee
+  from public.events where kind = 'tuto' and version not like '%-test' group by 1;
+create or replace view stats.skins as
+  select data->>'skin' as skin, count(*) as achats from public.events where kind = 'buy' and version not like '%-test' group by 1 order by 2 desc;
+create or replace view stats.seconde_chance as
+  select count(*) filter (where (data->>'used')::boolean) as utilisees, count(*) filter (where not (data->>'used')::boolean) as refusees,
+    round(avg((data->>'laps')::int) filter (where (data->>'used')::boolean), 1) as tour_moyen_utilisee
+  from public.events where kind = 'revive' and version not like '%-test';
+create or replace view stats.ecrans as
+  select data->>'s' as ecran, count(*) as ouvertures, count(distinct aid) as appareils
+  from public.events where kind = 'view' and version not like '%-test' group by 1 order by 2 desc;
+revoke all on all tables in schema stats from public, anon, authenticated;

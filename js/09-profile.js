@@ -31,6 +31,7 @@ function drawSkinBadge(cvs, sk){
   drawProbe(c, 19, 19, sk.sprite ? [] : tr.map(p => ({x: p.x - 8, y: p.y + 6})), sk, 0, sk.sprite ? .55 : .9);
 }
 async function openProfile(){
+  track('view', {s: 'profile'});
   unlockBonus();
   const st = store.get('v2.stats', {});
   $('profName').textContent = pseudo || 'Sans pseudo';

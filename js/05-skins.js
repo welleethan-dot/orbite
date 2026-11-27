@@ -178,10 +178,10 @@ function previewLoop(now){
 }
 function unlockBonus(){
   for (const sk of SKINS) if (sk.unlockLaps && lapsTotal >= sk.unlockLaps && !owned.includes(sk.id)){
-    owned.push(sk.id); store.set('v2.owned', owned); syncSkins(); setTimeout(() => celebrateSkin(sk.id), 300);
+    owned.push(sk.id); store.set('v2.owned', owned); syncSkins(); track('buy', {skin: sk.id, price: sk.price}); setTimeout(() => celebrateSkin(sk.id), 300);
   }
 }
-function openShop(){ pendingBuy = null; renderShop(); ui.show('shop'); if (!previewRaf) previewRaf = requestAnimationFrame(previewLoop); }
+function openShop(){ track('view', {s: 'shop'}); pendingBuy = null; renderShop(); ui.show('shop'); if (!previewRaf) previewRaf = requestAnimationFrame(previewLoop); }
 $('shopBtn').addEventListener('click', openShop);
 $('shopClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
 $('skins').addEventListener('click', e => {

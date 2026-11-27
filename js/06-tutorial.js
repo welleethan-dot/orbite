@@ -112,6 +112,7 @@ function tutoUpdate(dt){
 }
 function tutoNext(){ const i = S.tuto.step + 1; if (i < TUTO.length) tutoEnter(i); else tutoFinish(true); }
 function tutoFinish(play){
+  track('tuto', {done: S.tuto.step === TUTO.length - 1, step: S.tuto.step, from: tutoFrom});
   tutoDone = true; store.set('tutoDone', true);
   clearEvent(); $('tuto').hidden = true; $('sc').classList.remove('glow'); resize();
   if (play) start(); else goHome();

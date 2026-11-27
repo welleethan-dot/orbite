@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#0A0C22">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;800&family=JetBrains+Mono:wght@500;700&display=swap">
-<link rel="stylesheet" href="css/style.css?v=2.5">
+<link rel="stylesheet" href="css/style.css?v=2.6">
 
 </head>
 <body>
@@ -136,6 +136,30 @@
   </div>
 </div>
 
+<div class="overlay" id="privacy" hidden>
+  <div class="card privcard">
+    <div class="eyebrow">Réglages</div>
+    <h2>Confidentialité</h2>
+    <section class="psec"><h3>Sur votre téléphone</h3>
+      <p>Votre progression (record, éclats, skins, statistiques) et vos réglages restent sur cet appareil. Rien d'autre ne le quitte, à part ce qui suit.</p>
+    </section>
+    <section class="psec"><h3>Classement en ligne</h3>
+      <p>Si vous choisissez un pseudo, il est envoyé avec le résultat de vos parties (tours, durée, éclats, série de frôlements) et vos skins, pour le classement et votre profil public. Pas de nom, pas d'adresse e-mail, pas de compte.</p>
+    </section>
+    <section class="psec"><h3>Statistiques anonymes</h3>
+      <p>Pour améliorer le jeu, des statistiques sans pseudo sont envoyées, reliées à un numéro tiré au hasard : parties jouées, tours, paliers atteints, skins achetés, écrans ouverts, type d'appareil (iPhone, Android ou ordinateur).</p>
+      <div class="srow"><div><b>Partager les statistiques anonymes</b><small id="statsNote"></small></div><button class="switch" id="swStats" role="switch" aria-label="Partager les statistiques anonymes"><i></i></button></div>
+    </section>
+    <section class="psec"><h3>Où et combien de temps</h3>
+      <p>Sur un serveur en Europe (Supabase). Pas de publicité, aucun pistage par d'autres sociétés. Les statistiques anonymes sont effacées au bout de 13 mois.</p>
+    </section>
+    <section class="psec"><h3>Effacer vos données</h3>
+      <p>Envoyez-moi un message en privé avec votre pseudo (et votre numéro anonyme ci-dessus) : tout ce qui vous concerne sur le serveur sera effacé.</p>
+    </section>
+    <button class="link" id="privClose">Retour aux réglages</button>
+  </div>
+</div>
+
 <div class="overlay" id="pseudoBox" hidden>
   <div class="card">
     <div class="eyebrow">Classement en ligne</div>
@@ -233,6 +257,7 @@
       <div class="srow"><div><b>Comment jouer</b><small>Toutes les règles du jeu</small></div><button class="pill" id="howBtn">Voir</button></div>
       <div class="srow"><div><b>Didacticiel</b><small>Revoir comment jouer, pas à pas</small></div><button class="pill" id="setTuto">Revoir</button></div>
       <div class="srow"><div><b>Nouveautés</b><small>Version <span id="verLabel"></span></small></div><button class="pill" id="newsBtn">Voir</button></div>
+      <div class="srow"><div><b>Confidentialité</b><small>Ce que le jeu garde et envoie</small></div><button class="pill" id="privBtn">Voir</button></div>
     </div>
     <div class="sgroup scontact">
       <b>Un bug ? Une idée ?</b>
@@ -330,17 +355,17 @@
   </div>
 </div>
 
-<script src="js/01-core.js?v=2.5"></script>
-<script src="js/02-audio.js?v=2.5"></script>
-<script src="js/03-world.js?v=2.5"></script>
-<script src="js/04-ui.js?v=2.5"></script>
-<script src="js/05-skins.js?v=2.5"></script>
-<script src="js/06-tutorial.js?v=2.5"></script>
-<script src="js/07-news.js?v=2.5"></script>
-<script src="js/08-online.js?v=2.5"></script>
-<script src="js/09-profile.js?v=2.5"></script>
-<script src="js/10-settings.js?v=2.5"></script>
-<script src="js/11-game.js?v=2.5"></script>
+<script src="js/01-core.js?v=2.6"></script>
+<script src="js/02-audio.js?v=2.6"></script>
+<script src="js/03-world.js?v=2.6"></script>
+<script src="js/04-ui.js?v=2.6"></script>
+<script src="js/05-skins.js?v=2.6"></script>
+<script src="js/06-tutorial.js?v=2.6"></script>
+<script src="js/07-news.js?v=2.6"></script>
+<script src="js/08-online.js?v=2.6"></script>
+<script src="js/09-profile.js?v=2.6"></script>
+<script src="js/10-settings.js?v=2.6"></script>
+<script src="js/11-game.js?v=2.6"></script>
 
 <script>
 // Offline support: cache the game once it has been opened online.

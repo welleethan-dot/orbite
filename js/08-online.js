@@ -171,7 +171,7 @@ async function loadBoard(){
     }
   } catch(e){ if (id === boardReq) msg.textContent = 'Impossible de charger le classement. Vérifiez votre connexion.'; }
 }
-function openBoard(){ syncSkins(); boardMe(); ui.show('board'); loadBoard(); loadPlayerInfo().then(() => { if (!$('board').hidden) boardMe(); }); }
+function openBoard(){ track('view', {s: 'board'}); syncSkins(); boardMe(); ui.show('board'); loadBoard(); loadPlayerInfo().then(() => { if (!$('board').hidden) boardMe(); }); }
 $('boardBtn').addEventListener('click', openBoard);
 $('boardClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
 $('boardPeriod').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ boardPeriod = b.dataset.p; store.set('boardPeriod', boardPeriod); loadBoard(); } });
@@ -195,6 +195,7 @@ setTimeout(syncSkins, 2500);
 // ----- another player's profile, opened from the leaderboard (2.3) -----
 let plSkin = null, plReq = 0;
 async function openPlayer(name){
+  track('view', {s: 'player'});
   const id = ++plReq;
   plSkin = null; $('plName').textContent = name; $('plWas').textContent = ''; $('plSince').textContent = '';
   $('plPerf').hidden = $('plColl').hidden = true; $('plMsg').textContent = 'Chargement…';
@@ -227,3 +228,31 @@ async function openPlayer(name){
   $('plSince').textContent = p.since ? 'Dans le classement depuis le ' + fmtDate(p.since) : '';
 }
 $('plClose').addEventListener('click', () => ui.show('board'));
+
+// ----- anonymous statistics (2.6) -----
+// No pseudo, no player id: a separate random number (anonId) only links a device's events together.
+// Events wait on the device (v2.events) and are sent in small batches: at the end of a run, when the app is put
+// away, and at start. Nothing is recorded or sent when the player turns statistics off (Confidentialité).
+let anonId = store.get('v2.aid', null); if (!anonId){ anonId = newId(); store.set('v2.aid', anonId); }
+let events = store.get('v2.events', []), sendingEvents = null;
+const PLATFORM = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ? 'ios'
+  : /Android/.test(navigator.userAgent) ? 'android' : 'desktop';
+const INSTALLED = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+function track(kind, data = {}){
+  if (!settings.stats) return;
+  events.push({k: kind, d: data, at: new Date().toISOString()});
+  events = events.slice(-200); store.set('v2.events', events);
+}
+function sendEvents(){
+  if (sendingEvents || !settings.stats || !events.length) return sendingEvents || Promise.resolve();
+  const batch = events.slice(0, 50);
+  sendingEvents = rpc('log_events', {p_aid: anonId, p_version: APP_VERSION + (STORE_PREFIX === 'orbite.' ? '' : '-test'),
+      p_platform: PLATFORM + (INSTALLED ? '-app' : ''), p_events: batch})
+    .then(() => { events = events.slice(batch.length); store.set('v2.events', events); })
+    .catch(e => { if (e.code !== 'reseau' && e.code !== 'trop_rapide'){ events = events.slice(batch.length); store.set('v2.events', events); } })   // refused: dropped
+    .finally(() => { sendingEvents = null; });
+  return sendingEvents;
+}
+track('open', {sound: !muted, vib: settings.vib, lowfx: settings.lowfx, clock: settings.clock, pseudo: !!pseudo, games, best});
+document.addEventListener('visibilitychange', () => { if (document.hidden) sendEvents(); });
+setTimeout(sendEvents, 3000);
