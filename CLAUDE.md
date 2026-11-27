@@ -157,7 +157,7 @@ Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frô
 | 2.1.1 | 25/11/2026 | Mode de test retiré de l'application, correction des tricheurs |
 | 2.2 | 26/11/2026 | Réglages (son, vibrations, effets réduits, chrono…), accueil épuré |
 | 2.2.1 | 26/11/2026 | Technique : jeu découpé en fichiers, script de fabrication, tests automatiques |
-| 2.2.2 | (en test) | Dessin allégé : halos, fond et planète peints une fois puis copiés (≈ +50 % d'images/s sur téléphone lent simulé) |
+| 2.2.2 | 27/11/2026 | Dessin allégé : halos, fond et planète peints une fois puis copiés (≈ +50 % d'images/s sur téléphone lent simulé) |
 
 ## 8. Décisions prises (et pourquoi)
 
