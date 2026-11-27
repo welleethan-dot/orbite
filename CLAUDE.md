@@ -156,6 +156,8 @@ Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frô
 3. `python3 tools/build.py && node tests/run.js` : **toute la série doit passer** avant de montrer quoi que ce soit
    (ajouter un test pour chaque nouvelle fonction). `node tests/run.js classement profil` ne lance que ces tests.
    Les tests simulent Supabase : ils n'écrivent jamais dans le vrai classement.
+   Avant toute publication, vérifier le **code de sortie** de `node tests/run.js` (0 = tout passe), pas seulement la
+   dernière ligne affichée. Un test instable se corrige (jamais ignoré) : 27/11/2026, mesure du halo trop sensible.
 4. **Mise à jour simultanée** de `/beta/` (via `main`) **et** du lien Claude pour que le propriétaire teste.
 5. **Le propriétaire relit tous les textes visibles** (nouveautés, messages, boutons) avant publication.
 6. Après son « OK » : fusion dans `main` → GitHub Pages publie → vérification du site en ligne.
