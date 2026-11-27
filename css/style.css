@@ -202,3 +202,13 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 .lb li[role="button"]{cursor:pointer;}
 .lb li[role="button"]:active{background:rgba(191,243,255,.12);}
 .lb li[role="button"]:focus-visible{outline:2px solid var(--shard);outline-offset:2px;}
+/* training (2.5) */
+.cta.ghost.train{padding:10px 26px;font-size:.88rem;margin-top:-4px;}
+.trainlist{width:100%;display:flex;flex-direction:column;gap:8px;}
+.trainlist button{display:grid;grid-template-columns:14px minmax(0,1fr) auto;align-items:center;column-gap:12px;width:100%;text-align:left;padding:13px 14px;border-radius:14px;background:rgba(21,26,68,.55);border:1px solid rgba(191,243,255,.14);color:var(--ion);font:inherit;cursor:pointer;}
+.trainlist button:active:not(:disabled){background:rgba(191,243,255,.12);}
+.trainlist .tdot{width:12px;height:12px;border-radius:50%;}
+.trainlist b{font-family:var(--display);font-weight:800;letter-spacing:.03em;}
+.trainlist small{grid-column:2;color:var(--mist);font-size:.8rem;}
+.trainlist .tlap{grid-row:1 / span 2;grid-column:3;font-family:var(--mono);color:var(--mist);font-size:.85rem;}
+.trainlist button:disabled{opacity:.45;cursor:default;}

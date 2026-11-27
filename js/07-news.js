@@ -4,6 +4,10 @@
 // ---------- versions & news ----------
 // Newest first. Texts are written for players (no tech talk) and are proofread before each release.
 const CHANGELOG = [
+  {v:'2.5', date:'27/11/2026', notes:[
+    "Nouveau : l'Entraînement, depuis l'accueil. Recommencez juste avant un palier déjà atteint pour vous exercer. Rien ne compte : ni record, ni classement, ni éclats.",
+    "Le didacticiel apprend maintenant les frôlements, et présente les inversions folles, les bonus de palier et la seconde chance.",
+  ]},
   {v:'2.4', date:'27/11/2026', notes:[
     "Avant la pluie d'astéroïdes et les astéroïdes rapides, le ciel se dégage un instant : vous avez le temps de lire ce qui arrive.",
     "Nouveau palier à 100 tours : 10 ◆ en bonus.",

@@ -206,20 +206,46 @@ const TESTS = {
     await t.page.evaluate(() => {
       const TAU = 2*Math.PI, md = x => ((x % TAU) + TAU) % TAU;
       window.__bot = setInterval(() => { const S = __t.S; if (!S.tuto) return;
-        const near = (lane, o) => o.lane === lane && !o.passed && !o.ghost && md(S.dir*(o.a - S.a)) < .55;
+        const near = (lane, o) => o.lane === lane && !o.passed && !o.ghost && md(S.dir*(o.a - S.a)) < (S.tuto.step === 2 ? .38 : .55);   // step 2: frôlement, jump late
         if (S.tuto.step === 0){ __t.hop(); return; }
         if (S.rocks.some(o => near(S.lane, o)) && !S.rocks.some(o => near(1 - S.lane, o))){ __t.hop(); return; }
         if (S.gems.length){ const g = S.gems[0]; if (g.lane !== S.lane && md(S.dir*(g.a - S.a)) < 1.2 && !S.rocks.some(o => near(1 - S.lane, o))) __t.hop(); }
       }, 120);
     });
-    for (let i = 0; i < 400 && (await t.page.evaluate(() => __t.S.tuto && __t.S.tuto.step)) < 5; i++) await wait(150);
-    check((await t.page.evaluate(() => __t.S.tuto.step)) === 5, 'les étapes jouables du didacticiel ne se terminent pas');
-    for (let i = 0; i < 4; i++){ await t.page.tap('#tutoNext'); await wait(250); }
+    for (let i = 0; i < 500 && (await t.page.evaluate(() => __t.S.tuto && __t.S.tuto.step)) < 6; i++) await wait(150);
+    check((await t.page.evaluate(() => __t.S.tuto.step)) === 6, 'les étapes jouables du didacticiel ne se terminent pas (étape ' + (await t.page.evaluate(() => __t.S.tuto.step)) + ')');
+    check(await t.page.evaluate(() => __t.S.near >= 1), 'étape du frôlement validée sans frôlement');
+    for (let i = 0; i < 6; i++){ await t.page.tap('#tutoNext'); await wait(250); }
     check((await t.page.textContent('#tutoNext')) === 'JOUER', 'dernière étape sans bouton JOUER');
     await t.page.tap('#tutoNext'); await wait(300);
     check(await t.page.evaluate(() => !__t.S.tuto), 'JOUER ne lance pas une vraie partie');
     check((await ls(t.page, t.pre, 'tutoDone')) === true, 'didacticiel non marqué comme fait');
     check((await ls(t.page, t.pre, 'v2.games')) === null, 'le didacticiel a compté une partie');
+    check(t.errors.length === 0, `erreurs ${t.errors}`); await t.close();
+  },
+  async 'entraînement : paliers débloqués, rien ne compte'(){
+    let t = await open('app');
+    await t.page.tap('#trainBtn'); await wait(150);
+    check(await t.page.$$eval('#trainList button', l => l.every(b => b.disabled)), 'paliers ouverts sans les avoir atteints');
+    await t.close();
+    t = await open('app', {store: {'v2.best': 60, 'v2.games': 5, 'v2.gems': 500, 'v2.wallet': 500}, seal: true});
+    await t.page.tap('#trainBtn'); await wait(150);
+    const st = await t.page.$$eval('#trainList button', l => l.map(b => b.disabled ? 0 : 1).join(''));
+    check(st === '1110', 'paliers débloqués faux : ' + st);
+    await t.page.tap('#trainList button:nth-child(2)'); await wait(300);
+    check(await t.page.evaluate(() => mode === 'play' && __t.S.laps === 38), 'l’entraînement ne commence pas au tour 38');
+    check((await t.page.textContent('#testTag')).includes('Astéroïdes rapides'), 'mention « Entraînement » absente');
+    await t.page.evaluate(() => { const S = __t.S; S.shards = 9; const o = makeRock(S.lane, S.a + .05); o.born = -9; S.rocks.push(o); });
+    await t.page.waitForSelector('#over:not([hidden])', {timeout: 5000});
+    check(await t.page.isHidden('#second'), 'seconde chance proposée à l’entraînement');
+    check((await t.page.textContent('#overTitle')) === 'Entraînement' && await t.page.isHidden('#shareRun'), 'fin d’entraînement mal affichée');
+    check((await ls(t.page, t.pre, 'v2.games')) === 5 && (await ls(t.page, t.pre, 'v2.wallet')) === 500 && (await ls(t.page, t.pre, 'v2.best')) === 60, 'l’entraînement a compté');
+    check(t.db.scores.length === 0, 'entraînement envoyé au classement');
+    await t.page.tap('#again'); await wait(300);
+    check(await t.page.evaluate(() => __t.S.laps === 38), 'REJOUER ne relance pas le même entraînement');
+    await t.page.tap('#pauseBtn'); await t.page.tap('#homeFromPause'); await wait(200);
+    await t.page.tap('#play'); await wait(300);
+    check(await t.page.evaluate(() => __t.S.laps === 0) && await t.page.isHidden('#testTag'), 'JOUER après un entraînement ne lance pas une vraie partie');
     check(t.errors.length === 0, `erreurs ${t.errors}`); await t.close();
   },
   async 'boutique : achat, célébration, équipement'(){

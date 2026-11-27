@@ -88,7 +88,7 @@ function gameOver(){
   mode = 'dying'; S.dead = true; S.deadT = 0; S.shake = 1;
   const p = pos(); burst(p.x, p.y, skin().glow, 40, 260); burst(p.x, p.y, COL.rock, 24, 180);
   sfx.crash(); buzz([60, 40, 120]);
-  if (!S.revived && wallet >= REVIVE_COST){
+  if (!S.revived && wallet >= REVIVE_COST && !(testRun && testRun.train)){   // no second chance in training
     setTimeout(() => {
       if (mode !== 'dying') return;
       mode = 'offer'; S.offerT = REVIVE_WAIT; ui.hud(false);
@@ -106,7 +106,8 @@ function finishRun(delay){
     $('finalScore').textContent = S.laps; $('overBest').textContent = best;
     $('overShards').textContent = S.shards + (S.bonus || 0); $('overNear').textContent = S.near || 0;
     $('overTime').textContent = fmtTime(S.t);
-    $('overTitle').textContent = testRun ? 'Fin du test' : 'Collision';
+    $('overTitle').textContent = testRun ? (testRun.train ? 'Entraînement' : 'Fin du test') : 'Collision';
+    $('shareRun').hidden = !!testRun;
     $('newBest').hidden = !isBest; ui.show('over'); ui.stats();
     showOverRank();
   }, delay);
@@ -131,7 +132,7 @@ function hop(){
   for (const o of S.rocks){
     if (o.passed || o.ghost || o.lane !== S.lane) continue;
     const R = lanes[o.lane], half = (o.size*.8 + 6*unit)/R, ttc = (ahead(o.a) - half) / (S.omega + (o.w || 0));
-    if (ttc < NEAR_TIME && ahead(o.a) < Math.PI) o.nearArmed = true;
+    if (ttc < (S.tuto ? TUTO_NEAR_TIME : NEAR_TIME) && ahead(o.a) < Math.PI) o.nearArmed = true;
   }
   S.lane = 1 - S.lane; S.campT = 0;
   if (!S.tuto) S.hops = (S.hops || 0) + 1;
@@ -140,3 +141,29 @@ function hop(){
   sfx.hop(S.lane === 1); buzz(8);
   const p = pos(); burst(p.x, p.y, COL.ion, 6, 60);
 }
+
+// ---------- training (2.5) ----------
+// Start just before a stage, to practise it. Nothing counts (it is a test run without the test tools):
+// no record, no leaderboard, no crystals, no second chance. A stage opens once the record has reached it.
+const TRAINING = [
+  {lap: 28,  at: 30,  name: 'Pluie d’astéroïdes', col: 'rain'},
+  {lap: 38,  at: 40,  name: 'Astéroïdes rapides', col: 'fast'},
+  {lap: 48,  at: 50,  name: 'Inversion',          col: 'flip'},
+  {lap: 198, at: 200, name: 'Inversions folles',  col: 'chaos'},
+];
+function openTraining(){
+  const box = $('trainList'); box.replaceChildren();
+  for (const tr of TRAINING){
+    const b = document.createElement('button'), open = best >= tr.at;
+    const dot = document.createElement('span'); dot.className = 'tdot'; dot.style.background = EVENT_COL[tr.col];
+    const nm = document.createElement('b'); nm.textContent = tr.name;
+    const lap = document.createElement('span'); lap.className = 'tlap'; lap.textContent = 'tour ' + tr.at;
+    const sm = document.createElement('small'); sm.textContent = open ? 'Départ au tour ' + tr.lap : 'Atteignez le tour ' + tr.at + ' pour le débloquer';
+    b.append(dot, nm, lap, sm); b.disabled = !open; b.dataset.lap = tr.lap;
+    b.addEventListener('click', () => { testRun = {lap: tr.lap, kind: 'random', train: true, name: tr.name}; start(); });
+    box.append(b);
+  }
+  ui.show('train');
+}
+$('trainBtn').addEventListener('click', openTraining);
+$('trainClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });

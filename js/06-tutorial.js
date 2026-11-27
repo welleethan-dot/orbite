@@ -5,17 +5,21 @@
 // A guided first run: slow, no game over, one thing learnt per step. Launched on a new player's first
 // "Jouer", and again from "Comment jouer". Players who already played are not forced into it.
 let tutoDone = store.get('tutoDone', false) || games > 0, tutoFrom = 'play';
+const TUTO_NEAR_TIME = .35;                     // the tutorial's frôlement window (the real game: NEAR_TIME)
 const TUTO = [
   {id:'tap',    goal:3, prog:'Sauts', text:"Touchez n'importe où sur l'écran : la sonde saute d'une orbite à l'autre."},
   {id:'dodge',  goal:2, prog:'Astéroïdes évités', text:"Un astéroïde arrive sur votre orbite ! Changez d'orbite pour l'éviter."},
+  {id:'near',   goal:1, prog:'Frôlements', text:"Le frôlement : laissez l'astéroïde arriver tout près, puis sautez au dernier moment. Enchaînez-les pour faire monter le multiplicateur x2, x3…"},
   {id:'gem',    text:"Passez sur l'éclat ◆ pour le ramasser. Les éclats servent à acheter des skins dans la boutique."},
   {id:'rare',   text:"Un éclat rare, collé à un astéroïde, vaut 3 ◆. Attrapez-le, puis changez vite d'orbite !"},
   {id:'lap',    text:"Votre score, c'est le nombre de tours, affiché en haut à gauche. Faites un tour complet."},
   {id:'rain',   info:true, ev:['Pluie d’astéroïdes', 'rain', 1, 1.2], text:"Plus vous tenez, plus ça se corse. À 30 tours, voici ce qui s'affichera : la pluie d'astéroïdes. Ils arrivent bien plus souvent."},
   {id:'fast',   info:true, ev:['Astéroïdes rapides', 'fast', 2, 1.2], text:"À 40 tours, voici ce qui s'affichera : les astéroïdes rapides. Repérez leur traînée, ils foncent droit sur vous."},
   {id:'flip',   info:true, ev:['Inversion', 'flip', 2, 1.6], text:"À 50 tours, voici ce qui s'affichera : l'inversion. La sonde change de sens, et pendant l'alerte aucun astéroïde n'arrive."},
+  {id:'chaos',  info:true, ev:['Inversions folles', 'chaos', 3, 1.6], text:"À 200 tours : les inversions folles, plus rapides et imprévisibles. Les tours 100 et 200 rapportent aussi des éclats en bonus."},
   {id:'record', info:true, ev:['Nouveau record', 'record', 1, 1.2], text:"Et voici ce qui s'affichera quand vous battrez votre record : tout passe à l'or."},
-  {id:'ready',  info:true, last:true, text:"Vous êtes prêt ! Retenez les couleurs : chaque palier affiche son nom en haut de l'écran. Bonne chance !"},
+  {id:'second', info:true, text:"Touché ? Avec 100 ◆, une seconde chance vous permet de reprendre au même tour, une fois par partie."},
+  {id:'ready',  info:true, last:true, text:"Vous êtes prêt ! Pour vous exercer sur un palier déjà atteint, essayez l'Entraînement depuis l'accueil. Bonne chance !"},
 ];
 function playPressed(){ if (!tutoDone) startTutorial('play'); else start(); }
 function startTutorial(from){
@@ -40,6 +44,7 @@ function tutoEnter(i){
   resize();                                     // re-fit the orbits above the card (its height follows the text)
   if (st.ev){ const [title, col, pulses, dur] = st.ev; banner(title, EVENT_COL[col], pulses, dur, true); }
   if (st.id === 'flip') S.revWarn = 1.6;
+  if (st.id === 'chaos') S.revWarn = .9;
 }
 function tutoProg(msg){
   const st = TUTO[S.tuto.step];
@@ -58,7 +63,7 @@ function tutoHit(){                              // no game over in the tutorial
 }
 function tutoSpawn(){
   const T = S.tuto, id = TUTO[T.step].id, other = 1 - S.lane;
-  if (id === 'dodge'){ T.rock = makeRock(S.lane, S.a + S.dir*2.4); S.rocks.push(T.rock); }
+  if (id === 'dodge' || id === 'near'){ T.rock = makeRock(S.lane, S.a + S.dir*2.4); S.rocks.push(T.rock); T.near0 = S.near || 0; }
   if (id === 'gem'){ addGem(other, S.a + S.dir*2.6, false, 0); T.gem = S.gems[S.gems.length - 1]; }
   if (id === 'rare'){
     const ra = S.a + S.dir*3.4;
@@ -69,9 +74,9 @@ function tutoSpawn(){
 // Event steps: a live, harmless demo keeps running until the player taps "Suivant".
 function tutoDemo(dt){
   const T = S.tuto, id = TUTO[T.step].id, lane = Math.random() < .5 ? 0 : 1;
-  if (id === 'flip' && S.revWarn <= 0){            // flip again every few seconds
+  if ((id === 'flip' || id === 'chaos') && S.revWarn <= 0){   // flip again every few seconds (faster and at random for chaos)
     T.flipT = (T.flipT ?? 2.6) - dt;
-    if (T.flipT <= 0){ T.flipT = 2.6; S.revWarn = 1.6; }
+    if (T.flipT <= 0){ T.flipT = id === 'chaos' ? 1 + Math.random()*1.4 : 2.6; S.revWarn = id === 'chaos' ? .9 : 1.6; }
   }
   T.demoT = (T.demoT || 0) - dt; if (T.demoT > 0) return;
   if (id === 'rain'){ const r = makeRock(lane, S.a + S.dir*(1.8 + Math.random()*2.6)); r.ghost = true; S.rocks.push(r); T.demoT = .28; }
@@ -79,7 +84,7 @@ function tutoDemo(dt){
     const w = .9 + Math.random()*.4, m = 1.8 + Math.random(), r = makeRock(lane, S.a + S.dir*m*(S.omega + w)/S.omega, w, S.a + S.dir*m);
     r.ghost = true; S.rocks.push(r); T.demoT = .9;
   }
-  if (id === 'flip' && S.revWarn <= 0){ const r = makeRock(lane, S.a + S.dir*(2 + Math.random()*1.5)); r.ghost = true; S.rocks.push(r); T.demoT = .7; }
+  if ((id === 'flip' || id === 'chaos') && S.revWarn <= 0){ const r = makeRock(lane, S.a + S.dir*(2 + Math.random()*1.5)); r.ghost = true; S.rocks.push(r); T.demoT = .7; }
 }
 function tutoUpdate(dt){
   const T = S.tuto, st = TUTO[T.step];
@@ -89,6 +94,11 @@ function tutoUpdate(dt){
   if (st.id === 'dodge' && T.rock && T.rock.passed){
     T.count++; tutoProg(); T.rock = null;
     if (T.count >= st.goal) tutoStepDone(); else T.wait = .5;
+  }
+  if (st.id === 'near' && T.rock && T.rock.passed){
+    T.rock = null;
+    if ((S.near || 0) > T.near0){ T.count++; tutoProg(); tutoStepDone(); }
+    else { T.wait = .6; tutoProg('Trop tôt ! Attendez qu’il soit tout près.'); }
   }
   if (st.id === 'gem' && T.gem){
     if (T.gem.got) tutoStepDone();

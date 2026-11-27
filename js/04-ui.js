@@ -3,7 +3,7 @@
 
 // ---------- UI ----------
 const ui = {
-  show(id){ for (const k of ['menu','paused','over','test','shop','news','howto','board','pseudoBox','profile','unlock','sharebox','notice','settings','second','player']) $(k).hidden = k !== id; },
+  show(id){ for (const k of ['menu','paused','over','test','shop','news','howto','board','pseudoBox','profile','unlock','sharebox','notice','settings','second','player','train']) $(k).hidden = k !== id; },
   hud(on){ $('hud').hidden = !on; },
   score(){ $('sc').textContent = S.laps; $('hs').textContent = 'Record ' + Math.max(best, testRun || S.tuto ? 0 : S.laps); $('gm').textContent = '◆ ' + S.shards; },
   stats(){ $('menuBest').textContent = best; $('menuGames').textContent = games; $('menuGems').textContent = wallet; },
@@ -19,7 +19,8 @@ function start(){
   S.omegaMax = S.hard ? 3.6 : 3.25;
   if (testRun && testRun.lap > 0) jumpToLap(testRun.lap);
   $('testTag').hidden = !testRun;
-  if (testRun) $('testTag').textContent = 'Test · T' + testRun.lap + (S.hard ? ' · difficile' : ' · normale');
+  if (testRun) $('testTag').textContent = testRun.train ? 'Entraînement · ' + testRun.name   // the hard run stays secret here
+    : 'Test · T' + testRun.lap + (S.hard ? ' · difficile' : ' · normale');
   // hard runs are never announced: the player only feels it
   $('hint').hidden = false; $('hint').style.opacity = 1;
   setTimeout(()=>{ $('hint').style.opacity = 0; }, 2600);
@@ -74,6 +75,7 @@ function calmSky(secs){
 }
 function flipWarn(secs){ S.revWarn = secs; banner('Inversion', EVENT_COL.flip, 2, secs); buzz([20,40,20]); }
 function palierBonus(n){
+  if (testRun && testRun.train) return;                         // training gives nothing
   S.bonus = (S.bonus || 0) + n; const p = pos();
   popup('+' + n + ' ◆', p.x, p.y - 18*unit, COL.shard); burst(p.x, p.y, COL.shard, 30, 220); sfx.shard();
   if (S.laps !== CHAOS_LAP){ banner(S.laps + ' tours · +' + n + ' ◆', EVENT_COL.record, 1, 1.2); buzz([15, 30, 15]); }
@@ -84,7 +86,7 @@ function resume(){ if (mode !== 'paused') return; mode = 'play'; ui.show(null); 
 // Back arrow (2.3) at the top left of each menu screen: does exactly what the screen's own "Retour…" button does.
 // A single button on the page itself (not inside the screens, whose blurred background would make it scroll away).
 const BACK_OF = {settings: 'setClose', board: 'boardClose', profile: 'profClose', shop: 'shopClose', howto: 'howClose',
-  pseudoBox: 'pseudoLater', news: 'newsOk', sharebox: 'shareClose', unlock: 'unlockClose', test: 'testClose', player: 'plClose'};
+  pseudoBox: 'pseudoLater', news: 'newsOk', sharebox: 'shareClose', unlock: 'unlockClose', test: 'testClose', player: 'plClose', train: 'trainClose'};
 const backBtn = document.createElement('button');
 backBtn.className = 'icon back'; backBtn.id = 'backBtn'; backBtn.setAttribute('aria-label', 'Retour'); backBtn.hidden = true;
 backBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';

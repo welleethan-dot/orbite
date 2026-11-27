@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#0A0C22">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;800&family=JetBrains+Mono:wght@500;700&display=swap">
-<link rel="stylesheet" href="css/style.css?v=2.4">
+<link rel="stylesheet" href="css/style.css?v=2.5">
 
 </head>
 <body>
@@ -45,6 +45,7 @@
     <h1 id="title">ORBITE</h1>
     <p>Touchez l'écran pour changer d'orbite.</p>
     <button class="cta" id="play">JOUER</button>
+    <button class="cta ghost train" id="trainBtn">ENTRAÎNEMENT</button>
     <div class="duo"><button class="cta ghost" id="boardBtn">CLASSEMENT</button><button class="cta ghost" id="profileBtn">PROFIL</button><button class="cta ghost" id="shopBtn">SKINS</button></div>
     <div class="stats"><div>Record<b id="menuBest">0</b></div><div>Parties<b id="menuGames">0</b></div><div>Éclats<b id="menuGems">0</b></div></div>
   </div>
@@ -69,6 +70,7 @@
       <span class="dot" style="background:var(--shard)"></span><span>100 tours : 10 ◆ en bonus</span>
       <span class="dot" style="background:#FF5BD8"></span><span>200 tours : inversions folles, plus rapides et imprévisibles, et 25 ◆ en bonus</span>
       <span class="dot" style="background:#FFD66B"></span><span>Nouveau record : tout passe à l'or</span>
+      <span class="dot" style="background:var(--mist)"></span><span>Entraînement, depuis l'accueil : recommencez juste avant un palier déjà atteint, sans rien gagner ni perdre</span>
       <span class="dot" style="background:conic-gradient(#FF4D6D,#19E6D2,#B46BFF,#FFD66B,#FF4D6D)"></span><span>À chaque palier, son nom s'affiche en haut, les orbites prennent sa couleur et le ciel se dégage un instant pour vous laisser le lire</span>
     </div>
     <button class="cta" id="tutoAgain">REFAIRE LE DIDACTICIEL</button>
@@ -112,6 +114,16 @@
     </section>
     <div class="pfoot" id="plSince"></div>
     <button class="link" id="plClose">Retour au classement</button>
+  </div>
+</div>
+
+<div class="overlay" id="train" hidden>
+  <div class="card">
+    <div class="eyebrow">Entraînement</div>
+    <h2>Choisissez un palier</h2>
+    <p>La partie commence juste avant le palier choisi. Rien ne compte : ni record, ni classement, ni éclats.</p>
+    <div class="trainlist" id="trainList"></div>
+    <button class="link" id="trainClose">Retour à l'accueil</button>
   </div>
 </div>
 
@@ -309,17 +321,17 @@
   </div>
 </div>
 
-<script src="js/01-core.js?v=2.4"></script>
-<script src="js/02-audio.js?v=2.4"></script>
-<script src="js/03-world.js?v=2.4"></script>
-<script src="js/04-ui.js?v=2.4"></script>
-<script src="js/05-skins.js?v=2.4"></script>
-<script src="js/06-tutorial.js?v=2.4"></script>
-<script src="js/07-news.js?v=2.4"></script>
-<script src="js/08-online.js?v=2.4"></script>
-<script src="js/09-profile.js?v=2.4"></script>
-<script src="js/10-settings.js?v=2.4"></script>
-<script src="js/11-game.js?v=2.4"></script>
+<script src="js/01-core.js?v=2.5"></script>
+<script src="js/02-audio.js?v=2.5"></script>
+<script src="js/03-world.js?v=2.5"></script>
+<script src="js/04-ui.js?v=2.5"></script>
+<script src="js/05-skins.js?v=2.5"></script>
+<script src="js/06-tutorial.js?v=2.5"></script>
+<script src="js/07-news.js?v=2.5"></script>
+<script src="js/08-online.js?v=2.5"></script>
+<script src="js/09-profile.js?v=2.5"></script>
+<script src="js/10-settings.js?v=2.5"></script>
+<script src="js/11-game.js?v=2.5"></script>
 
 <script>
 // Offline support: cache the game once it has been opened online.

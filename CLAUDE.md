@@ -132,6 +132,15 @@ dans `js/08-online.js`) : skin équipé animé, pseudo (et « anciennement »), 
 série, éclats en une partie, parties classées, collection de skins, date d'arrivée. Retour : au classement.
 Les skins déclarés par le jeu ne sont pas vérifiables côté serveur (affichage seulement).
 
+**Entraînement (2.5)** : bouton sous JOUER → écran `train` (`TRAINING` dans `js/10-settings.js`) : départ au tour 28, 38,
+48 ou 198, juste avant la pluie, les rapides, l'inversion ou les inversions folles. Un palier s'ouvre quand le record l'a
+atteint. Techniquement une partie de test (`testRun` avec `train: true`) : ni record, ni stats, ni classement, ni éclats,
+ni bonus de palier, ni seconde chance, pas de partage. Tirage normal de la partie difficile (jamais affiché).
+
+**Didacticiel (2.5)** : 13 étapes : saut, esquive, **frôlement** (fenêtre élargie à 0,35 s, `TUTO_NEAR_TIME`), éclat,
+éclat rare, tour, puis présentation : pluie, rapides, inversion, inversions folles (+ bonus 100/200), record, seconde
+chance, prêt (mentionne l'Entraînement).
+
 **Frôlement** : esquive à moins de **0,12 s** de l'impact (`NEAR_TIME`) ou passage très serré (`NEAR_GAP`).
 Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frôlements à moins de 2,5 s d'écart.
 
@@ -191,6 +200,7 @@ Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frô
 | 2.2.2 | 27/11/2026 | Dessin allégé : halos, fond et planète peints une fois puis copiés (≈ +50 % d'images/s sur téléphone lent simulé) |
 | 2.3 | 27/11/2026 | Seconde chance (100 ◆, une fois par partie), flèche retour en haut à gauche des écrans, profil des joueurs depuis le classement |
 | 2.4 | 27/11/2026 | Répit avant les paliers 30/40, bonus aux tours 100 (+10 ◆) et 200 (+25 ◆), inversions folles dès 200 |
+| 2.5 | (en test) | Entraînement (départ avant un palier atteint, rien ne compte), didacticiel mis à jour (frôlements, nouveautés) |
 
 ## 8. Décisions prises (et pourquoi)
 
@@ -217,7 +227,6 @@ Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frô
 7. Décider du modèle économique avant les stores
 
 **Idées notées**
-- Mode **Entraînement** (partir du tour 29, 39 ou 49, sans récompense)
 - **3ᵉ anneau** à partir du tour 100 (voir § 4, mis de côté)
 - **Skin secret** débloqué par une série de frôlements (seuil à définir : x5 difficile, x10 exploit)
 - **Défis du jour**, série de jours consécutifs, badges dans le Profil
