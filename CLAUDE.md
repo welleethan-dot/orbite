@@ -58,7 +58,7 @@ modifié, décision prise, idée notée, version publiée), dans le même commit
 - Scellées, groupe 1 (`v2.seal`) : `v2.best`, `v2.games`, `v2.laps`, `v2.gems`, `v2.wallet`, `v2.owned`, `v2.near`.
 - Scellées, groupe 2 (`v2.seal2`) : `v2.stats` (bestChain, bestNearRun, bestGemsRun, bestTime, timeTotal, hops, bestDate, since).
 - Non scellées : `v2.skin`, `v2.pid` (identifiant secret du joueur), `v2.pseudo`, `v2.pending` (parties à envoyer),
-  `settings`, `muted`, `seenVersion`, `tutoDone`, `boardSort`, `boardPeriod`, `test`, `v2.skinsSent` (skins déjà envoyés, 2.3).
+  `settings`, `muted`, `seenVersion`, `tutoDone`, `boardSort`, `boardPeriod`, `test`, `v2.skinsSent` (skins déjà envoyés, 2.3), `trainLap` (2.5).
 - **Ne jamais ajouter une clé à un groupe de sceau existant** : ça invaliderait le sceau et effacerait la
   progression de tout le monde. Créer un nouveau groupe (`v2.seal3`…).
 
@@ -134,7 +134,8 @@ Les skins déclarés par le jeu ne sont pas vérifiables côté serveur (afficha
 
 **Entraînement (2.5)** : bouton sous JOUER → écran `train` (`TRAINING` dans `js/10-settings.js`) : départ au tour 28, 38,
 48 ou 198, juste avant la pluie, les rapides, l'inversion ou les inversions folles. Un palier s'ouvre quand le record l'a
-atteint. Techniquement une partie de test (`testRun` avec `train: true`) : ni record, ni stats, ni classement, ni éclats,
+atteint. Plus **« Tour au choix »** : n'importe quel tour de 0 à 200 (`TRAIN_MAX`, mémorisé dans `trainLap`, non scellé),
+sans condition de record (demande du propriétaire). Techniquement une partie de test (`testRun` avec `train: true`) : ni record, ni stats, ni classement, ni éclats,
 ni bonus de palier, ni seconde chance, pas de partage. Tirage normal de la partie difficile (jamais affiché).
 
 **Didacticiel (2.5)** : 13 étapes : saut, esquive, **frôlement** (fenêtre élargie à 0,35 s, `TUTO_NEAR_TIME`), éclat,
@@ -200,7 +201,7 @@ Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frô
 | 2.2.2 | 27/11/2026 | Dessin allégé : halos, fond et planète peints une fois puis copiés (≈ +50 % d'images/s sur téléphone lent simulé) |
 | 2.3 | 27/11/2026 | Seconde chance (100 ◆, une fois par partie), flèche retour en haut à gauche des écrans, profil des joueurs depuis le classement |
 | 2.4 | 27/11/2026 | Répit avant les paliers 30/40, bonus aux tours 100 (+10 ◆) et 200 (+25 ◆), inversions folles dès 200 |
-| 2.5 | (en test) | Entraînement (départ avant un palier atteint, rien ne compte), didacticiel mis à jour (frôlements, nouveautés) |
+| 2.5 | (en test) | Entraînement (départ avant un palier atteint ou tour au choix jusqu'à 200, rien ne compte), didacticiel mis à jour (frôlements, nouveautés) |
 
 ## 8. Décisions prises (et pourquoi)
 

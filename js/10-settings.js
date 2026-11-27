@@ -165,5 +165,13 @@ function openTraining(){
   }
   ui.show('train');
 }
-$('trainBtn').addEventListener('click', openTraining);
+// Any starting lap, from 0 to TRAIN_MAX (2.5). Remembered for next time.
+const TRAIN_MAX = 200;
+let trainLap = store.get('trainLap', 0);
+function setTrainLap(n){ trainLap = Math.max(0, Math.min(TRAIN_MAX, Math.round(+n) || 0)); $('trLap').value = trainLap; store.set('trainLap', trainLap); }
+$('trMinus').addEventListener('click', () => setTrainLap(trainLap - 1));
+$('trPlus').addEventListener('click', () => setTrainLap(trainLap + 1));
+$('trLap').addEventListener('change', e => setTrainLap(e.target.value));
+$('trGo').addEventListener('click', () => { setTrainLap($('trLap').value); testRun = {lap: trainLap, kind: 'random', train: true, name: 'Tour ' + trainLap}; start(); });
+$('trainBtn').addEventListener('click', () => { setTrainLap(trainLap); openTraining(); });
 $('trainClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });

@@ -121,8 +121,17 @@
   <div class="card">
     <div class="eyebrow">Entraînement</div>
     <h2>Choisissez un palier</h2>
-    <p>La partie commence juste avant le palier choisi. Rien ne compte : ni record, ni classement, ni éclats.</p>
+    <p>Commencez juste avant un palier, ou au tour de votre choix. Rien ne compte : ni record, ni classement, ni éclats.</p>
     <div class="trainlist" id="trainList"></div>
+    <div class="trainfree">
+      <b>Tour au choix</b>
+      <div class="stepper">
+        <button class="icon" id="trMinus" aria-label="Un tour de moins">−</button>
+        <input id="trLap" type="number" inputmode="numeric" min="0" max="200" step="1" value="0" aria-label="Tour de départ">
+        <button class="icon" id="trPlus" aria-label="Un tour de plus">+</button>
+      </div>
+      <button class="cta" id="trGo">COMMENCER</button>
+    </div>
     <button class="link" id="trainClose">Retour à l'accueil</button>
   </div>
 </div>

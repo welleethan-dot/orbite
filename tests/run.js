@@ -244,6 +244,16 @@ const TESTS = {
     await t.page.tap('#again'); await wait(300);
     check(await t.page.evaluate(() => __t.S.laps === 38), 'REJOUER ne relance pas le même entraînement');
     await t.page.tap('#pauseBtn'); await t.page.tap('#homeFromPause'); await wait(200);
+    // any starting lap, 0 to 200
+    await t.page.tap('#trainBtn'); await t.page.fill('#trLap', '500'); await t.page.press('#trLap', 'Enter'); await t.page.dispatchEvent('#trLap', 'change');
+    check((await t.page.inputValue('#trLap')) === '200', 'tour au choix non plafonné à 200');
+    await t.page.fill('#trLap', '120'); await t.page.dispatchEvent('#trLap', 'change'); await t.page.tap('#trPlus'); await t.page.tap('#trGo'); await wait(300);
+    check(await t.page.evaluate(() => mode === 'play' && __t.S.laps === 121 && __t.S.storm), 'départ au tour choisi (121) raté');
+    check((await t.page.textContent('#testTag')).includes('Tour 121'), 'mention du tour choisi absente');
+    await t.page.tap('#pauseBtn'); await t.page.tap('#homeFromPause'); await wait(200);
+    await t.page.tap('#trainBtn'); await wait(100);
+    check((await t.page.inputValue('#trLap')) === '121', 'tour au choix non mémorisé');
+    await t.page.tap('#backBtn'); await wait(100);
     await t.page.tap('#play'); await wait(300);
     check(await t.page.evaluate(() => __t.S.laps === 0) && await t.page.isHidden('#testTag'), 'JOUER après un entraînement ne lance pas une vraie partie');
     check(t.errors.length === 0, `erreurs ${t.errors}`); await t.close();
