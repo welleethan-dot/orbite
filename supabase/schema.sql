@@ -378,3 +378,12 @@ create or replace view stats.ecrans as
   select data->>'s' as ecran, count(*) as ouvertures, count(distinct aid) as appareils
   from public.events where kind = 'view' and version not like '%-test' group by 1 order by 2 desc;
 revoke all on all tables in schema stats from public, anon, authenticated;
+
+-- Joueurs du classement (données déjà publiques du classement, par pseudo) : select * from stats.joueurs;
+create or replace view stats.joueurs as
+  select p.pseudo, p.created_at::date as arrive_le, count(s.id) as parties_classees, max(s.laps) as record,
+    coalesce(sum(s.laps), 0) as tours, max(s.created_at) as derniere_partie, p.skin as skin_equipe,
+    coalesce(array_length(p.skins, 1), 0) as nb_skins
+  from public.players p left join public.scores s on s.player_id = p.id
+  group by p.id order by derniere_partie desc nulls last;
+revoke all on all tables in schema stats from public, anon, authenticated;

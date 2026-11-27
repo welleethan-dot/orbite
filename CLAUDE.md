@@ -89,6 +89,8 @@ modifié, décision prise, idée notée, version publiée), dans le même commit
 - **Lecture par le propriétaire** dans l'éditeur SQL de Supabase (schéma `stats`, invisible du jeu ; hors /beta/ et hors
   entraînement) : `select * from stats.resume;` · `stats.jours` · `stats.paliers` · `stats.fidelite` (retours J+1 et
   semaine 2) · `stats.didacticiel` · `stats.skins` · `stats.seconde_chance` · `stats.ecrans` · `stats.parties` (détail).
+  `stats.joueurs` : joueurs du classement par pseudo (parties classées, record, tours, dernière partie, skins) —
+  données du classement déjà annoncées ; les statistiques anonymes restent **sans** pseudo (décision du propriétaire, 27/11/2026).
 - **Effacer les données d'un joueur** qui le demande (éditeur SQL) :
   `delete from public.players where pseudo_key = public.orbite_norm('Pseudo');` (scores et historique suivent) et
   `delete from public.events where aid::text like 'xxxxxxxx%';` (8 premiers caractères du « numéro anonyme »).
