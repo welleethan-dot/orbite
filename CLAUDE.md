@@ -28,7 +28,8 @@ modifié, décision prise, idée notée, version publiée), dans le même commit
 - La **clé publique** (`sb_publishable_…`) est dans `js/08-online.js` (`SUPA_KEY`). Elle est faite pour être visible.
 - La **clé secrète / service_role** et le **mot de passe de la base** ne doivent **jamais** être demandés,
   écrits dans le code ou collés dans une conversation.
-- Les changements de base se font en donnant un script SQL au propriétaire, qui le colle dans l'éditeur SQL.
+- Les changements de base se font en donnant un script SQL au propriétaire, qui le colle dans une **nouvelle feuille**
+  de l'éditeur SQL (New query) puis Run. Script 2.3 (profil public) appliqué le 27/11/2026.
 
 ## 3. Architecture technique
 
@@ -176,7 +177,7 @@ Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frô
 | 2.2 | 26/11/2026 | Réglages (son, vibrations, effets réduits, chrono…), accueil épuré |
 | 2.2.1 | 26/11/2026 | Technique : jeu découpé en fichiers, script de fabrication, tests automatiques |
 | 2.2.2 | 27/11/2026 | Dessin allégé : halos, fond et planète peints une fois puis copiés (≈ +50 % d'images/s sur téléphone lent simulé) |
-| 2.3 | (en test) | Seconde chance (100 ◆, une fois par partie), flèche retour en haut à gauche des écrans, profil des joueurs depuis le classement |
+| 2.3 | 27/11/2026 | Seconde chance (100 ◆, une fois par partie), flèche retour en haut à gauche des écrans, profil des joueurs depuis le classement |
 
 ## 8. Décisions prises (et pourquoi)
 
