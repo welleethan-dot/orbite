@@ -57,13 +57,17 @@ modifié, décision prise, idée notée, version publiée), dans le même commit
 - Scellées, groupe 1 (`v2.seal`) : `v2.best`, `v2.games`, `v2.laps`, `v2.gems`, `v2.wallet`, `v2.owned`, `v2.near`.
 - Scellées, groupe 2 (`v2.seal2`) : `v2.stats` (bestChain, bestNearRun, bestGemsRun, bestTime, timeTotal, hops, bestDate, since).
 - Non scellées : `v2.skin`, `v2.pid` (identifiant secret du joueur), `v2.pseudo`, `v2.pending` (parties à envoyer),
-  `settings`, `muted`, `seenVersion`, `tutoDone`, `boardSort`, `boardPeriod`, `test`.
+  `settings`, `muted`, `seenVersion`, `tutoDone`, `boardSort`, `boardPeriod`, `test`, `v2.skinsSent` (skins déjà envoyés, 2.3).
 - **Ne jamais ajouter une clé à un groupe de sceau existant** : ça invaliderait le sceau et effacerait la
   progression de tout le monde. Créer un nouveau groupe (`v2.seal3`…).
 
 **Serveur (Supabase)**
 - Tables `players`, `scores`, `pseudo_changes` : **aucun accès direct** depuis le jeu (RLS activé, droits retirés).
-- Le jeu n'appelle que 4 fonctions : `set_pseudo`, `submit_score`, `get_leaderboard`, `player_info`.
+- Le jeu n'appelle que 6 fonctions : `set_pseudo`, `submit_score`, `get_leaderboard`, `player_info`, et depuis la 2.3
+  `set_skins` (skins débloqués + skin équipé, envoyés quand ils changent ; seuls les skins connus sont gardés, 1 envoi / 2 s)
+  et `player_profile(pseudo)` (profil public : record et sa date, rang de tous les temps, meilleure série, éclats en une
+  partie, parties classées, date d'arrivée, skins). Colonnes `players.skin`, `skins` (null = jamais envoyés), `skins_at`.
+  Le profil public ne compte que les parties envoyées au classement (d'où « Parties classées »).
 - `submit_score` vérifie : 1 envoi / 3 s, 400 / jour / joueur, tours cohérents avec la durée (bornes calculées
   sur les vitesses normale et difficile), éclats ≤ 3 × (tours / 5) + 3, série ≤ 3 × tours + 3.
 - Pseudo : 3 à 16 caractères, filtre de grossièretés, unique (sans tenir compte des majuscules et accents),
@@ -111,6 +115,11 @@ La partie n'est comptée (stats, classement) qu'après le refus ou la fin du tem
 **Navigation (2.3)** : flèche retour en haut à gauche de chaque écran de menu (`BACK_OF` dans `js/04-ui.js`) ; elle fait
 exactement comme le bouton « Retour… » du bas de l'écran (gardé). Un seul bouton `#backBtn` posé sur la page (pas dans
 les écrans : leur fond flouté `backdrop-filter` ferait défiler un élément `fixed` avec le contenu), affiché tant qu'un écran de `BACK_OF` est visible.
+
+**Profil des joueurs (2.3)** : toucher une ligne du classement ouvre « Profil du joueur » (écran `player`, `openPlayer`
+dans `js/08-online.js`) : skin équipé animé, pseudo (et « anciennement »), record + date, rang de tous les temps, meilleure
+série, éclats en une partie, parties classées, collection de skins, date d'arrivée. Retour : au classement.
+Les skins déclarés par le jeu ne sont pas vérifiables côté serveur (affichage seulement).
 
 **Frôlement** : esquive à moins de **0,12 s** de l'impact (`NEAR_TIME`) ou passage très serré (`NEAR_GAP`).
 Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frôlements à moins de 2,5 s d'écart.
@@ -167,7 +176,7 @@ Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frô
 | 2.2 | 26/11/2026 | Réglages (son, vibrations, effets réduits, chrono…), accueil épuré |
 | 2.2.1 | 26/11/2026 | Technique : jeu découpé en fichiers, script de fabrication, tests automatiques |
 | 2.2.2 | 27/11/2026 | Dessin allégé : halos, fond et planète peints une fois puis copiés (≈ +50 % d'images/s sur téléphone lent simulé) |
-| 2.3 | (en test) | Seconde chance (100 ◆, une fois par partie), flèche retour en haut à gauche des écrans |
+| 2.3 | (en test) | Seconde chance (100 ◆, une fois par partie), flèche retour en haut à gauche des écrans, profil des joueurs depuis le classement |
 
 ## 8. Décisions prises (et pourquoi)
 

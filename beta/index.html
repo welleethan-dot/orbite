@@ -216,6 +216,10 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 /* second chance (2.3): time left to decide */
 .timebar{width:100%;max-width:240px;height:4px;border-radius:2px;background:rgba(191,243,255,.15);overflow:hidden;}
 .timebar i{display:block;height:100%;width:100%;background:var(--shard);border-radius:2px;}
+/* leaderboard rows open the player's profile (2.3) */
+.lb li[role="button"]{cursor:pointer;}
+.lb li[role="button"]:active{background:rgba(191,243,255,.12);}
+.lb li[role="button"]:focus-visible{outline:2px solid var(--shard);outline-offset:2px;}
 </style>
 
 </head>
@@ -286,6 +290,31 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
     <div class="lbmsg" id="boardMsg"></div>
     <div class="lbme" id="boardMe"></div>
     <button class="link" id="boardClose">Retour à l'accueil</button>
+  </div>
+</div>
+
+<div class="overlay" id="player" hidden>
+  <div class="card profcard">
+    <div class="eyebrow">Profil du joueur</div>
+    <canvas class="avatar" id="plAvatar" aria-hidden="true"></canvas>
+    <div class="pname" id="plName"></div>
+    <div class="ranks" id="plWas"></div>
+    <div class="lbmsg" id="plMsg"></div>
+    <section class="psec" id="plPerf" hidden><h3>Performances</h3>
+      <div class="pgrid">
+        <div class="ptile phero"><div><div class="pl">Record</div><div class="pv" id="plBest">0 tours</div></div><div class="pl" id="plBestDate"></div></div>
+        <div class="ptile"><div class="pv" id="plRank">—</div><div class="pl">Au classement de tous les temps</div></div>
+        <div class="ptile"><div class="pv" id="plChain">x0</div><div class="pl">Meilleure série de frôlements</div></div>
+        <div class="ptile"><div class="pv gold" id="plGems">0 ◆</div><div class="pl">Éclats en une partie</div></div>
+        <div class="ptile"><div class="pv" id="plGames">0</div><div class="pl">Parties classées</div></div>
+      </div>
+    </section>
+    <section class="psec" id="plColl" hidden><h3>Collection</h3>
+      <div class="pskins" id="plSkins"></div>
+      <div class="pprog"><span id="plSkinCount"></span></div>
+    </section>
+    <div class="pfoot" id="plSince"></div>
+    <button class="link" id="plClose">Retour au classement</button>
   </div>
 </div>
 
@@ -817,7 +846,7 @@ function popup(text, x, y, color){ S.popups.push({text, x, y, life:1, color}); }
 
 // ---------- UI ----------
 const ui = {
-  show(id){ for (const k of ['menu','paused','over','test','shop','news','howto','board','pseudoBox','profile','unlock','sharebox','notice','settings','second']) $(k).hidden = k !== id; },
+  show(id){ for (const k of ['menu','paused','over','test','shop','news','howto','board','pseudoBox','profile','unlock','sharebox','notice','settings','second','player']) $(k).hidden = k !== id; },
   hud(on){ $('hud').hidden = !on; },
   score(){ $('sc').textContent = S.laps; $('hs').textContent = 'Record ' + Math.max(best, testRun || S.tuto ? 0 : S.laps); $('gm').textContent = '◆ ' + S.shards; },
   stats(){ $('menuBest').textContent = best; $('menuGames').textContent = games; $('menuGems').textContent = wallet; },
@@ -881,7 +910,7 @@ function resume(){ if (mode !== 'paused') return; mode = 'play'; ui.show(null); 
 // Back arrow (2.3) at the top left of each menu screen: does exactly what the screen's own "Retour…" button does.
 // A single button on the page itself (not inside the screens, whose blurred background would make it scroll away).
 const BACK_OF = {settings: 'setClose', board: 'boardClose', profile: 'profClose', shop: 'shopClose', howto: 'howClose',
-  pseudoBox: 'pseudoLater', news: 'newsOk', sharebox: 'shareClose', unlock: 'unlockClose', test: 'testClose'};
+  pseudoBox: 'pseudoLater', news: 'newsOk', sharebox: 'shareClose', unlock: 'unlockClose', test: 'testClose', player: 'plClose'};
 const backBtn = document.createElement('button');
 backBtn.className = 'icon back'; backBtn.id = 'backBtn'; backBtn.setAttribute('aria-label', 'Retour'); backBtn.hidden = true;
 backBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';
@@ -1074,7 +1103,7 @@ function previewLoop(now){
 }
 function unlockBonus(){
   for (const sk of SKINS) if (sk.unlockLaps && lapsTotal >= sk.unlockLaps && !owned.includes(sk.id)){
-    owned.push(sk.id); store.set('v2.owned', owned); setTimeout(() => celebrateSkin(sk.id), 300);
+    owned.push(sk.id); store.set('v2.owned', owned); syncSkins(); setTimeout(() => celebrateSkin(sk.id), 300);
   }
 }
 function openShop(){ pendingBuy = null; renderShop(); ui.show('shop'); if (!previewRaf) previewRaf = requestAnimationFrame(previewLoop); }
@@ -1082,7 +1111,7 @@ $('shopBtn').addEventListener('click', openShop);
 $('shopClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
 $('skins').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b || b.disabled) return;
-  if (b.dataset.equip){ equipped = b.dataset.equip; store.set('v2.skin', equipped); pendingBuy = null; sfx.equip(); buzz(10); renderShop(); }
+  if (b.dataset.equip){ equipped = b.dataset.equip; store.set('v2.skin', equipped); syncSkins(); pendingBuy = null; sfx.equip(); buzz(10); renderShop(); }
   if (b.dataset.buy){ pendingBuy = b.dataset.buy; renderShop(); $('confirm').scrollIntoView({block:'nearest'}); }
 });
 $('confirmNo').addEventListener('click', () => { pendingBuy = null; renderShop(); });
@@ -1230,6 +1259,7 @@ const CHANGELOG = [
   {v:'2.3', date:'27/11/2026', notes:[
     "Nouveau : la seconde chance. Après une collision, reprenez la partie au même tour pour 100 ◆. Une seule fois par partie.",
     "Une flèche en haut à gauche de chaque écran pour revenir en arrière, sans descendre jusqu'en bas.",
+    "Dans le classement, touchez un joueur pour voir son profil : son record, ses meilleures performances et les skins qu'il a débloqués.",
   ]},
   {v:'2.2.2', date:'27/11/2026', notes:[
     "Le jeu est plus fluide, surtout sur les téléphones modestes et quand l'écran est rempli d'astéroïdes.",
@@ -1492,7 +1522,7 @@ async function submitPseudo(){
   }
   $('pseudoOk').disabled = true; $('pseudoErr').textContent = '';
   try {
-    pseudo = await rpc('set_pseudo', {p_id: playerId, p_pseudo: v}); store.set('v2.pseudo', pseudo); await loadPlayerInfo();
+    pseudo = await rpc('set_pseudo', {p_id: playerId, p_pseudo: v}); store.set('v2.pseudo', pseudo); await loadPlayerInfo(); syncSkins();
     sfx.go(); flushScores();
     if (pseudoBack === 'board') openBoard(); else if (pseudoBack === 'over'){ ui.show('over'); showOverRank(); } else if (pseudoBack === 'settings') openSettings(); else ui.show('menu');
   } catch(e){
@@ -1554,14 +1584,68 @@ async function loadBoard(){
       if (boardSort !== 'chain' && r.best_chain) parts.push('série x' + r.best_chain);
       sm.append(parts.join(' · '));
       li.append(rk, nm, val, sm); list.append(li);
+      li.setAttribute('role', 'button'); li.tabIndex = 0; li.setAttribute('aria-label', 'Voir le profil de ' + r.pseudo);
+      const go = () => { sfx.ui(); openPlayer(r.pseudo); };
+      li.addEventListener('click', go); li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } });
     }
   } catch(e){ if (id === boardReq) msg.textContent = 'Impossible de charger le classement. Vérifiez votre connexion.'; }
 }
-function openBoard(){ boardMe(); ui.show('board'); loadBoard(); loadPlayerInfo().then(() => { if (!$('board').hidden) boardMe(); }); }
+function openBoard(){ syncSkins(); boardMe(); ui.show('board'); loadBoard(); loadPlayerInfo().then(() => { if (!$('board').hidden) boardMe(); }); }
 $('boardBtn').addEventListener('click', openBoard);
 $('boardClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
 $('boardPeriod').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ boardPeriod = b.dataset.p; store.set('boardPeriod', boardPeriod); loadBoard(); } });
 $('boardSort').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b){ boardSort = b.dataset.s; store.set('boardSort', boardSort); loadBoard(); } });
+
+// ----- skins shared with the other players (2.3) -----
+// Sent when they change (and once a pseudo exists). The server keeps only known skins.
+let skinsTimer = 0;
+function syncSkins(){
+  clearTimeout(skinsTimer);
+  skinsTimer = setTimeout(async () => {
+    if (!pseudo) return;
+    const list = SKINS.map(k => k.id).filter(id => owned.includes(id)), sig = equipped + '|' + list.join(',');
+    if (store.get('v2.skinsSent', '') === sig) return;
+    try { await rpc('set_skins', {p_id: playerId, p_skin: equipped, p_skins: list}); store.set('v2.skinsSent', sig); }
+    catch(e){ if (e.code === 'trop_rapide') syncSkins(); }               // otherwise: next time
+  }, 1200);
+}
+setTimeout(syncSkins, 2500);
+
+// ----- another player's profile, opened from the leaderboard (2.3) -----
+let plSkin = null, plReq = 0;
+async function openPlayer(name){
+  const id = ++plReq;
+  plSkin = null; $('plName').textContent = name; $('plWas').textContent = ''; $('plSince').textContent = '';
+  $('plPerf').hidden = $('plColl').hidden = true; $('plMsg').textContent = 'Chargement…';
+  ui.show('player'); startAnim();
+  let p;
+  try { p = await rpc('player_profile', {p_pseudo: name}); }
+  catch(e){ if (id === plReq) $('plMsg').textContent = 'Profil indisponible pour le moment. Vérifiez votre connexion.'; return; }
+  if (id !== plReq) return;
+  if (!p){ $('plMsg').textContent = 'Ce joueur a changé de pseudo.'; return; }
+  $('plMsg').textContent = '';
+  $('plName').textContent = p.pseudo;                                    // text only: no HTML from players
+  $('plWas').textContent = p.old_pseudo ? 'anciennement ' + p.old_pseudo : '';
+  $('plBest').textContent = fmtInt(p.best) + ' tours';
+  $('plBestDate').textContent = p.best_date ? 'le ' + fmtDate(p.best_date) : '';
+  $('plRank').textContent = p.best ? p.rank + (p.rank == 1 ? 'er' : 'e') : '—';
+  $('plChain').textContent = 'x' + (p.best_chain || 0);
+  $('plGems').textContent = fmtInt(p.best_gems) + ' ◆';
+  $('plGames').textContent = fmtInt(p.games);
+  $('plPerf').hidden = false;
+  const box = $('plSkins'); box.replaceChildren();
+  const has = Array.isArray(p.skins) ? p.skins : null;
+  plSkin = has && SKINS.some(k => k.id === p.skin) ? p.skin : 'sonde';
+  startAnim();                                                            // his skin, turning around the avatar
+  if (has){
+    for (const sk of SKINS){ const cv = document.createElement('canvas'); cv.title = sk.name; if (!has.includes(sk.id)) cv.className = 'off'; box.append(cv); drawSkinBadge(cv, sk); }
+    const cur = SKINS.find(k => k.id === plSkin);
+    $('plSkinCount').textContent = `Skins : ${has.filter(id => SKINS.some(k => k.id === id)).length} / ${SKINS.length} · équipé : ${cur.name}`;
+  } else $('plSkinCount').textContent = 'Ses skins s\'afficheront après sa prochaine mise à jour du jeu.';
+  $('plColl').hidden = false;
+  $('plSince').textContent = p.since ? 'Dans le classement depuis le ' + fmtDate(p.since) : '';
+}
+$('plClose').addEventListener('click', () => ui.show('board'));
 </script>
 <script>
 // Orbite · Profil, célébration des skins, partage
@@ -1573,7 +1657,7 @@ const fmtDate = iso => { if (!iso) return ''; const [y, m, d] = iso.split('-'); 
 let animRaf = 0;
 // Animated skin previews (profile avatar, unlock screen): runs while one of them is visible.
 function animLoop(now){
-  const jobs = [['profile', 'profAvatar', equipped, 30], ['unlock', 'unlockCv', unlockSkinId, 17]];
+  const jobs = [['profile', 'profAvatar', equipped, 30], ['unlock', 'unlockCv', unlockSkinId, 17], ['player', 'plAvatar', plSkin, 30]];
   let any = false;
   for (const [ov, id, skId, scale] of jobs){
     if ($(ov).hidden || !skId) continue; any = true;

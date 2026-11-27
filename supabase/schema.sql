@@ -4,8 +4,9 @@
 -- Le script peut être relancé sans risque (il remplace les fonctions).
 --
 -- Principe de sécurité : le jeu (clé publique) n'a AUCUN accès direct
--- aux tables. Il passe uniquement par 3 fonctions qui vérifient tout
--- côté serveur : set_pseudo, submit_score, get_leaderboard.
+-- aux tables. Il passe uniquement par des fonctions qui vérifient tout
+-- côté serveur : set_pseudo, submit_score, get_leaderboard, player_info,
+-- set_skins et player_profile (2.3).
 -- =====================================================================
 
 -- ---------- Tables ----------
@@ -41,6 +42,11 @@ create table if not exists public.pseudo_changes (
 );
 create index if not exists pseudo_changes_player_idx on public.pseudo_changes (player_id, changed_at);
 create index if not exists pseudo_changes_oldkey_idx on public.pseudo_changes (old_key, changed_at);
+
+-- Skins des joueurs (2.3) : affichés dans le profil public. Envoyés par le jeu (set_skins) ; null = pas encore envoyés.
+alter table public.players add column if not exists skin     text;
+alter table public.players add column if not exists skins    text[];
+alter table public.players add column if not exists skins_at timestamptz;
 
 -- Aucun accès direct aux tables depuis le jeu : sécurité au niveau des lignes activée, sans règle d'accès.
 alter table public.players enable row level security;
@@ -200,7 +206,48 @@ language sql stable security definer set search_path = public as $$
   order by rk, created_at
 $$;
 
--- Le jeu (clé publique) ne peut appeler QUE ces trois fonctions.
+-- ---------- 4. Profil public (2.3) ----------
+-- Skins débloqués et skin équipé, envoyés par le jeu. Seuls les skins connus sont gardés ; la Sonde est toujours là.
+create or replace function public.set_skins(p_id uuid, p_skin text, p_skins text[]) returns boolean
+language plpgsql security definer set search_path = public as $$
+declare
+  v_known text[] := array['sonde','comete','glacier','nebuleuse','aurore','trounoir','mezen'];
+  v_skins text[];
+  v_last  timestamptz;
+begin
+  select skins_at into v_last from players where id = p_id;
+  if not found then raise exception 'joueur_inconnu'; end if;
+  if v_last is not null and now() - v_last < interval '2 seconds' then raise exception 'trop_rapide'; end if;
+  select array_agg(k order by array_position(v_known, k)) into v_skins
+    from unnest(v_known) k where k = 'sonde' or k = any(coalesce(p_skins, '{}'));
+  update players set skins = v_skins, skin = case when p_skin = any(v_skins) then p_skin else 'sonde' end, skins_at = now()
+   where id = p_id;
+  return true;
+end $$;
+
+-- Profil d'un joueur du classement, retrouvé par son pseudo (l'identifiant secret n'est jamais montré).
+create or replace function public.player_profile(p_pseudo text) returns json
+language sql stable security definer set search_path = public as $$
+  select json_build_object(
+    'pseudo', p.pseudo,
+    'old_pseudo', (select c.old_pseudo from pseudo_changes c where c.player_id = p.id
+                    and c.changed_at > now() - interval '30 days' order by c.changed_at desc limit 1),
+    'since', to_char(p.created_at at time zone 'Europe/Paris', 'YYYY-MM-DD'),
+    'games', (select count(*) from scores s where s.player_id = p.id),
+    'laps_total', (select coalesce(sum(laps), 0) from scores s where s.player_id = p.id),
+    'best', (select coalesce(max(laps), 0) from scores s where s.player_id = p.id),
+    'best_date', (select to_char(s.created_at at time zone 'Europe/Paris', 'YYYY-MM-DD') from scores s
+                   where s.player_id = p.id order by s.laps desc, s.created_at asc limit 1),
+    'best_gems', (select coalesce(max(gems), 0) from scores s where s.player_id = p.id),
+    'best_chain', (select coalesce(max(best_chain), 0) from scores s where s.player_id = p.id),
+    'rank', (select 1 + count(*) from (select player_id, max(laps) m from scores group by player_id) b
+              where b.m > (select coalesce(max(laps), 0) from scores s where s.player_id = p.id)),
+    'skin', p.skin,
+    'skins', p.skins)
+  from players p where p.pseudo_key = orbite_norm(btrim(coalesce(p_pseudo, '')))
+$$;
+
+-- Le jeu (clé publique) ne peut appeler QUE ces fonctions.
 revoke all on function public.set_pseudo(uuid, text) from public;
 revoke all on function public.submit_score(uuid, integer, real, integer, integer, text) from public;
 revoke all on function public.get_leaderboard(text, text, uuid, integer) from public;
@@ -210,3 +257,7 @@ grant execute on function public.player_info(uuid) to anon, authenticated;
 grant execute on function public.set_pseudo(uuid, text) to anon, authenticated;
 grant execute on function public.submit_score(uuid, integer, real, integer, integer, text) to anon, authenticated;
 grant execute on function public.get_leaderboard(text, text, uuid, integer) to anon, authenticated;
+revoke all on function public.set_skins(uuid, text, text[]) from public;
+revoke all on function public.player_profile(text) from public;
+grant execute on function public.set_skins(uuid, text, text[]) to anon, authenticated;
+grant execute on function public.player_profile(text) to anon, authenticated;

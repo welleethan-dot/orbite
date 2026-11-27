@@ -7,7 +7,7 @@ const fmtDate = iso => { if (!iso) return ''; const [y, m, d] = iso.split('-'); 
 let animRaf = 0;
 // Animated skin previews (profile avatar, unlock screen): runs while one of them is visible.
 function animLoop(now){
-  const jobs = [['profile', 'profAvatar', equipped, 30], ['unlock', 'unlockCv', unlockSkinId, 17]];
+  const jobs = [['profile', 'profAvatar', equipped, 30], ['unlock', 'unlockCv', unlockSkinId, 17], ['player', 'plAvatar', plSkin, 30]];
   let any = false;
   for (const [ov, id, skId, scale] of jobs){
     if ($(ov).hidden || !skId) continue; any = true;

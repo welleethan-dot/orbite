@@ -88,6 +88,31 @@
   </div>
 </div>
 
+<div class="overlay" id="player" hidden>
+  <div class="card profcard">
+    <div class="eyebrow">Profil du joueur</div>
+    <canvas class="avatar" id="plAvatar" aria-hidden="true"></canvas>
+    <div class="pname" id="plName"></div>
+    <div class="ranks" id="plWas"></div>
+    <div class="lbmsg" id="plMsg"></div>
+    <section class="psec" id="plPerf" hidden><h3>Performances</h3>
+      <div class="pgrid">
+        <div class="ptile phero"><div><div class="pl">Record</div><div class="pv" id="plBest">0 tours</div></div><div class="pl" id="plBestDate"></div></div>
+        <div class="ptile"><div class="pv" id="plRank">—</div><div class="pl">Au classement de tous les temps</div></div>
+        <div class="ptile"><div class="pv" id="plChain">x0</div><div class="pl">Meilleure série de frôlements</div></div>
+        <div class="ptile"><div class="pv gold" id="plGems">0 ◆</div><div class="pl">Éclats en une partie</div></div>
+        <div class="ptile"><div class="pv" id="plGames">0</div><div class="pl">Parties classées</div></div>
+      </div>
+    </section>
+    <section class="psec" id="plColl" hidden><h3>Collection</h3>
+      <div class="pskins" id="plSkins"></div>
+      <div class="pprog"><span id="plSkinCount"></span></div>
+    </section>
+    <div class="pfoot" id="plSince"></div>
+    <button class="link" id="plClose">Retour au classement</button>
+  </div>
+</div>
+
 <div class="overlay" id="pseudoBox" hidden>
   <div class="card">
     <div class="eyebrow">Classement en ligne</div>

@@ -198,3 +198,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 /* second chance (2.3): time left to decide */
 .timebar{width:100%;max-width:240px;height:4px;border-radius:2px;background:rgba(191,243,255,.15);overflow:hidden;}
 .timebar i{display:block;height:100%;width:100%;background:var(--shard);border-radius:2px;}
+/* leaderboard rows open the player's profile (2.3) */
+.lb li[role="button"]{cursor:pointer;}
+.lb li[role="button"]:active{background:rgba(191,243,255,.12);}
+.lb li[role="button"]:focus-visible{outline:2px solid var(--shard);outline-offset:2px;}
