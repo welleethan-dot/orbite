@@ -230,6 +230,9 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 .trainlist small{grid-column:2;color:var(--mist);font-size:.8rem;}
 .trainlist .tlap{grid-row:1 / span 2;grid-column:3;font-family:var(--mono);color:var(--mist);font-size:.85rem;}
 .trainlist button:disabled{opacity:.45;cursor:default;}
+.trainfree{width:100%;display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px;border-radius:14px;background:rgba(21,26,68,.55);border:1px solid rgba(191,243,255,.14);}
+.trainfree b{font-family:var(--display);font-weight:800;letter-spacing:.03em;color:var(--ion);}
+.trainfree .cta{margin-top:0;padding:13px 38px;font-size:1rem;}
 </style>
 
 </head>
@@ -336,8 +339,17 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
   <div class="card">
     <div class="eyebrow">Entraînement</div>
     <h2>Choisissez un palier</h2>
-    <p>La partie commence juste avant le palier choisi. Rien ne compte : ni record, ni classement, ni éclats.</p>
+    <p>Commencez juste avant un palier, ou au tour de votre choix. Rien ne compte : ni record, ni classement, ni éclats.</p>
     <div class="trainlist" id="trainList"></div>
+    <div class="trainfree">
+      <b>Tour au choix</b>
+      <div class="stepper">
+        <button class="icon" id="trMinus" aria-label="Un tour de moins">−</button>
+        <input id="trLap" type="number" inputmode="numeric" min="0" max="200" step="1" value="0" aria-label="Tour de départ">
+        <button class="icon" id="trPlus" aria-label="Un tour de plus">+</button>
+      </div>
+      <button class="cta" id="trGo">COMMENCER</button>
+    </div>
     <button class="link" id="trainClose">Retour à l'accueil</button>
   </div>
 </div>
@@ -1174,7 +1186,7 @@ $('confirmYes').addEventListener('click', () => {
 document.addEventListener('click', e => {
   const b = e.target.closest('.overlay button, .tuto button'); if (!b || b.disabled || b.id === 'confirmYes') return;
   if (b.dataset.equip) return;                   // equipping has its own sound
-  if (['play', 'again', 'testGo', 'resume', 'secondYes'].includes(b.id)) sfx.go(); else sfx.ui();
+  if (['play', 'again', 'testGo', 'resume', 'secondYes', 'trGo'].includes(b.id)) sfx.go(); else sfx.ui();
 });
 </script>
 <script>
@@ -1310,7 +1322,7 @@ $('tutoAgain').addEventListener('click', () => startTutorial('howto'));
 // Newest first. Texts are written for players (no tech talk) and are proofread before each release.
 const CHANGELOG = [
   {v:'2.5', date:'27/11/2026', notes:[
-    "Nouveau : l'Entraînement, depuis l'accueil. Recommencez juste avant un palier déjà atteint pour vous exercer. Rien ne compte : ni record, ni classement, ni éclats.",
+    "Nouveau : l'Entraînement, depuis l'accueil. Recommencez juste avant un palier déjà atteint, ou au tour de votre choix jusqu'au tour 200. Rien ne compte : ni record, ni classement, ni éclats.",
     "Le didacticiel apprend maintenant les frôlements, et présente les inversions folles, les bonus de palier et la seconde chance.",
   ]},
   {v:'2.4', date:'27/11/2026', notes:[
@@ -2058,7 +2070,15 @@ function openTraining(){
   }
   ui.show('train');
 }
-$('trainBtn').addEventListener('click', openTraining);
+// Any starting lap, from 0 to TRAIN_MAX (2.5). Remembered for next time.
+const TRAIN_MAX = 200;
+let trainLap = store.get('trainLap', 0);
+function setTrainLap(n){ trainLap = Math.max(0, Math.min(TRAIN_MAX, Math.round(+n) || 0)); $('trLap').value = trainLap; store.set('trainLap', trainLap); }
+$('trMinus').addEventListener('click', () => setTrainLap(trainLap - 1));
+$('trPlus').addEventListener('click', () => setTrainLap(trainLap + 1));
+$('trLap').addEventListener('change', e => setTrainLap(e.target.value));
+$('trGo').addEventListener('click', () => { setTrainLap($('trLap').value); testRun = {lap: trainLap, kind: 'random', train: true, name: 'Tour ' + trainLap}; start(); });
+$('trainBtn').addEventListener('click', () => { setTrainLap(trainLap); openTraining(); });
 $('trainClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
 </script>
 <script>
