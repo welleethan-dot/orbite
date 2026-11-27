@@ -220,6 +220,16 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 .lb li[role="button"]{cursor:pointer;}
 .lb li[role="button"]:active{background:rgba(191,243,255,.12);}
 .lb li[role="button"]:focus-visible{outline:2px solid var(--shard);outline-offset:2px;}
+/* training (2.5) */
+.cta.ghost.train{padding:10px 26px;font-size:.88rem;margin-top:-4px;}
+.trainlist{width:100%;display:flex;flex-direction:column;gap:8px;}
+.trainlist button{display:grid;grid-template-columns:14px minmax(0,1fr) auto;align-items:center;column-gap:12px;width:100%;text-align:left;padding:13px 14px;border-radius:14px;background:rgba(21,26,68,.55);border:1px solid rgba(191,243,255,.14);color:var(--ion);font:inherit;cursor:pointer;}
+.trainlist button:active:not(:disabled){background:rgba(191,243,255,.12);}
+.trainlist .tdot{width:12px;height:12px;border-radius:50%;}
+.trainlist b{font-family:var(--display);font-weight:800;letter-spacing:.03em;}
+.trainlist small{grid-column:2;color:var(--mist);font-size:.8rem;}
+.trainlist .tlap{grid-row:1 / span 2;grid-column:3;font-family:var(--mono);color:var(--mist);font-size:.85rem;}
+.trainlist button:disabled{opacity:.45;cursor:default;}
 </style>
 
 </head>
@@ -246,10 +256,11 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
 <div class="overlay" id="menu">
   <div class="card">
     <button class="icon gear" id="setBtn" aria-label="Réglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
-    <div class="eyebrow">Version de test · 2.4</div>
+    <div class="eyebrow">Version de test · 2.5</div>
     <h1 id="title">ORBITE</h1>
     <p>Touchez l'écran pour changer d'orbite.</p>
     <button class="cta" id="play">JOUER</button>
+    <button class="cta ghost train" id="trainBtn">ENTRAÎNEMENT</button>
     <div class="duo"><button class="cta ghost" id="boardBtn">CLASSEMENT</button><button class="cta ghost" id="profileBtn">PROFIL</button><button class="cta ghost" id="shopBtn">SKINS</button></div>
     <div class="stats"><div>Record<b id="menuBest">0</b></div><div>Parties<b id="menuGames">0</b></div><div>Éclats<b id="menuGems">0</b></div></div>
   </div>
@@ -274,6 +285,7 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
       <span class="dot" style="background:var(--shard)"></span><span>100 tours : 10 ◆ en bonus</span>
       <span class="dot" style="background:#FF5BD8"></span><span>200 tours : inversions folles, plus rapides et imprévisibles, et 25 ◆ en bonus</span>
       <span class="dot" style="background:#FFD66B"></span><span>Nouveau record : tout passe à l'or</span>
+      <span class="dot" style="background:var(--mist)"></span><span>Entraînement, depuis l'accueil : recommencez juste avant un palier déjà atteint, sans rien gagner ni perdre</span>
       <span class="dot" style="background:conic-gradient(#FF4D6D,#19E6D2,#B46BFF,#FFD66B,#FF4D6D)"></span><span>À chaque palier, son nom s'affiche en haut, les orbites prennent sa couleur et le ciel se dégage un instant pour vous laisser le lire</span>
     </div>
     <button class="cta" id="tutoAgain">REFAIRE LE DIDACTICIEL</button>
@@ -317,6 +329,16 @@ h2{font-family:var(--display);font-weight:800;font-size:2.2rem;margin:0;text-wra
     </section>
     <div class="pfoot" id="plSince"></div>
     <button class="link" id="plClose">Retour au classement</button>
+  </div>
+</div>
+
+<div class="overlay" id="train" hidden>
+  <div class="card">
+    <div class="eyebrow">Entraînement</div>
+    <h2>Choisissez un palier</h2>
+    <p>La partie commence juste avant le palier choisi. Rien ne compte : ni record, ni classement, ni éclats.</p>
+    <div class="trainlist" id="trainList"></div>
+    <button class="link" id="trainClose">Retour à l'accueil</button>
   </div>
 </div>
 
@@ -848,7 +870,7 @@ function popup(text, x, y, color){ S.popups.push({text, x, y, life:1, color}); }
 
 // ---------- UI ----------
 const ui = {
-  show(id){ for (const k of ['menu','paused','over','test','shop','news','howto','board','pseudoBox','profile','unlock','sharebox','notice','settings','second','player']) $(k).hidden = k !== id; },
+  show(id){ for (const k of ['menu','paused','over','test','shop','news','howto','board','pseudoBox','profile','unlock','sharebox','notice','settings','second','player','train']) $(k).hidden = k !== id; },
   hud(on){ $('hud').hidden = !on; },
   score(){ $('sc').textContent = S.laps; $('hs').textContent = 'Record ' + Math.max(best, testRun || S.tuto ? 0 : S.laps); $('gm').textContent = '◆ ' + S.shards; },
   stats(){ $('menuBest').textContent = best; $('menuGames').textContent = games; $('menuGems').textContent = wallet; },
@@ -864,7 +886,8 @@ function start(){
   S.omegaMax = S.hard ? 3.6 : 3.25;
   if (testRun && testRun.lap > 0) jumpToLap(testRun.lap);
   $('testTag').hidden = !testRun;
-  if (testRun) $('testTag').textContent = 'Test · T' + testRun.lap + (S.hard ? ' · difficile' : ' · normale');
+  if (testRun) $('testTag').textContent = testRun.train ? 'Entraînement · ' + testRun.name   // the hard run stays secret here
+    : 'Test · T' + testRun.lap + (S.hard ? ' · difficile' : ' · normale');
   // hard runs are never announced: the player only feels it
   $('hint').hidden = false; $('hint').style.opacity = 1;
   setTimeout(()=>{ $('hint').style.opacity = 0; }, 2600);
@@ -919,6 +942,7 @@ function calmSky(secs){
 }
 function flipWarn(secs){ S.revWarn = secs; banner('Inversion', EVENT_COL.flip, 2, secs); buzz([20,40,20]); }
 function palierBonus(n){
+  if (testRun && testRun.train) return;                         // training gives nothing
   S.bonus = (S.bonus || 0) + n; const p = pos();
   popup('+' + n + ' ◆', p.x, p.y - 18*unit, COL.shard); burst(p.x, p.y, COL.shard, 30, 220); sfx.shard();
   if (S.laps !== CHAOS_LAP){ banner(S.laps + ' tours · +' + n + ' ◆', EVENT_COL.record, 1, 1.2); buzz([15, 30, 15]); }
@@ -929,7 +953,7 @@ function resume(){ if (mode !== 'paused') return; mode = 'play'; ui.show(null); 
 // Back arrow (2.3) at the top left of each menu screen: does exactly what the screen's own "Retour…" button does.
 // A single button on the page itself (not inside the screens, whose blurred background would make it scroll away).
 const BACK_OF = {settings: 'setClose', board: 'boardClose', profile: 'profClose', shop: 'shopClose', howto: 'howClose',
-  pseudoBox: 'pseudoLater', news: 'newsOk', sharebox: 'shareClose', unlock: 'unlockClose', test: 'testClose', player: 'plClose'};
+  pseudoBox: 'pseudoLater', news: 'newsOk', sharebox: 'shareClose', unlock: 'unlockClose', test: 'testClose', player: 'plClose', train: 'trainClose'};
 const backBtn = document.createElement('button');
 backBtn.className = 'icon back'; backBtn.id = 'backBtn'; backBtn.setAttribute('aria-label', 'Retour'); backBtn.hidden = true;
 backBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';
@@ -1161,17 +1185,21 @@ document.addEventListener('click', e => {
 // A guided first run: slow, no game over, one thing learnt per step. Launched on a new player's first
 // "Jouer", and again from "Comment jouer". Players who already played are not forced into it.
 let tutoDone = store.get('tutoDone', false) || games > 0, tutoFrom = 'play';
+const TUTO_NEAR_TIME = .35;                     // the tutorial's frôlement window (the real game: NEAR_TIME)
 const TUTO = [
   {id:'tap',    goal:3, prog:'Sauts', text:"Touchez n'importe où sur l'écran : la sonde saute d'une orbite à l'autre."},
   {id:'dodge',  goal:2, prog:'Astéroïdes évités', text:"Un astéroïde arrive sur votre orbite ! Changez d'orbite pour l'éviter."},
+  {id:'near',   goal:1, prog:'Frôlements', text:"Le frôlement : laissez l'astéroïde arriver tout près, puis sautez au dernier moment. Enchaînez-les pour faire monter le multiplicateur x2, x3…"},
   {id:'gem',    text:"Passez sur l'éclat ◆ pour le ramasser. Les éclats servent à acheter des skins dans la boutique."},
   {id:'rare',   text:"Un éclat rare, collé à un astéroïde, vaut 3 ◆. Attrapez-le, puis changez vite d'orbite !"},
   {id:'lap',    text:"Votre score, c'est le nombre de tours, affiché en haut à gauche. Faites un tour complet."},
   {id:'rain',   info:true, ev:['Pluie d’astéroïdes', 'rain', 1, 1.2], text:"Plus vous tenez, plus ça se corse. À 30 tours, voici ce qui s'affichera : la pluie d'astéroïdes. Ils arrivent bien plus souvent."},
   {id:'fast',   info:true, ev:['Astéroïdes rapides', 'fast', 2, 1.2], text:"À 40 tours, voici ce qui s'affichera : les astéroïdes rapides. Repérez leur traînée, ils foncent droit sur vous."},
   {id:'flip',   info:true, ev:['Inversion', 'flip', 2, 1.6], text:"À 50 tours, voici ce qui s'affichera : l'inversion. La sonde change de sens, et pendant l'alerte aucun astéroïde n'arrive."},
+  {id:'chaos',  info:true, ev:['Inversions folles', 'chaos', 3, 1.6], text:"À 200 tours : les inversions folles, plus rapides et imprévisibles. Les tours 100 et 200 rapportent aussi des éclats en bonus."},
   {id:'record', info:true, ev:['Nouveau record', 'record', 1, 1.2], text:"Et voici ce qui s'affichera quand vous battrez votre record : tout passe à l'or."},
-  {id:'ready',  info:true, last:true, text:"Vous êtes prêt ! Retenez les couleurs : chaque palier affiche son nom en haut de l'écran. Bonne chance !"},
+  {id:'second', info:true, text:"Touché ? Avec 100 ◆, une seconde chance vous permet de reprendre au même tour, une fois par partie."},
+  {id:'ready',  info:true, last:true, text:"Vous êtes prêt ! Pour vous exercer sur un palier déjà atteint, essayez l'Entraînement depuis l'accueil. Bonne chance !"},
 ];
 function playPressed(){ if (!tutoDone) startTutorial('play'); else start(); }
 function startTutorial(from){
@@ -1196,6 +1224,7 @@ function tutoEnter(i){
   resize();                                     // re-fit the orbits above the card (its height follows the text)
   if (st.ev){ const [title, col, pulses, dur] = st.ev; banner(title, EVENT_COL[col], pulses, dur, true); }
   if (st.id === 'flip') S.revWarn = 1.6;
+  if (st.id === 'chaos') S.revWarn = .9;
 }
 function tutoProg(msg){
   const st = TUTO[S.tuto.step];
@@ -1214,7 +1243,7 @@ function tutoHit(){                              // no game over in the tutorial
 }
 function tutoSpawn(){
   const T = S.tuto, id = TUTO[T.step].id, other = 1 - S.lane;
-  if (id === 'dodge'){ T.rock = makeRock(S.lane, S.a + S.dir*2.4); S.rocks.push(T.rock); }
+  if (id === 'dodge' || id === 'near'){ T.rock = makeRock(S.lane, S.a + S.dir*2.4); S.rocks.push(T.rock); T.near0 = S.near || 0; }
   if (id === 'gem'){ addGem(other, S.a + S.dir*2.6, false, 0); T.gem = S.gems[S.gems.length - 1]; }
   if (id === 'rare'){
     const ra = S.a + S.dir*3.4;
@@ -1225,9 +1254,9 @@ function tutoSpawn(){
 // Event steps: a live, harmless demo keeps running until the player taps "Suivant".
 function tutoDemo(dt){
   const T = S.tuto, id = TUTO[T.step].id, lane = Math.random() < .5 ? 0 : 1;
-  if (id === 'flip' && S.revWarn <= 0){            // flip again every few seconds
+  if ((id === 'flip' || id === 'chaos') && S.revWarn <= 0){   // flip again every few seconds (faster and at random for chaos)
     T.flipT = (T.flipT ?? 2.6) - dt;
-    if (T.flipT <= 0){ T.flipT = 2.6; S.revWarn = 1.6; }
+    if (T.flipT <= 0){ T.flipT = id === 'chaos' ? 1 + Math.random()*1.4 : 2.6; S.revWarn = id === 'chaos' ? .9 : 1.6; }
   }
   T.demoT = (T.demoT || 0) - dt; if (T.demoT > 0) return;
   if (id === 'rain'){ const r = makeRock(lane, S.a + S.dir*(1.8 + Math.random()*2.6)); r.ghost = true; S.rocks.push(r); T.demoT = .28; }
@@ -1235,7 +1264,7 @@ function tutoDemo(dt){
     const w = .9 + Math.random()*.4, m = 1.8 + Math.random(), r = makeRock(lane, S.a + S.dir*m*(S.omega + w)/S.omega, w, S.a + S.dir*m);
     r.ghost = true; S.rocks.push(r); T.demoT = .9;
   }
-  if (id === 'flip' && S.revWarn <= 0){ const r = makeRock(lane, S.a + S.dir*(2 + Math.random()*1.5)); r.ghost = true; S.rocks.push(r); T.demoT = .7; }
+  if ((id === 'flip' || id === 'chaos') && S.revWarn <= 0){ const r = makeRock(lane, S.a + S.dir*(2 + Math.random()*1.5)); r.ghost = true; S.rocks.push(r); T.demoT = .7; }
 }
 function tutoUpdate(dt){
   const T = S.tuto, st = TUTO[T.step];
@@ -1245,6 +1274,11 @@ function tutoUpdate(dt){
   if (st.id === 'dodge' && T.rock && T.rock.passed){
     T.count++; tutoProg(); T.rock = null;
     if (T.count >= st.goal) tutoStepDone(); else T.wait = .5;
+  }
+  if (st.id === 'near' && T.rock && T.rock.passed){
+    T.rock = null;
+    if ((S.near || 0) > T.near0){ T.count++; tutoProg(); tutoStepDone(); }
+    else { T.wait = .6; tutoProg('Trop tôt ! Attendez qu’il soit tout près.'); }
   }
   if (st.id === 'gem' && T.gem){
     if (T.gem.got) tutoStepDone();
@@ -1275,6 +1309,10 @@ $('tutoAgain').addEventListener('click', () => startTutorial('howto'));
 // ---------- versions & news ----------
 // Newest first. Texts are written for players (no tech talk) and are proofread before each release.
 const CHANGELOG = [
+  {v:'2.5', date:'27/11/2026', notes:[
+    "Nouveau : l'Entraînement, depuis l'accueil. Recommencez juste avant un palier déjà atteint pour vous exercer. Rien ne compte : ni record, ni classement, ni éclats.",
+    "Le didacticiel apprend maintenant les frôlements, et présente les inversions folles, les bonus de palier et la seconde chance.",
+  ]},
   {v:'2.4', date:'27/11/2026', notes:[
     "Avant la pluie d'astéroïdes et les astéroïdes rapides, le ciel se dégage un instant : vous avez le temps de lire ce qui arrive.",
     "Nouveau palier à 100 tours : 10 ◆ en bonus.",
@@ -1943,7 +1981,7 @@ function gameOver(){
   mode = 'dying'; S.dead = true; S.deadT = 0; S.shake = 1;
   const p = pos(); burst(p.x, p.y, skin().glow, 40, 260); burst(p.x, p.y, COL.rock, 24, 180);
   sfx.crash(); buzz([60, 40, 120]);
-  if (!S.revived && wallet >= REVIVE_COST){
+  if (!S.revived && wallet >= REVIVE_COST && !(testRun && testRun.train)){   // no second chance in training
     setTimeout(() => {
       if (mode !== 'dying') return;
       mode = 'offer'; S.offerT = REVIVE_WAIT; ui.hud(false);
@@ -1961,7 +1999,8 @@ function finishRun(delay){
     $('finalScore').textContent = S.laps; $('overBest').textContent = best;
     $('overShards').textContent = S.shards + (S.bonus || 0); $('overNear').textContent = S.near || 0;
     $('overTime').textContent = fmtTime(S.t);
-    $('overTitle').textContent = testRun ? 'Fin du test' : 'Collision';
+    $('overTitle').textContent = testRun ? (testRun.train ? 'Entraînement' : 'Fin du test') : 'Collision';
+    $('shareRun').hidden = !!testRun;
     $('newBest').hidden = !isBest; ui.show('over'); ui.stats();
     showOverRank();
   }, delay);
@@ -1986,7 +2025,7 @@ function hop(){
   for (const o of S.rocks){
     if (o.passed || o.ghost || o.lane !== S.lane) continue;
     const R = lanes[o.lane], half = (o.size*.8 + 6*unit)/R, ttc = (ahead(o.a) - half) / (S.omega + (o.w || 0));
-    if (ttc < NEAR_TIME && ahead(o.a) < Math.PI) o.nearArmed = true;
+    if (ttc < (S.tuto ? TUTO_NEAR_TIME : NEAR_TIME) && ahead(o.a) < Math.PI) o.nearArmed = true;
   }
   S.lane = 1 - S.lane; S.campT = 0;
   if (!S.tuto) S.hops = (S.hops || 0) + 1;
@@ -1995,6 +2034,32 @@ function hop(){
   sfx.hop(S.lane === 1); buzz(8);
   const p = pos(); burst(p.x, p.y, COL.ion, 6, 60);
 }
+
+// ---------- training (2.5) ----------
+// Start just before a stage, to practise it. Nothing counts (it is a test run without the test tools):
+// no record, no leaderboard, no crystals, no second chance. A stage opens once the record has reached it.
+const TRAINING = [
+  {lap: 28,  at: 30,  name: 'Pluie d’astéroïdes', col: 'rain'},
+  {lap: 38,  at: 40,  name: 'Astéroïdes rapides', col: 'fast'},
+  {lap: 48,  at: 50,  name: 'Inversion',          col: 'flip'},
+  {lap: 198, at: 200, name: 'Inversions folles',  col: 'chaos'},
+];
+function openTraining(){
+  const box = $('trainList'); box.replaceChildren();
+  for (const tr of TRAINING){
+    const b = document.createElement('button'), open = best >= tr.at;
+    const dot = document.createElement('span'); dot.className = 'tdot'; dot.style.background = EVENT_COL[tr.col];
+    const nm = document.createElement('b'); nm.textContent = tr.name;
+    const lap = document.createElement('span'); lap.className = 'tlap'; lap.textContent = 'tour ' + tr.at;
+    const sm = document.createElement('small'); sm.textContent = open ? 'Départ au tour ' + tr.lap : 'Atteignez le tour ' + tr.at + ' pour le débloquer';
+    b.append(dot, nm, lap, sm); b.disabled = !open; b.dataset.lap = tr.lap;
+    b.addEventListener('click', () => { testRun = {lap: tr.lap, kind: 'random', train: true, name: tr.name}; start(); });
+    box.append(b);
+  }
+  ui.show('train');
+}
+$('trainBtn').addEventListener('click', openTraining);
+$('trainClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
 </script>
 <script>
 // Orbite · Commandes, mise à jour, dessin, boucle du jeu
