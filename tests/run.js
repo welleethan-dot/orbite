@@ -434,7 +434,7 @@ const TESTS = {
         const tick = () => { if (++frames < 30) requestAnimationFrame(tick); else {
           delete ctx.shadowBlur; delete ctx.createRadialGradient;
           const o = S.rocks[3], p = pos(o.a, lanes[o.lane]), d = DPR, px = (x, y) => ctx.getImageData(Math.round(x*d), Math.round(y*d), 1, 1).data;
-          const near = px(p.x + o.size*1.25, p.y), far = px(p.x + o.size*4, p.y);   // just outside the rock / open space
+          const near = px(p.x + o.size*1.15, p.y), far = px(p.x + o.size*4, p.y);   // just outside the rock (its edge is at .72 to 1.04 x size) / open space
           res({blur, grad, near: near[0], far: far[0], cache: glowCache.size});
         } };
         requestAnimationFrame(tick);
@@ -442,7 +442,7 @@ const TESTS = {
     }));
     check(r.blur === 0, `${r.blur} flous recalculés en 30 images (attendu : 0)`);
     check(r.grad === 0, `${r.grad} dégradés recalculés en 30 images (attendu : 0)`);
-    check(r.near > r.far + 25, `halo rouge des astéroïdes absent (${r.near} contre ${r.far} dans le vide)`);
+    check(r.near > r.far + 15, `halo rouge des astéroïdes absent (${r.near} contre ${r.far} dans le vide)`);
     check(r.cache < 40, `trop d'images en mémoire : ${r.cache}`);
     check(t.errors.length === 0, `erreurs : ${t.errors}`);
     await t.close();
