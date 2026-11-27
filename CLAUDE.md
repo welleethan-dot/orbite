@@ -28,7 +28,8 @@ modifié, décision prise, idée notée, version publiée), dans le même commit
 - La **clé publique** (`sb_publishable_…`) est dans `js/08-online.js` (`SUPA_KEY`). Elle est faite pour être visible.
 - La **clé secrète / service_role** et le **mot de passe de la base** ne doivent **jamais** être demandés,
   écrits dans le code ou collés dans une conversation.
-- Les changements de base se font en donnant un script SQL au propriétaire, qui le colle dans l'éditeur SQL.
+- Les changements de base se font en donnant un script SQL au propriétaire, qui le colle dans une **nouvelle feuille**
+  de l'éditeur SQL (New query) puis Run. Script 2.3 (profil public) appliqué le 27/11/2026.
 
 ## 3. Architecture technique
 
@@ -57,13 +58,17 @@ modifié, décision prise, idée notée, version publiée), dans le même commit
 - Scellées, groupe 1 (`v2.seal`) : `v2.best`, `v2.games`, `v2.laps`, `v2.gems`, `v2.wallet`, `v2.owned`, `v2.near`.
 - Scellées, groupe 2 (`v2.seal2`) : `v2.stats` (bestChain, bestNearRun, bestGemsRun, bestTime, timeTotal, hops, bestDate, since).
 - Non scellées : `v2.skin`, `v2.pid` (identifiant secret du joueur), `v2.pseudo`, `v2.pending` (parties à envoyer),
-  `settings`, `muted`, `seenVersion`, `tutoDone`, `boardSort`, `boardPeriod`, `test`.
+  `settings`, `muted`, `seenVersion`, `tutoDone`, `boardSort`, `boardPeriod`, `test`, `v2.skinsSent` (skins déjà envoyés, 2.3).
 - **Ne jamais ajouter une clé à un groupe de sceau existant** : ça invaliderait le sceau et effacerait la
   progression de tout le monde. Créer un nouveau groupe (`v2.seal3`…).
 
 **Serveur (Supabase)**
 - Tables `players`, `scores`, `pseudo_changes` : **aucun accès direct** depuis le jeu (RLS activé, droits retirés).
-- Le jeu n'appelle que 4 fonctions : `set_pseudo`, `submit_score`, `get_leaderboard`, `player_info`.
+- Le jeu n'appelle que 6 fonctions : `set_pseudo`, `submit_score`, `get_leaderboard`, `player_info`, et depuis la 2.3
+  `set_skins` (skins débloqués + skin équipé, envoyés quand ils changent ; seuls les skins connus sont gardés, 1 envoi / 2 s)
+  et `player_profile(pseudo)` (profil public : record et sa date, rang de tous les temps, meilleure série, éclats en une
+  partie, parties classées, date d'arrivée, skins). Colonnes `players.skin`, `skins` (null = jamais envoyés), `skins_at`.
+  Le profil public ne compte que les parties envoyées au classement (d'où « Parties classées »).
 - `submit_score` vérifie : 1 envoi / 3 s, 400 / jour / joueur, tours cohérents avec la durée (bornes calculées
   sur les vitesses normale et difficile), éclats ≤ 3 × (tours / 5) + 3, série ≤ 3 × tours + 3.
 - Pseudo : 3 à 16 caractères, filtre de grossièretés, unique (sans tenir compte des majuscules et accents),
@@ -102,6 +107,20 @@ modifié, décision prise, idée notée, version publiée), dans le même commit
 - `shadowBlur` compte en pixels d'écran, pas en unités de page : en tenir compte (÷ DPR) pour les marges.
 - Mesure : scène de 8 astéroïdes, Pixel 7 simulé, processeur ralenti ×6 : 19 → 28 images/s (30 astéroïdes, ×4 : 16 → 30).
   Test « dessin allégé » : 0 flou et 0 dégradé recalculés en 30 images.
+
+**Seconde chance (2.3)** : après une collision, écran « Seconde chance » pendant 6 s (`REVIVE_WAIT`) : reprendre au même
+tour pour **100 éclats** du porte-monnaie (`REVIVE_COST`), **une fois par partie**, proposée seulement si le joueur a les
+100 éclats. À la reprise : ciel vidé d'astéroïdes, sonde qui clignote et ne peut pas être touchée pendant 2 s (`REVIVE_SHIELD`).
+La partie n'est comptée (stats, classement) qu'après le refus ou la fin du temps. Le score repris compte normalement au classement.
+
+**Navigation (2.3)** : flèche retour en haut à gauche de chaque écran de menu (`BACK_OF` dans `js/04-ui.js`) ; elle fait
+exactement comme le bouton « Retour… » du bas de l'écran (gardé). Un seul bouton `#backBtn` posé sur la page (pas dans
+les écrans : leur fond flouté `backdrop-filter` ferait défiler un élément `fixed` avec le contenu), affiché tant qu'un écran de `BACK_OF` est visible.
+
+**Profil des joueurs (2.3)** : toucher une ligne du classement ouvre « Profil du joueur » (écran `player`, `openPlayer`
+dans `js/08-online.js`) : skin équipé animé, pseudo (et « anciennement »), record + date, rang de tous les temps, meilleure
+série, éclats en une partie, parties classées, collection de skins, date d'arrivée. Retour : au classement.
+Les skins déclarés par le jeu ne sont pas vérifiables côté serveur (affichage seulement).
 
 **Frôlement** : esquive à moins de **0,12 s** de l'impact (`NEAR_TIME`) ou passage très serré (`NEAR_GAP`).
 Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frôlements à moins de 2,5 s d'écart.
@@ -158,6 +177,7 @@ Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frô
 | 2.2 | 26/11/2026 | Réglages (son, vibrations, effets réduits, chrono…), accueil épuré |
 | 2.2.1 | 26/11/2026 | Technique : jeu découpé en fichiers, script de fabrication, tests automatiques |
 | 2.2.2 | 27/11/2026 | Dessin allégé : halos, fond et planète peints une fois puis copiés (≈ +50 % d'images/s sur téléphone lent simulé) |
+| 2.3 | 27/11/2026 | Seconde chance (100 ◆, une fois par partie), flèche retour en haut à gauche des écrans, profil des joueurs depuis le classement |
 
 ## 8. Décisions prises (et pourquoi)
 
@@ -177,7 +197,7 @@ Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frô
 **Priorités validées (dans l'ordre)**
 1. ~~Ce document~~ ✅ · ~~script de fabrication, tests automatiques, découpage en fichiers~~ ✅ (2.2.1)
 2. ~~Alléger le dessin des halos lumineux~~ ✅ (2.2.2)
-3. Double authentification GitHub et Supabase (à faire par le propriétaire)
+3. ~~Double authentification GitHub et Supabase~~ ✅ (faite par le propriétaire le 27/11/2026)
 4. Statistiques anonymes des joueurs pour le propriétaire + page **Confidentialité** dans les Réglages
 5. Code de transfert de progression, puis sauvegarde en ligne
 6. Musique générée par le code (réglage Musique séparé du Son)

@@ -103,7 +103,7 @@ async function submitPseudo(){
   }
   $('pseudoOk').disabled = true; $('pseudoErr').textContent = '';
   try {
-    pseudo = await rpc('set_pseudo', {p_id: playerId, p_pseudo: v}); store.set('v2.pseudo', pseudo); await loadPlayerInfo();
+    pseudo = await rpc('set_pseudo', {p_id: playerId, p_pseudo: v}); store.set('v2.pseudo', pseudo); await loadPlayerInfo(); syncSkins();
     sfx.go(); flushScores();
     if (pseudoBack === 'board') openBoard(); else if (pseudoBack === 'over'){ ui.show('over'); showOverRank(); } else if (pseudoBack === 'settings') openSettings(); else ui.show('menu');
   } catch(e){
@@ -165,11 +165,65 @@ async function loadBoard(){
       if (boardSort !== 'chain' && r.best_chain) parts.push('série x' + r.best_chain);
       sm.append(parts.join(' · '));
       li.append(rk, nm, val, sm); list.append(li);
+      li.setAttribute('role', 'button'); li.tabIndex = 0; li.setAttribute('aria-label', 'Voir le profil de ' + r.pseudo);
+      const go = () => { sfx.ui(); openPlayer(r.pseudo); };
+      li.addEventListener('click', go); li.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } });
     }
   } catch(e){ if (id === boardReq) msg.textContent = 'Impossible de charger le classement. Vérifiez votre connexion.'; }
 }
-function openBoard(){ boardMe(); ui.show('board'); loadBoard(); loadPlayerInfo().then(() => { if (!$('board').hidden) boardMe(); }); }
+function openBoard(){ syncSkins(); boardMe(); ui.show('board'); loadBoard(); loadPlayerInfo().then(() => { if (!$('board').hidden) boardMe(); }); }
 $('boardBtn').addEventListener('click', openBoard);
 $('boardClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
 $('boardPeriod').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ boardPeriod = b.dataset.p; store.set('boardPeriod', boardPeriod); loadBoard(); } });
 $('boardSort').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b){ boardSort = b.dataset.s; store.set('boardSort', boardSort); loadBoard(); } });
+
+// ----- skins shared with the other players (2.3) -----
+// Sent when they change (and once a pseudo exists). The server keeps only known skins.
+let skinsTimer = 0;
+function syncSkins(){
+  clearTimeout(skinsTimer);
+  skinsTimer = setTimeout(async () => {
+    if (!pseudo) return;
+    const list = SKINS.map(k => k.id).filter(id => owned.includes(id)), sig = equipped + '|' + list.join(',');
+    if (store.get('v2.skinsSent', '') === sig) return;
+    try { await rpc('set_skins', {p_id: playerId, p_skin: equipped, p_skins: list}); store.set('v2.skinsSent', sig); }
+    catch(e){ if (e.code === 'trop_rapide') syncSkins(); }               // otherwise: next time
+  }, 1200);
+}
+setTimeout(syncSkins, 2500);
+
+// ----- another player's profile, opened from the leaderboard (2.3) -----
+let plSkin = null, plReq = 0;
+async function openPlayer(name){
+  const id = ++plReq;
+  plSkin = null; $('plName').textContent = name; $('plWas').textContent = ''; $('plSince').textContent = '';
+  $('plPerf').hidden = $('plColl').hidden = true; $('plMsg').textContent = 'Chargement…';
+  ui.show('player'); startAnim();
+  let p;
+  try { p = await rpc('player_profile', {p_pseudo: name}); }
+  catch(e){ if (id === plReq) $('plMsg').textContent = 'Profil indisponible pour le moment. Vérifiez votre connexion.'; return; }
+  if (id !== plReq) return;
+  if (!p){ $('plMsg').textContent = 'Ce joueur a changé de pseudo.'; return; }
+  $('plMsg').textContent = '';
+  $('plName').textContent = p.pseudo;                                    // text only: no HTML from players
+  $('plWas').textContent = p.old_pseudo ? 'anciennement ' + p.old_pseudo : '';
+  $('plBest').textContent = fmtInt(p.best) + ' tours';
+  $('plBestDate').textContent = p.best_date ? 'le ' + fmtDate(p.best_date) : '';
+  $('plRank').textContent = p.best ? p.rank + (p.rank == 1 ? 'er' : 'e') : '—';
+  $('plChain').textContent = 'x' + (p.best_chain || 0);
+  $('plGems').textContent = fmtInt(p.best_gems) + ' ◆';
+  $('plGames').textContent = fmtInt(p.games);
+  $('plPerf').hidden = false;
+  const box = $('plSkins'); box.replaceChildren();
+  const has = Array.isArray(p.skins) ? p.skins : null;
+  plSkin = has && SKINS.some(k => k.id === p.skin) ? p.skin : 'sonde';
+  startAnim();                                                            // his skin, turning around the avatar
+  if (has){
+    for (const sk of SKINS){ const cv = document.createElement('canvas'); cv.title = sk.name; if (!has.includes(sk.id)) cv.className = 'off'; box.append(cv); drawSkinBadge(cv, sk); }
+    const cur = SKINS.find(k => k.id === plSkin);
+    $('plSkinCount').textContent = `Skins : ${has.filter(id => SKINS.some(k => k.id === id)).length} / ${SKINS.length} · équipé : ${cur.name}`;
+  } else $('plSkinCount').textContent = 'Ses skins s\'afficheront après sa prochaine mise à jour du jeu.';
+  $('plColl').hidden = false;
+  $('plSince').textContent = p.since ? 'Dans le classement depuis le ' + fmtDate(p.since) : '';
+}
+$('plClose').addEventListener('click', () => ui.show('board'));

@@ -178,7 +178,7 @@ function previewLoop(now){
 }
 function unlockBonus(){
   for (const sk of SKINS) if (sk.unlockLaps && lapsTotal >= sk.unlockLaps && !owned.includes(sk.id)){
-    owned.push(sk.id); store.set('v2.owned', owned); setTimeout(() => celebrateSkin(sk.id), 300);
+    owned.push(sk.id); store.set('v2.owned', owned); syncSkins(); setTimeout(() => celebrateSkin(sk.id), 300);
   }
 }
 function openShop(){ pendingBuy = null; renderShop(); ui.show('shop'); if (!previewRaf) previewRaf = requestAnimationFrame(previewLoop); }
@@ -186,7 +186,7 @@ $('shopBtn').addEventListener('click', openShop);
 $('shopClose').addEventListener('click', () => { ui.show('menu'); ui.stats(); });
 $('skins').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b || b.disabled) return;
-  if (b.dataset.equip){ equipped = b.dataset.equip; store.set('v2.skin', equipped); pendingBuy = null; sfx.equip(); buzz(10); renderShop(); }
+  if (b.dataset.equip){ equipped = b.dataset.equip; store.set('v2.skin', equipped); syncSkins(); pendingBuy = null; sfx.equip(); buzz(10); renderShop(); }
   if (b.dataset.buy){ pendingBuy = b.dataset.buy; renderShop(); $('confirm').scrollIntoView({block:'nearest'}); }
 });
 $('confirmNo').addEventListener('click', () => { pendingBuy = null; renderShop(); });
@@ -206,5 +206,5 @@ $('confirmYes').addEventListener('click', () => {
 document.addEventListener('click', e => {
   const b = e.target.closest('.overlay button, .tuto button'); if (!b || b.disabled || b.id === 'confirmYes') return;
   if (b.dataset.equip) return;                   // equipping has its own sound
-  if (['play', 'again', 'testGo', 'resume'].includes(b.id)) sfx.go(); else sfx.ui();
+  if (['play', 'again', 'testGo', 'resume', 'secondYes'].includes(b.id)) sfx.go(); else sfx.ui();
 });

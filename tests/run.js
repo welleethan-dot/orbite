@@ -40,7 +40,7 @@ function serve(){
 
 // ---------- serveur Supabase simulé ----------
 function fakeSupabase(){
-  const db = {players: {}, scores: [], offline: false, calls: []};
+  const db = {players: {}, scores: [], skins: {}, offline: false, calls: []};
   db.handler = async route => {
     if (db.offline) return route.abort('internetdisconnected');
     const fn = route.request().url().split('/rpc/')[1], a = JSON.parse(route.request().postData() || '{}');
@@ -53,6 +53,15 @@ function fakeSupabase(){
       db.players[a.p_id] = a.p_pseudo; return ok(a.p_pseudo);
     }
     if (fn === 'player_info') return ok(db.players[a.p_id] ? {pseudo: db.players[a.p_id], changes_left: 3, next_reset: '2026-12-01'} : null);
+    if (fn === 'set_skins'){ if (!db.players[a.p_id]) return ko('joueur_inconnu'); db.skins[a.p_id] = {skin: a.p_skin, skins: a.p_skins}; return ok(true); }
+    if (fn === 'player_profile'){
+      const id = Object.keys(db.players).find(k => db.players[k].toLowerCase() === String(a.p_pseudo).toLowerCase()); if (!id) return ok(null);
+      const mine = db.scores.filter(s => s.p_id === id), max = k => Math.max(0, ...mine.map(s => s[k]));
+      const bests = {}; for (const s of db.scores) bests[s.p_id] = Math.max(bests[s.p_id] || 0, s.p_laps);
+      return ok({pseudo: db.players[id], old_pseudo: null, since: '2026-11-25', games: mine.length, laps_total: mine.reduce((x, s) => x + s.p_laps, 0),
+        best: max('p_laps'), best_date: '2026-11-26', best_gems: max('p_gems'), best_chain: max('p_best_chain'),
+        rank: 1 + Object.values(bests).filter(v => v > max('p_laps')).length, skin: (db.skins[id] || {}).skin || null, skins: (db.skins[id] || {}).skins || null});
+    }
     if (fn === 'submit_score'){ if (!db.players[a.p_id]) return ko('joueur_inconnu'); db.scores.push({...a}); return ok(true); }
     if (fn === 'get_leaderboard'){
       const key = {laps: 'p_laps', gems: 'p_gems', chain: 'p_best_chain'}[a.p_sort], bestOf = {};
@@ -189,6 +198,55 @@ const TESTS = {
     check((await ls(t.page, t.pre, 'v2.skin')) === 'sonde', 'équipement non pris en compte');
     check(t.errors.length === 0, `erreurs ${t.errors}`); await t.close();
   },
+  async 'flèche retour sur chaque écran (fixe au défilement)'(){
+    const t = await open('app', {device: 'iPhone SE'});
+    check(await t.page.isHidden('#backBtn'), 'flèche visible sur l’accueil');
+    for (const [btn, screen] of [['#setBtn', 'settings'], ['#boardBtn', 'board'], ['#profileBtn', 'profile'], ['#shopBtn', 'shop']]){
+      await t.page.tap(btn); await wait(150);
+      check(await t.page.isVisible('#backBtn'), `${screen} : pas de flèche retour visible`);
+      await t.page.evaluate(id => { document.getElementById(id).scrollTop = 99999; }, screen); await wait(100);
+      const r = await t.page.evaluate(() => { const b = document.getElementById('backBtn').getBoundingClientRect(); return {top: b.top, left: b.left}; });
+      check(r.top >= 0 && r.top < 80 && r.left < 60, `${screen} : flèche pas en haut à gauche après défilement (${r.top}, ${r.left})`);
+      await t.page.tap('#backBtn'); await wait(150);
+      check(await t.page.isVisible('#menu'), `${screen} : la flèche ne ramène pas à l’accueil`);
+      check(await t.page.isHidden('#backBtn'), `${screen} : flèche restée sur l’accueil`);
+    }
+    await t.page.tap('#setBtn'); await t.page.tap('#howBtn'); await t.page.tap('#backBtn'); await wait(150);
+    check(await t.page.isVisible('#settings'), '« Comment jouer » : la flèche ne ramène pas aux réglages');
+    await t.page.tap('#backBtn'); await wait(150); await t.page.tap('#play'); await wait(200);
+    check(await t.page.isHidden('#backBtn'), 'flèche visible pendant la partie');
+    check(t.errors.length === 0, `erreurs ${t.errors}`); await t.close();
+  },
+  async 'seconde chance : 100 éclats, une fois par partie'(){
+    const t = await open('app', {store: {'v2.gems': 250, 'v2.wallet': 250, 'v2.games': 3}, seal: true});
+    await t.page.tap('#play'); await wait(300);
+    const crash = () => t.page.evaluate(() => { const S = __t.S; S.laps = 17; S.rocks.length = 0;
+      const o = makeRock(S.lane, S.a + .05); o.born = -9; S.rocks.push(o); });
+    await crash(); await t.page.waitForSelector('#second:not([hidden])', {timeout: 5000});
+    check((await t.page.textContent('#secondLaps')) === '17', 'mauvais nombre de tours affiché');
+    check((await ls(t.page, t.pre, 'v2.games')) === 3, 'partie comptée avant le choix');
+    await t.page.tap('#secondYes'); await wait(300);
+    check(await t.page.evaluate(() => mode === 'play' && __t.S.laps === 17 && __t.S.rocks.length === 0), 'la partie ne reprend pas au même tour');
+    check((await ls(t.page, t.pre, 'v2.wallet')) === 150, 'les 100 éclats ne sont pas déduits');
+    await t.page.evaluate(() => { const S = __t.S, o = makeRock(S.lane, S.a + .05); o.born = -9; S.rocks.push(o); });
+    await wait(400);
+    check(await t.page.evaluate(() => mode === 'play'), 'pas de protection juste après la reprise');
+    await t.page.evaluate(() => { __t.S.shield = 0; }); await crash();
+    await t.page.waitForSelector('#over:not([hidden])', {timeout: 5000});
+    check(await t.page.isHidden('#second'), 'seconde chance proposée deux fois');
+    check((await ls(t.page, t.pre, 'v2.games')) === 4 && (await t.page.textContent('#finalScore')) === '17', 'partie mal comptée après la reprise');
+    check((await ls(t.page, t.pre, 'v2.wallet')) === 150, 'porte-monnaie faux');
+    // refus (temps écoulé) et porte-monnaie insuffisant
+    await t.page.tap('#again'); await wait(300); await crash();
+    await t.page.waitForSelector('#second:not([hidden])', {timeout: 5000});
+    await t.page.waitForSelector('#over:not([hidden])', {timeout: 9000});
+    check((await ls(t.page, t.pre, 'v2.wallet')) === 150, 'éclats déduits sans accord');
+    await t.page.evaluate(() => { wallet = 50; });
+    await t.page.tap('#again'); await wait(300); await crash();
+    await t.page.waitForSelector('#over:not([hidden])', {timeout: 5000});
+    check(await t.page.isHidden('#second'), 'proposée sans assez d’éclats');
+    check(t.errors.length === 0, `erreurs ${t.errors}`); await t.close();
+  },
   async 'sceau : modification à la main remise à zéro'(){
     const t = await open('app', {store: {'v2.gems': 50, 'v2.wallet': 50, 'v2.best': 20}, seal: true});
     check((await t.page.textContent('#menuBest')) === '20', 'progression légitime perdue');
@@ -234,6 +292,34 @@ const TESTS = {
     await t.page.tap('#homeFromOver'); await t.page.tap('#boardBtn'); await wait(800);
     check((await t.page.$$('#boardList li')).length === 2, 'classement incomplet');
     check(await t.page.evaluate(() => !document.querySelector('#boardList img')), 'pseudo interprété comme du code');
+    check(t.errors.length === 0, `erreurs ${t.errors}`); await t.close();
+  },
+  async 'profil d’un joueur depuis le classement'(){
+    const t = await open('app', {store: {'v2.pseudo': 'Moi_42', 'v2.owned': ['sonde', 'comete', 'aurore'], 'v2.skin': 'aurore', 'v2.gems': 2000, 'v2.wallet': 0}, seal: true});
+    const me = await t.page.evaluate(pre => JSON.parse(localStorage.getItem(pre + 'v2.pid')), t.pre);
+    t.db.players[me] = 'Moi_42'; t.db.players.x = 'Rival<b>'; t.db.skins.x = {skin: 'glacier', skins: ['sonde', 'glacier', 'mezen']};
+    t.db.scores.push({p_id: 'x', p_laps: 80, p_duration: 160, p_gems: 30, p_best_chain: 12}, {p_id: 'x', p_laps: 40, p_duration: 90, p_gems: 9, p_best_chain: 4},
+                     {p_id: me, p_laps: 20, p_duration: 50, p_gems: 3, p_best_chain: 1});
+    t.db.players.y = 'Ancien'; t.db.scores.push({p_id: 'y', p_laps: 10, p_duration: 30, p_gems: 1, p_best_chain: 0});
+    await wait(4500);                                          // sent shortly after start (not to slow the start down)
+    check(JSON.stringify(t.db.skins[me]) === JSON.stringify({skin: 'aurore', skins: ['sonde', 'comete', 'aurore']}), 'mes skins ne sont pas envoyés : ' + JSON.stringify(t.db.skins[me]) + ' ' + t.db.calls + ' ' + JSON.stringify(await t.page.evaluate(() => [pseudo, owned, equipped])));
+    await t.page.tap('#boardBtn'); await wait(800);
+    await t.page.tap('#boardList li:first-child'); await wait(600);
+    check(await t.page.isVisible('#player'), 'le profil du joueur ne s’ouvre pas');
+    check((await t.page.textContent('#plName')) === 'Rival<b>', 'pseudo mal affiché');
+    check(await t.page.evaluate(() => !document.querySelector('#player .pname b')), 'pseudo interprété comme du code');
+    check((await t.page.textContent('#plBest')).startsWith('80') && (await t.page.textContent('#plRank')) === '1er', 'record ou rang faux');
+    check((await t.page.textContent('#plChain')) === 'x12' && (await t.page.textContent('#plGames')) === '2', 'série ou parties fausses');
+    const off = await t.page.$$eval('#plSkins canvas', l => l.map(c => c.className === 'off' ? 0 : 1).join(''));
+    check(off === '1010001', 'skins débloqués faux : ' + off);
+    check((await t.page.textContent('#plSkinCount')).includes('Glacier'), 'skin équipé absent');
+    await t.page.tap('#backBtn'); await wait(300);
+    check(await t.page.isVisible('#board'), 'la flèche ne ramène pas au classement');
+    await t.page.tap('#boardList li:nth-child(3)'); await wait(600);
+    check((await t.page.textContent('#plSkinCount')).includes('mise à jour'), 'joueur sans skins envoyés : pas de message');
+    await t.page.tap('#plClose'); await wait(200);
+    t.db.offline = true; await t.page.tap('#boardList li:first-child'); await wait(600);
+    check((await t.page.textContent('#plMsg')).includes('indisponible'), 'pas de message sans connexion');
     check(t.errors.length === 0, `erreurs ${t.errors}`); await t.close();
   },
   async 'profil et partage'(){
@@ -336,7 +422,7 @@ const TESTS = {
   for (const [name, fn] of chosen){
     const s = Date.now();
     try { await fn(); console.log(`  ✓ ${name}  (${((Date.now() - s)/1000).toFixed(1)} s)`); }
-    catch(e){ failed++; console.log(`  ✗ ${name}\n      → ${e.message.split('\n')[0]}`); }
+    catch(e){ failed++; console.log(`  ✗ ${name}\n      → ${e.message.split('\n').slice(0, process.env.DEBUG ? 30 : 1).join('\n')}`); }
   }
   await browser.close(); server.close();
   console.log(`\n${chosen.length - failed}/${chosen.length} réussis en ${((Date.now() - t0)/1000).toFixed(0)} s`);

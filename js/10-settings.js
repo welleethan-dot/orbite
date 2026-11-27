@@ -80,10 +80,25 @@ function goHome(){
 $('homeFromPause').addEventListener('click', goHome);
 $('homeFromOver').addEventListener('click', goHome);
 
+// Second chance (2.3): once per run, for REVIVE_COST crystals from the wallet, resume at the same lap.
+// Offered for REVIVE_WAIT seconds after the crash; the run is only counted once the player declines (or time runs out).
+const REVIVE_COST = 100, REVIVE_WAIT = 6, REVIVE_SHIELD = 2;
 function gameOver(){
   mode = 'dying'; S.dead = true; S.deadT = 0; S.shake = 1;
   const p = pos(); burst(p.x, p.y, skin().glow, 40, 260); burst(p.x, p.y, COL.rock, 24, 180);
   sfx.crash(); buzz([60, 40, 120]);
+  if (!S.revived && wallet >= REVIVE_COST){
+    setTimeout(() => {
+      if (mode !== 'dying') return;
+      mode = 'offer'; S.offerT = REVIVE_WAIT; ui.hud(false);
+      $('secondLaps').textContent = S.laps; $('secondWallet').textContent = fmtN(wallet);
+      $('secondBar').style.width = '100%'; ui.show('second');
+    }, 900);
+    return;
+  }
+  finishRun(900);
+}
+function finishRun(delay){
   const isBest = recordRun();                   // test runs never touch the stats
   setTimeout(() => {
     mode = 'over'; ui.hud(false);
@@ -93,8 +108,22 @@ function gameOver(){
     $('overTitle').textContent = testRun ? 'Fin du test' : 'Collision';
     $('newBest').hidden = !isBest; ui.show('over'); ui.stats();
     showOverRank();
-  }, 900);
+  }, delay);
 }
+function declineRevive(){
+  if (mode !== 'offer') return;
+  mode = 'dying'; ui.show(null); finishRun(0);
+}
+function revive(){
+  if (mode !== 'offer' || wallet < REVIVE_COST) return;
+  wallet -= REVIVE_COST; store.set('v2.wallet', wallet);
+  S.revived = true; S.dead = false; S.shield = REVIVE_SHIELD;
+  S.rocks = []; S.spawnT = Math.max(S.spawnT, 1);              // a clear sky to start again
+  S.trail = []; S.shake = 0;
+  mode = 'play'; ui.show(null); ui.hud(true); ui.score(); last = performance.now();
+}
+$('secondYes').addEventListener('click', revive);
+$('secondNo').addEventListener('click', declineRevive);
 function hop(){
   if (mode !== 'play') return;
   // last-moment dodge: a rock on the orbit we leave would have hit within NEAR_TIME
