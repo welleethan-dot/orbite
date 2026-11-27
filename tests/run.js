@@ -294,6 +294,35 @@ const TESTS = {
     check(!(await t.page.isVisible('#over')), 'le pilote s’est fait toucher : passage bloqué ?');
     await t.close();
   },
+  async 'dessin allégé : halos copiés, pas recalculés'(){
+    const t = await open('app', {device: 'Pixel 7'});
+    await t.page.tap('#play'); await wait(300);
+    const r = await t.page.evaluate(() => new Promise(res => {
+      mode = 'paused'; document.getElementById('paused').hidden = true;
+      S.rocks = []; for (let i = 0; i < 8; i++){ const o = makeRock(i % 2, S.a + .6 + i*.7); o.born = -9; S.rocks.push(o); }
+      S.gems = []; addGem(0, S.a + 1.2, true, 0); S.gems[0].born = -9;
+      let frames = 0;
+      setTimeout(() => {                                       // the pictures are painted during the first frames
+        let blur = 0, grad = 0;
+        const sb = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'shadowBlur');
+        Object.defineProperty(ctx, 'shadowBlur', {configurable: true, get(){ return sb.get.call(this); }, set(v){ if (v > 0) blur++; sb.set.call(this, v); }});
+        const cr = ctx.createRadialGradient.bind(ctx); ctx.createRadialGradient = (...a) => { grad++; return cr(...a); };
+        const tick = () => { if (++frames < 30) requestAnimationFrame(tick); else {
+          delete ctx.shadowBlur; delete ctx.createRadialGradient;
+          const o = S.rocks[3], p = pos(o.a, lanes[o.lane]), d = DPR, px = (x, y) => ctx.getImageData(Math.round(x*d), Math.round(y*d), 1, 1).data;
+          const near = px(p.x + o.size*1.25, p.y), far = px(p.x + o.size*4, p.y);   // just outside the rock / open space
+          res({blur, grad, near: near[0], far: far[0], cache: glowCache.size});
+        } };
+        requestAnimationFrame(tick);
+      }, 400);
+    }));
+    check(r.blur === 0, `${r.blur} flous recalculés en 30 images (attendu : 0)`);
+    check(r.grad === 0, `${r.grad} dégradés recalculés en 30 images (attendu : 0)`);
+    check(r.near > r.far + 25, `halo rouge des astéroïdes absent (${r.near} contre ${r.far} dans le vide)`);
+    check(r.cache < 40, `trop d'images en mémoire : ${r.cache}`);
+    check(t.errors.length === 0, `erreurs : ${t.errors}`);
+    await t.close();
+  },
 };
 
 // ---------- lancement ----------

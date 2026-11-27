@@ -4,6 +4,9 @@
 // ---------- versions & news ----------
 // Newest first. Texts are written for players (no tech talk) and are proofread before each release.
 const CHANGELOG = [
+  {v:'2.2.2', date:'27/11/2026', notes:[
+    "Le jeu est plus fluide, surtout sur les téléphones modestes et quand l'écran est rempli d'astéroïdes.",
+  ]},
   {v:'2.2.1', date:'26/11/2026', notes:[
     "Améliorations techniques en coulisses, pour un jeu plus fiable à chaque mise à jour.",
   ]},
