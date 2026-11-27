@@ -188,7 +188,7 @@ Pas de texte en jeu, sauf le multiplicateur à partir de « x2 ». Série = frô
 | 2.2.1 | 26/11/2026 | Technique : jeu découpé en fichiers, script de fabrication, tests automatiques |
 | 2.2.2 | 27/11/2026 | Dessin allégé : halos, fond et planète peints une fois puis copiés (≈ +50 % d'images/s sur téléphone lent simulé) |
 | 2.3 | 27/11/2026 | Seconde chance (100 ◆, une fois par partie), flèche retour en haut à gauche des écrans, profil des joueurs depuis le classement |
-| 2.4 | (en test) | Répit avant les paliers 30/40, bonus aux tours 100 (+10 ◆) et 200 (+25 ◆), inversions folles dès 200 |
+| 2.4 | 27/11/2026 | Répit avant les paliers 30/40, bonus aux tours 100 (+10 ◆) et 200 (+25 ◆), inversions folles dès 200 |
 
 ## 8. Décisions prises (et pourquoi)
 
