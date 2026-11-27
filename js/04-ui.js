@@ -26,7 +26,7 @@ function start(){
 }
 let bannerTimer = 0;
 // One colour per event, so it can be recognised out of the corner of the eye without reading it.
-const EVENT_COL = {rain:'#FF4D6D', fast:'#19E6D2', flip:'#B46BFF', record:'#FFD66B'};   // red, turquoise, violet, gold
+const EVENT_COL = {rain:'#FF4D6D', fast:'#19E6D2', flip:'#B46BFF', record:'#FFD66B', chaos:'#FF5BD8'};   // red, turquoise, violet, gold, magenta
 // One word, read in a glance (full explanations are in the rules on the home screen).
 // Events are shown without any text: the orbits and the screen edges light up in the event's colour.
 // Each event also has its own rhythm (1 flash, 2 flashes, a longer pulse) so it reads even without the colour.
@@ -60,6 +60,23 @@ function reverse(){
   for (const g of S.gems) g.prev = ahead(g.a);
   S.spawnT = .5; S.shake = .35;
   tone(300, 900, .25, 'sine', .1);
+}
+// ---------- stages (2.4) ----------
+// Before the rain (30) and the fast rocks (40), and at lap 200: the sky clears and nothing arrives for CALM_TIME
+// seconds, long enough to read the title. From lap 200 (CHAOS_LAP), reversals come every 3 to 6 laps, at random,
+// with a shorter warning. Laps 100 and 200 give bonus crystals: in the wallet, not in the run's crystals
+// (the server checks those against the laps).
+const CALM_TIME = 2, CHAOS_LAP = 200, CHAOS_WARN = .9, PALIER_BONUS = {100: 10, 200: 25};
+const chaosGap = () => 3 + Math.floor(Math.random()*4);
+function calmSky(secs){
+  for (const o of S.rocks){ if (o.passed) continue; const p = pos(o.a, lanes[o.lane]); burst(p.x, p.y, COL.rock, 6, 90); }
+  S.rocks = S.rocks.filter(o => o.passed); S.calm = secs;
+}
+function flipWarn(secs){ S.revWarn = secs; banner('Inversion', EVENT_COL.flip, 2, secs); buzz([20,40,20]); }
+function palierBonus(n){
+  S.bonus = (S.bonus || 0) + n; const p = pos();
+  popup('+' + n + ' ◆', p.x, p.y - 18*unit, COL.shard); burst(p.x, p.y, COL.shard, 30, 220); sfx.shard();
+  if (S.laps !== CHAOS_LAP){ banner(S.laps + ' tours · +' + n + ' ◆', EVENT_COL.record, 1, 1.2); buzz([15, 30, 15]); }
 }
 function pause(){ if (mode !== 'play') return; mode = 'paused'; ui.show('paused'); }
 function resume(){ if (mode !== 'paused') return; mode = 'play'; ui.show(null); last = performance.now(); }
